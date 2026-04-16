@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Auth\SoliAdminProvider;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Socialite\Contracts\Factory as SocialiteFactory;
+use Laravel\Socialite\SocialiteManager;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,7 +27,7 @@ class AppServiceProvider extends ServiceProvider
 
     private function configureSocialite(): void
     {
-        /** @var \Laravel\Socialite\SocialiteManager $socialite */
+        /** @var SocialiteManager $socialite */
         $socialite = $this->app->make(SocialiteFactory::class);
 
         $socialite->extend('soli-admin', function () use ($socialite) {

@@ -41,7 +41,8 @@ export default function Welcome() {
                                         <ul className="mt-1 space-y-1">
                                             {auth.assignments.map((a, i) => (
                                                 <li key={i}>
-                                                    Onderdeel #{a.onderdeel_id} — {a.instrument_soort}
+                                                    Onderdeel #{a.onderdeel_id}{' '}
+                                                    — {a.instrument_soort}
                                                 </li>
                                             ))}
                                         </ul>
