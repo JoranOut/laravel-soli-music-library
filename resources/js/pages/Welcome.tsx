@@ -1,71 +1,111 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
+import { Download } from 'lucide-react';
+import { Heading } from '@/components/heading';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import { useTranslation } from '@/hooks/use-translation';
+import AppLayout from '@/layouts/app-layout';
+import type { OrchestraGroup } from '@/types/muziekstukken';
 
-interface Auth {
-    user: { id: number; name: string; email: string } | null;
-    roles: string[];
-    assignments: { onderdeel_id: number; instrument_soort: string }[];
+type Props = {
+    orchestraGroups: OrchestraGroup[];
+};
+
+async function handleDownload(partId: number) {
+    const response = await fetch(`/parts/${partId}/download-url`);
+    const { url } = await response.json();
+    window.location.href = url;
 }
 
-export default function Welcome() {
-    const { auth } = usePage<{ auth: Auth }>().props;
+export default function Welcome({ orchestraGroups }: Props) {
+    const { t } = useTranslation();
 
     return (
-        <>
-            <Head title="Welkom" />
-            <div className="flex min-h-screen items-center justify-center bg-background">
-                <div className="text-center">
-                    <h1 className="text-4xl font-bold text-foreground">
-                        Soli Muziekbibliotheek
-                    </h1>
-                    <p className="mt-4 text-lg text-muted-foreground">
-                        Muziekvereniging Soli Driehuis
-                    </p>
+        <AppLayout breadcrumbs={[{ title: t('My Music'), href: '/' }]}>
+            <Head title={t('My Music')} />
+            <div className="space-y-10 p-6">
+                <Heading title={t('My Music')} />
 
-                    <div className="mt-8">
-                        {auth.user ? (
-                            <div className="space-y-4">
-                                <p className="text-foreground">
-                                    Welkom, <strong>{auth.user.name}</strong>
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                    {auth.user.email}
-                                </p>
-                                {auth.roles.length > 0 && (
-                                    <p className="text-sm text-muted-foreground">
-                                        Rollen: {auth.roles.join(', ')}
-                                    </p>
-                                )}
-                                {auth.assignments.length > 0 && (
-                                    <div className="text-sm text-muted-foreground">
-                                        <p>Bezetting:</p>
-                                        <ul className="mt-1 space-y-1">
-                                            {auth.assignments.map((a, i) => (
-                                                <li key={i}>
-                                                    Onderdeel #{a.onderdeel_id}{' '}
-                                                    — {a.instrument_soort}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
-                                <button
-                                    onClick={() => router.post('/auth/logout')}
-                                    className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-                                >
-                                    Uitloggen
-                                </button>
+                {orchestraGroups.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                        {t('No assignments yet.')}
+                    </p>
+                ) : (
+                    orchestraGroups.map((group) => (
+                        <section key={group.orchestra.id} className="space-y-6">
+                            <div className="space-y-2">
+                                <h3 className="text-lg font-semibold tracking-tight">
+                                    {group.orchestra.name}
+                                </h3>
+                                <div className="flex flex-wrap gap-1">
+                                    {group.instruments.map((instrument) => (
+                                        <Badge key={instrument.id} variant="secondary">
+                                            {instrument.name}
+                                        </Badge>
+                                    ))}
+                                </div>
                             </div>
-                        ) : (
-                            <a
-                                href="/auth/redirect"
-                                className="inline-block rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-                            >
-                                Inloggen via Soli Admin
-                            </a>
-                        )}
-                    </div>
-                </div>
+
+                            {group.pieces.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">
+                                    {t('No music parts available.')}
+                                </p>
+                            ) : (
+                                <div className="rounded-lg border">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>{t('Piece')}</TableHead>
+                                                <TableHead>{t('Composer')}</TableHead>
+                                                <TableHead>{t('Instrument')}</TableHead>
+                                                <TableHead className="w-0" />
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {group.pieces.flatMap((piece) =>
+                                                piece.parts.map((part) => (
+                                                    <TableRow key={part.id}>
+                                                        <TableCell>{piece.title}</TableCell>
+                                                        <TableCell>
+                                                            {piece.composer ?? (
+                                                                <span className="text-muted-foreground">—</span>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {part.instrument_type.name}
+                                                            {part.voice != null && ` ${part.voice}`}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                onClick={() => handleDownload(part.id)}
+                                                            >
+                                                                <Download />
+                                                                <span className="sr-only">
+                                                                    {t('Download')}
+                                                                </span>
+                                                            </Button>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                )),
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            )}
+                        </section>
+                    ))
+                )}
             </div>
-        </>
+        </AppLayout>
     );
 }
