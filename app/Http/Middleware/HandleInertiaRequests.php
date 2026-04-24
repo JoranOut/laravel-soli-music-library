@@ -2,7 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Orchestra;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -47,7 +49,59 @@ class HandleInertiaRequests extends Middleware
                 ] : null,
                 'roles' => $user ? session('roles', []) : [],
                 'assignments' => $user ? session('assignments', []) : [],
+                'resolved_assignments' => $user ? session('resolved_assignments', []) : [],
+                'permissions' => $user ? $user->getAllPermissions()->pluck('name')->toArray() : [],
+                'orchestras' => $user ? $this->getUserOrchestras() : [],
             ],
+            'adminUrl' => config('services.soli_admin.base_url', 'https://admin.soli.nl'),
+            'sidebarOpen' => $request->cookie('sidebar_state', 'true') === 'true',
+            'locale' => app()->getLocale(),
+            'translations' => fn () => $this->getTranslations(),
         ];
+    }
+
+    /** @return array<int, array{id: int, name: string, abbreviation: string}> */
+    private function getUserOrchestras(): array
+    {
+        $assignments = session('resolved_assignments', []);
+
+        if (empty($assignments)) {
+            return [];
+        }
+
+        $orchestraIds = collect($assignments)->pluck('orchestra_id')->unique()->toArray();
+
+        return Orchestra::whereIn('id', $orchestraIds)
+            ->orderBy('sort_order')
+            ->get(['id', 'name', 'abbreviation'])
+            ->toArray();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function getTranslations(): array
+    {
+        $locale = app()->getLocale();
+
+        if (app()->isProduction()) {
+            return Cache::rememberForever("translations.{$locale}", fn () => $this->loadTranslations($locale));
+        }
+
+        return $this->loadTranslations($locale);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function loadTranslations(string $locale): array
+    {
+        $path = lang_path("{$locale}.json");
+
+        if (! file_exists($path)) {
+            return [];
+        }
+
+        return json_decode(file_get_contents($path), true) ?? [];
     }
 }
