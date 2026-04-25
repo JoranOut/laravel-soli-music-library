@@ -31,22 +31,26 @@ class AppServiceProvider extends ServiceProvider
 
     private function syncPermissions(): void
     {
-        if (app()->runningUnitTests()) {
+        if (app()->runningUnitTests() || app()->runningInConsole()) {
             return;
         }
 
-        $hash = md5(json_encode([PermissionMatrix::PERMISSIONS, array_keys(PermissionMatrix::ROLE_DEFAULTS)]));
+        try {
+            $hash = md5(json_encode([PermissionMatrix::PERMISSIONS, array_keys(PermissionMatrix::ROLE_DEFAULTS)]));
 
-        if (Cache::get('permission_matrix_hash') === $hash) {
-            return;
+            if (Cache::get('permission_matrix_hash') === $hash) {
+                return;
+            }
+
+            if (! Schema::hasTable(config('permission.table_names.permissions', 'soli_permissions'))) {
+                return;
+            }
+
+            PermissionMatrix::sync();
+            Cache::put('permission_matrix_hash', $hash);
+        } catch (\Throwable) {
+            // Silently skip when DB is unavailable (e.g. during package:discover)
         }
-
-        if (! Schema::hasTable(config('permission.table_names.permissions', 'soli_permissions'))) {
-            return;
-        }
-
-        PermissionMatrix::sync();
-        Cache::put('permission_matrix_hash', $hash);
     }
 
     private function configureSocialite(): void

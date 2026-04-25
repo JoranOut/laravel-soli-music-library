@@ -15,6 +15,7 @@ class Piece extends Model
 {
     /** @use HasFactory<PieceFactory> */
     use HasFactory;
+
     use SoftDeletes;
 
     /** @return array<string, string> */

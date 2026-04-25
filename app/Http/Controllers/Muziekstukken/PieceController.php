@@ -6,11 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\InstrumentType;
 use App\Models\Orchestra;
 use App\Models\Piece;
-use App\Models\PieceOrchestra;
 use App\Services\MusicAccessService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Inertia\Inertia;
@@ -293,7 +293,7 @@ class PieceController extends Controller
         }
     }
 
-    /** @return array{genres: \Illuminate\Support\Collection<int, string>, musicTypes: \Illuminate\Support\Collection<int, string>} */
+    /** @return array{genres: Collection<int, string>, musicTypes: Collection<int, string>} */
     private function getSuggestions(): array
     {
         $genres = Piece::whereNotNull('genre')

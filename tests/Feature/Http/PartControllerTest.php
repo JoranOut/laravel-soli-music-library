@@ -8,8 +8,8 @@ use App\Models\Piece;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\URL;
+use Spatie\Permission\Models\Permission;
 
 beforeEach(function () {
     Storage::fake('sheets');
