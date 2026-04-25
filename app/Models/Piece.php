@@ -1,0 +1,47 @@
+<?php
+
+namespace App\Models;
+
+use Database\Factories\PieceFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+#[Fillable(['title', 'composer', 'arranger', 'publisher', 'difficulty', 'notes', 'bought_for', 'buy_date', 'genre', 'music_type', 'archive_number'])]
+class Piece extends Model
+{
+    /** @use HasFactory<PieceFactory> */
+    use HasFactory;
+
+    use SoftDeletes;
+
+    /** @return array<string, string> */
+    protected function casts(): array
+    {
+        return [
+            'genre' => 'array',
+            'buy_date' => 'date',
+        ];
+    }
+
+    /** @return BelongsToMany<Orchestra, $this> */
+    public function orchestras(): BelongsToMany
+    {
+        return $this->belongsToMany(Orchestra::class, 'piece_orchestra')->wherePivotNull('tot');
+    }
+
+    /** @return HasMany<PieceOrchestra, $this> */
+    public function orchestraUsages(): HasMany
+    {
+        return $this->hasMany(PieceOrchestra::class);
+    }
+
+    /** @return HasMany<Part, $this> */
+    public function parts(): HasMany
+    {
+        return $this->hasMany(Part::class);
+    }
+}

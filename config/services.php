@@ -43,4 +43,13 @@ return [
         'server_url' => env('SOLI_ADMIN_SERVER_URL'),
     ],
 
+    'soli_admin_api' => [
+        'base_url' => env('SOLI_ADMIN_API_URL', 'http://localhost:8000'),
+        'api_key' => env('SOLI_ADMIN_API_KEY'),
+    ],
+
+    'soli_admin_webhook' => [
+        'secret' => env('SOLI_ADMIN_WEBHOOK_SECRET'),
+    ],
+
 ];

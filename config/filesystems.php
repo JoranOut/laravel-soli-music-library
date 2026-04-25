@@ -38,6 +38,13 @@ return [
             'report' => false,
         ],
 
+        'sheets' => [
+            'driver' => 'local',
+            'root' => storage_path('app/sheets'),
+            'throw' => false,
+            'report' => false,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
