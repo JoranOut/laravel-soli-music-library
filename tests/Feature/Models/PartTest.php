@@ -73,11 +73,20 @@ it('resolves instrument type even when soft-deleted', function () {
         ->and($part->instrumentType->trashed())->toBeTrue();
 });
 
-it('is deleted when piece is deleted', function () {
+it('survives soft-delete of piece', function () {
     $piece = Piece::factory()->create();
     $part = Part::factory()->create(['piece_id' => $piece->id]);
 
     $piece->delete();
+
+    expect(Part::find($part->id))->not->toBeNull();
+});
+
+it('is cascade-deleted when piece is force-deleted', function () {
+    $piece = Piece::factory()->create();
+    $part = Part::factory()->create(['piece_id' => $piece->id]);
+
+    $piece->forceDelete();
 
     expect(Part::find($part->id))->toBeNull();
 });
