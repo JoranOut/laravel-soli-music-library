@@ -4,6 +4,8 @@ import { useRef, useState } from 'react';
 import { Heading } from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import type { ComboboxOption } from '@/components/ui/combobox';
+import { Combobox } from '@/components/ui/combobox';
 import {
     Dialog,
     DialogContent,
@@ -12,9 +14,8 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Combobox, type ComboboxOption } from '@/components/ui/combobox';
-import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
 import {
     Table,
     TableBody,
@@ -24,16 +25,16 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { useTranslation } from '@/hooks/use-translation';
-import { guessFromFilename } from '@/lib/instrument-guess';
 import AppLayout from '@/layouts/app-layout';
+import { guessFromFilename } from '@/lib/instrument-guess';
 import type {
     InstrumentType,
     Orchestra,
-    OrchestraUsage,
     Part,
     Piece,
 } from '@/types/muziekstukken';
-import PieceForm, { type PieceFormHandle } from './piece-form';
+import type { PieceFormHandle } from './piece-form';
+import PieceForm from './piece-form';
 
 type PartUpload = {
     file: File;
@@ -163,10 +164,6 @@ export default function Edit({
         setUsages((prev) =>
             prev.map((u, i) => (i === index ? { ...u, [field]: value } : u)),
         );
-    }
-
-    function removeUsage(index: number) {
-        setUsages((prev) => prev.filter((_, i) => i !== index));
     }
 
     function saveAll() {
