@@ -41,7 +41,16 @@ type Props = {
 };
 
 const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
-    { piece, orchestras, action, method, canEditAllFields = true, showOrchestraCheckboxes = true, genreSuggestions = [], musicTypeSuggestions = [] },
+    {
+        piece,
+        orchestras,
+        action,
+        method,
+        canEditAllFields = true,
+        showOrchestraCheckboxes = true,
+        genreSuggestions = [],
+        musicTypeSuggestions = [],
+    },
     ref,
 ) {
     const { t } = useTranslation();
@@ -94,7 +103,9 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
     }
 
     // Merge suggestions with current selections to show all relevant options
-    const allGenreOptions = [...new Set([...genreSuggestions, ...data.genre])].sort();
+    const allGenreOptions = [
+        ...new Set([...genreSuggestions, ...data.genre]),
+    ].sort();
 
     const showSubmitButton = !!action;
 
@@ -108,11 +119,15 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                             <Input
                                 id="title"
                                 value={data.title}
-                                onChange={(e) => setData('title', e.target.value)}
+                                onChange={(e) =>
+                                    setData('title', e.target.value)
+                                }
                                 required
                             />
                             {pageErrors.title && (
-                                <p className="text-sm text-destructive">{pageErrors.title}</p>
+                                <p className="text-sm text-destructive">
+                                    {pageErrors.title}
+                                </p>
                             )}
                         </div>
 
@@ -121,10 +136,14 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                             <Input
                                 id="composer"
                                 value={data.composer}
-                                onChange={(e) => setData('composer', e.target.value)}
+                                onChange={(e) =>
+                                    setData('composer', e.target.value)
+                                }
                             />
                             {pageErrors.composer && (
-                                <p className="text-sm text-destructive">{pageErrors.composer}</p>
+                                <p className="text-sm text-destructive">
+                                    {pageErrors.composer}
+                                </p>
                             )}
                         </div>
 
@@ -133,10 +152,14 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                             <Input
                                 id="arranger"
                                 value={data.arranger}
-                                onChange={(e) => setData('arranger', e.target.value)}
+                                onChange={(e) =>
+                                    setData('arranger', e.target.value)
+                                }
                             />
                             {pageErrors.arranger && (
-                                <p className="text-sm text-destructive">{pageErrors.arranger}</p>
+                                <p className="text-sm text-destructive">
+                                    {pageErrors.arranger}
+                                </p>
                             )}
                         </div>
 
@@ -145,22 +168,32 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                             <Input
                                 id="publisher"
                                 value={data.publisher}
-                                onChange={(e) => setData('publisher', e.target.value)}
+                                onChange={(e) =>
+                                    setData('publisher', e.target.value)
+                                }
                             />
                             {pageErrors.publisher && (
-                                <p className="text-sm text-destructive">{pageErrors.publisher}</p>
+                                <p className="text-sm text-destructive">
+                                    {pageErrors.publisher}
+                                </p>
                             )}
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="difficulty">{t('Difficulty')}</Label>
+                            <Label htmlFor="difficulty">
+                                {t('Difficulty')}
+                            </Label>
                             <Input
                                 id="difficulty"
                                 value={data.difficulty}
-                                onChange={(e) => setData('difficulty', e.target.value)}
+                                onChange={(e) =>
+                                    setData('difficulty', e.target.value)
+                                }
                             />
                             {pageErrors.difficulty && (
-                                <p className="text-sm text-destructive">{pageErrors.difficulty}</p>
+                                <p className="text-sm text-destructive">
+                                    {pageErrors.difficulty}
+                                </p>
                             )}
                         </div>
                     </div>
@@ -174,20 +207,28 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                             rows={3}
                         />
                         {pageErrors.notes && (
-                            <p className="text-sm text-destructive">{pageErrors.notes}</p>
+                            <p className="text-sm text-destructive">
+                                {pageErrors.notes}
+                            </p>
                         )}
                     </div>
 
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-2">
-                            <Label htmlFor="bought_for">{t('Bought for')}</Label>
+                            <Label htmlFor="bought_for">
+                                {t('Bought for')}
+                            </Label>
                             <Input
                                 id="bought_for"
                                 value={data.bought_for}
-                                onChange={(e) => setData('bought_for', e.target.value)}
+                                onChange={(e) =>
+                                    setData('bought_for', e.target.value)
+                                }
                             />
                             {pageErrors.bought_for && (
-                                <p className="text-sm text-destructive">{pageErrors.bought_for}</p>
+                                <p className="text-sm text-destructive">
+                                    {pageErrors.bought_for}
+                                </p>
                             )}
                         </div>
 
@@ -197,36 +238,53 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                                 id="buy_date"
                                 type="date"
                                 value={data.buy_date}
-                                onChange={(e) => setData('buy_date', e.target.value)}
+                                onChange={(e) =>
+                                    setData('buy_date', e.target.value)
+                                }
                             />
                             {pageErrors.buy_date && (
-                                <p className="text-sm text-destructive">{pageErrors.buy_date}</p>
+                                <p className="text-sm text-destructive">
+                                    {pageErrors.buy_date}
+                                </p>
                             )}
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="archive_number">{t('Archive number')}</Label>
+                            <Label htmlFor="archive_number">
+                                {t('Archive number')}
+                            </Label>
                             <Input
                                 id="archive_number"
                                 value={data.archive_number}
-                                onChange={(e) => setData('archive_number', e.target.value)}
+                                onChange={(e) =>
+                                    setData('archive_number', e.target.value)
+                                }
                             />
                             {pageErrors.archive_number && (
-                                <p className="text-sm text-destructive">{pageErrors.archive_number}</p>
+                                <p className="text-sm text-destructive">
+                                    {pageErrors.archive_number}
+                                </p>
                             )}
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="music_type">{t('Music type')}</Label>
+                            <Label htmlFor="music_type">
+                                {t('Music type')}
+                            </Label>
                             <Combobox
-                                options={musicTypeSuggestions.map((s) => ({ value: s, label: s }))}
+                                options={musicTypeSuggestions.map((s) => ({
+                                    value: s,
+                                    label: s,
+                                }))}
                                 value={data.music_type}
                                 onChange={(v) => setData('music_type', v)}
                                 placeholder={t('Music type')}
                                 allowCustom
                             />
                             {pageErrors.music_type && (
-                                <p className="text-sm text-destructive">{pageErrors.music_type}</p>
+                                <p className="text-sm text-destructive">
+                                    {pageErrors.music_type}
+                                </p>
                             )}
                         </div>
                     </div>
@@ -262,7 +320,9 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                             allowCustom
                         />
                         {pageErrors.genre && (
-                            <p className="text-sm text-destructive">{pageErrors.genre}</p>
+                            <p className="text-sm text-destructive">
+                                {pageErrors.genre}
+                            </p>
                         )}
                     </div>
                 </>
@@ -298,7 +358,9 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                     </div>
                     <div className="space-y-1">
                         <Label>{t('Archive number')}</Label>
-                        <p className="text-sm">{piece?.archive_number || '-'}</p>
+                        <p className="text-sm">
+                            {piece?.archive_number || '-'}
+                        </p>
                     </div>
                     <div className="space-y-1">
                         <Label>{t('Music type')}</Label>
@@ -307,12 +369,15 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                     <div className="space-y-1">
                         <Label>{t('Genre')}</Label>
                         <div className="flex flex-wrap gap-1">
-                            {piece?.genre && piece.genre.length > 0
-                                ? piece.genre.map((g) => (
-                                    <Badge key={g} variant="secondary">{g}</Badge>
+                            {piece?.genre && piece.genre.length > 0 ? (
+                                piece.genre.map((g) => (
+                                    <Badge key={g} variant="secondary">
+                                        {g}
+                                    </Badge>
                                 ))
-                                : <p className="text-sm">-</p>
-                            }
+                            ) : (
+                                <p className="text-sm">-</p>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -328,15 +393,21 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                                 className="flex items-center gap-2 text-sm"
                             >
                                 <Checkbox
-                                    checked={data.orchestras.includes(orchestra.id)}
-                                    onCheckedChange={() => toggleOrchestra(orchestra.id)}
+                                    checked={data.orchestras.includes(
+                                        orchestra.id,
+                                    )}
+                                    onCheckedChange={() =>
+                                        toggleOrchestra(orchestra.id)
+                                    }
                                 />
                                 {orchestra.name}
                             </label>
                         ))}
                     </div>
                     {pageErrors.orchestras && (
-                        <p className="text-sm text-destructive">{pageErrors.orchestras}</p>
+                        <p className="text-sm text-destructive">
+                            {pageErrors.orchestras}
+                        </p>
                     )}
                 </div>
             )}

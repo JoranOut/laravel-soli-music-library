@@ -57,10 +57,10 @@ function isSeparatorOrEnd(str: string, index: number): boolean {
  */
 function normalise(filename: string): string {
     return filename
-        .replace(/\.[^.]+$/, '')     // strip extension
+        .replace(/\.[^.]+$/, '') // strip extension
         .toLowerCase()
-        .replace(/_/g, ' ')          // underscores → spaces
-        .replace(/\^/g, '');         // remove carets (e.g. B^b → Bb)
+        .replace(/_/g, ' ') // underscores → spaces
+        .replace(/\^/g, ''); // remove carets (e.g. B^b → Bb)
 }
 
 /**
@@ -68,11 +68,18 @@ function normalise(filename: string): string {
  * Looks for a single digit (1-9) immediately after the alias,
  * after one space following the alias, or before the alias with a space.
  */
-function extractVoice(cleaned: string, matchStart: number, matchEnd: number): string {
+function extractVoice(
+    cleaned: string,
+    matchStart: number,
+    matchEnd: number,
+): string {
     // Digit immediately after alias: "trp4", "altsax1"
     if (matchEnd < cleaned.length && /[1-9]/.test(cleaned[matchEnd])) {
         // Make sure it's a single digit (not part of a larger number)
-        if (matchEnd + 1 >= cleaned.length || !/\d/.test(cleaned[matchEnd + 1])) {
+        if (
+            matchEnd + 1 >= cleaned.length ||
+            !/\d/.test(cleaned[matchEnd + 1])
+        ) {
             return cleaned[matchEnd];
         }
     }
@@ -84,7 +91,10 @@ function extractVoice(cleaned: string, matchStart: number, matchEnd: number): st
         matchEnd + 1 < cleaned.length &&
         /[1-9]/.test(cleaned[matchEnd + 1])
     ) {
-        if (matchEnd + 2 >= cleaned.length || !/\d/.test(cleaned[matchEnd + 2])) {
+        if (
+            matchEnd + 2 >= cleaned.length ||
+            !/\d/.test(cleaned[matchEnd + 2])
+        ) {
             return cleaned[matchEnd + 1];
         }
     }
@@ -110,7 +120,10 @@ function extractVoice(cleaned: string, matchStart: number, matchEnd: number): st
  * @param types     The InstrumentType[] available in the system
  * @returns         A partial guess with instrument_type_id, voice, and/or is_conductor
  */
-export function guessFromFilename(filename: string, types: InstrumentType[]): GuessResult {
+export function guessFromFilename(
+    filename: string,
+    types: InstrumentType[],
+): GuessResult {
     let cleaned = normalise(filename);
 
     // If there's a " - " separator, use the part after the last one
@@ -123,7 +136,11 @@ export function guessFromFilename(filename: string, types: InstrumentType[]): Gu
     // Check conductor patterns first
     for (const pattern of CONDUCTOR_PATTERNS) {
         const idx = cleaned.indexOf(pattern);
-        if (idx !== -1 && isSeparatorOrStart(cleaned, idx - 1) && isSeparatorOrEnd(cleaned, idx + pattern.length)) {
+        if (
+            idx !== -1 &&
+            isSeparatorOrStart(cleaned, idx - 1) &&
+            isSeparatorOrEnd(cleaned, idx + pattern.length)
+        ) {
             return { is_conductor: true };
         }
     }

@@ -26,7 +26,12 @@ import {
 } from '@/components/ui/table';
 import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
-import type { InstrumentType, Orchestra, PaginatedData, Piece } from '@/types/muziekstukken';
+import type {
+    InstrumentType,
+    Orchestra,
+    PaginatedData,
+    Piece,
+} from '@/types/muziekstukken';
 
 const INSTRUMENTS_STORAGE_KEY = 'muziekstukken-instruments-filter';
 
@@ -58,21 +63,37 @@ type Props = {
     canEditUsages: boolean;
 };
 
-export default function Index({ pieces, orchestras, instrumentTypes, filters, canEdit, canEditUsages }: Props) {
+export default function Index({
+    pieces,
+    orchestras,
+    instrumentTypes,
+    filters,
+    canEdit,
+    canEditUsages,
+}: Props) {
     const { t } = useTranslation();
-    const [usageDialogPieceId, setUsageDialogPieceId] = useState<number | null>(null);
-    const [usageForm, setUsageForm] = useState({ orchestra_id: '', van: '', tot: '', details: '' });
+    const [usageDialogPieceId, setUsageDialogPieceId] = useState<number | null>(
+        null,
+    );
+    const [usageForm, setUsageForm] = useState({
+        orchestra_id: '',
+        van: '',
+        tot: '',
+        details: '',
+    });
     const [submitting, setSubmitting] = useState(false);
 
     // Instruments filter state
-    const [selectedInstruments, setSelectedInstruments] = useState<number[]>(() => {
-        try {
-            const stored = localStorage.getItem(INSTRUMENTS_STORAGE_KEY);
-            return stored ? JSON.parse(stored) : [];
-        } catch {
-            return [];
-        }
-    });
+    const [selectedInstruments, setSelectedInstruments] = useState<number[]>(
+        () => {
+            try {
+                const stored = localStorage.getItem(INSTRUMENTS_STORAGE_KEY);
+                return stored ? JSON.parse(stored) : [];
+            } catch {
+                return [];
+            }
+        },
+    );
     const [instrumentDialogOpen, setInstrumentDialogOpen] = useState(false);
     const [dialogSelection, setDialogSelection] = useState<number[]>([]);
 
@@ -130,7 +151,11 @@ export default function Index({ pieces, orchestras, instrumentTypes, filters, ca
     function handleSearch(search: string) {
         router.get(
             '/muziekstukken',
-            { search: search || undefined, orchestra: filters.orchestra || undefined, instruments: filters.instruments || undefined },
+            {
+                search: search || undefined,
+                orchestra: filters.orchestra || undefined,
+                instruments: filters.instruments || undefined,
+            },
             { preserveState: true, replace: true },
         );
     }
@@ -138,7 +163,11 @@ export default function Index({ pieces, orchestras, instrumentTypes, filters, ca
     function handleOrchestraFilter(orchestra: string) {
         router.get(
             '/muziekstukken',
-            { search: filters.search || undefined, orchestra: orchestra || undefined, instruments: filters.instruments || undefined },
+            {
+                search: filters.search || undefined,
+                orchestra: orchestra || undefined,
+                instruments: filters.instruments || undefined,
+            },
             { preserveState: true, replace: true },
         );
     }
@@ -171,9 +200,7 @@ export default function Index({ pieces, orchestras, instrumentTypes, filters, ca
 
     return (
         <AppLayout
-            breadcrumbs={[
-                { title: t('All Pieces'), href: '/muziekstukken' },
-            ]}
+            breadcrumbs={[{ title: t('All Pieces'), href: '/muziekstukken' }]}
         >
             <Head title={t('All Pieces')} />
             <div className="space-y-6 p-6">
@@ -200,7 +227,9 @@ export default function Index({ pieces, orchestras, instrumentTypes, filters, ca
                         <Label>{t('In use by')}</Label>
                         <Select
                             value={filters.orchestra ?? ''}
-                            onChange={(e) => handleOrchestraFilter(e.target.value)}
+                            onChange={(e) =>
+                                handleOrchestraFilter(e.target.value)
+                            }
                             className="max-w-[200px]"
                         >
                             <option value="">{t('All orchestras')}</option>
@@ -241,8 +270,12 @@ export default function Index({ pieces, orchestras, instrumentTypes, filters, ca
                                         colSpan={9}
                                         className="text-center text-muted-foreground"
                                     >
-                                        {(filters.search || filters.orchestra || filters.instruments)
-                                            ? t('No pieces found with the applied filters.')
+                                        {filters.search ||
+                                        filters.orchestra ||
+                                        filters.instruments
+                                            ? t(
+                                                  'No pieces found with the applied filters.',
+                                              )
                                             : t('No pieces found.')}
                                     </TableCell>
                                 </TableRow>
@@ -273,12 +306,17 @@ export default function Index({ pieces, orchestras, instrumentTypes, filters, ca
                                         {piece.genre?.length ? (
                                             <div className="flex flex-wrap gap-1">
                                                 {piece.genre.map((g) => (
-                                                    <Badge key={g} variant="outline">
+                                                    <Badge
+                                                        key={g}
+                                                        variant="outline"
+                                                    >
                                                         {g}
                                                     </Badge>
                                                 ))}
                                             </div>
-                                        ) : '-'}
+                                        ) : (
+                                            '-'
+                                        )}
                                     </TableCell>
                                     <TableCell>
                                         {piece.difficulty ?? '-'}
@@ -301,7 +339,11 @@ export default function Index({ pieces, orchestras, instrumentTypes, filters, ca
                                                     variant="ghost"
                                                     size="icon"
                                                     className="h-6 w-6"
-                                                    onClick={() => openUsageDialog(piece.id)}
+                                                    onClick={() =>
+                                                        openUsageDialog(
+                                                            piece.id,
+                                                        )
+                                                    }
                                                 >
                                                     <Plus className="h-4 w-4" />
                                                 </Button>
@@ -346,19 +388,28 @@ export default function Index({ pieces, orchestras, instrumentTypes, filters, ca
 
             <Dialog
                 open={instrumentDialogOpen}
-                onOpenChange={(open) => { if (!open) setInstrumentDialogOpen(false); }}
+                onOpenChange={(open) => {
+                    if (!open) setInstrumentDialogOpen(false);
+                }}
             >
                 <DialogContent className="max-w-5xl">
                     <DialogHeader>
                         <DialogTitle>{t('Filter by parts')}</DialogTitle>
                         <p className="text-sm text-muted-foreground">
-                            {t('Select the instruments that should be included at minimum.')}
+                            {t(
+                                'Select the instruments that should be included at minimum.',
+                            )}
                         </p>
                     </DialogHeader>
                     <div className="columns-5 gap-6">
                         {familyGroups.map((group) => (
-                            <div key={group.name} className="mb-4 break-inside-avoid">
-                                <h4 className="mb-2 text-sm font-semibold">{group.name}</h4>
+                            <div
+                                key={group.name}
+                                className="mb-4 break-inside-avoid"
+                            >
+                                <h4 className="mb-2 text-sm font-semibold">
+                                    {group.name}
+                                </h4>
                                 <div className="space-y-1">
                                     {group.types.map((type) => (
                                         <label
@@ -366,8 +417,14 @@ export default function Index({ pieces, orchestras, instrumentTypes, filters, ca
                                             className="flex items-center gap-2 text-sm"
                                         >
                                             <Checkbox
-                                                checked={dialogSelection.includes(type.id)}
-                                                onCheckedChange={() => toggleDialogInstrument(type.id)}
+                                                checked={dialogSelection.includes(
+                                                    type.id,
+                                                )}
+                                                onCheckedChange={() =>
+                                                    toggleDialogInstrument(
+                                                        type.id,
+                                                    )
+                                                }
                                             />
                                             {type.name}
                                         </label>
@@ -389,7 +446,11 @@ export default function Index({ pieces, orchestras, instrumentTypes, filters, ca
                         >
                             {t('Cancel')}
                         </Button>
-                        <Button onClick={() => applyInstrumentFilter(dialogSelection)}>
+                        <Button
+                            onClick={() =>
+                                applyInstrumentFilter(dialogSelection)
+                            }
+                        >
                             {t('Apply')}
                         </Button>
                     </DialogFooter>
@@ -398,7 +459,9 @@ export default function Index({ pieces, orchestras, instrumentTypes, filters, ca
 
             <Dialog
                 open={usageDialogPieceId !== null}
-                onOpenChange={(open) => { if (!open) setUsageDialogPieceId(null); }}
+                onOpenChange={(open) => {
+                    if (!open) setUsageDialogPieceId(null);
+                }}
             >
                 <DialogContent>
                     <DialogHeader>
@@ -410,7 +473,12 @@ export default function Index({ pieces, orchestras, instrumentTypes, filters, ca
                             <Combobox
                                 options={orchestraOptions}
                                 value={usageForm.orchestra_id}
-                                onChange={(v) => setUsageForm((f) => ({ ...f, orchestra_id: v }))}
+                                onChange={(v) =>
+                                    setUsageForm((f) => ({
+                                        ...f,
+                                        orchestra_id: v,
+                                    }))
+                                }
                             />
                         </div>
                         <div className="space-y-2">
@@ -418,7 +486,12 @@ export default function Index({ pieces, orchestras, instrumentTypes, filters, ca
                             <Input
                                 type="date"
                                 value={usageForm.van}
-                                onChange={(e) => setUsageForm((f) => ({ ...f, van: e.target.value }))}
+                                onChange={(e) =>
+                                    setUsageForm((f) => ({
+                                        ...f,
+                                        van: e.target.value,
+                                    }))
+                                }
                             />
                         </div>
                         <div className="space-y-2">
@@ -426,14 +499,24 @@ export default function Index({ pieces, orchestras, instrumentTypes, filters, ca
                             <Input
                                 type="date"
                                 value={usageForm.tot}
-                                onChange={(e) => setUsageForm((f) => ({ ...f, tot: e.target.value }))}
+                                onChange={(e) =>
+                                    setUsageForm((f) => ({
+                                        ...f,
+                                        tot: e.target.value,
+                                    }))
+                                }
                             />
                         </div>
                         <div className="space-y-2">
                             <Label>{t('Details')}</Label>
                             <Input
                                 value={usageForm.details}
-                                onChange={(e) => setUsageForm((f) => ({ ...f, details: e.target.value }))}
+                                onChange={(e) =>
+                                    setUsageForm((f) => ({
+                                        ...f,
+                                        details: e.target.value,
+                                    }))
+                                }
                                 placeholder={t('Details')}
                             />
                         </div>

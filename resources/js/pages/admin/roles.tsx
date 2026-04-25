@@ -17,7 +17,9 @@ type Props = {
 
 type GroupedPermission = { name: string; label: string };
 
-function groupPermissions(permissions: string[]): Record<string, GroupedPermission[]> {
+function groupPermissions(
+    permissions: string[],
+): Record<string, GroupedPermission[]> {
     const groups: Record<string, GroupedPermission[]> = {};
     for (const perm of permissions) {
         const spaceIndex = perm.indexOf(' ');
@@ -81,51 +83,49 @@ export default function Roles({ roles, permissions }: Props) {
                             </tr>
                         </thead>
                         <tbody>
-                            {Object.entries(grouped).map(
-                                ([group, perms]) => (
-                                    <>
-                                        <tr
-                                            key={`group-${group}`}
-                                            className="border-b bg-muted/25"
+                            {Object.entries(grouped).map(([group, perms]) => (
+                                <>
+                                    <tr
+                                        key={`group-${group}`}
+                                        className="border-b bg-muted/25"
+                                    >
+                                        <td
+                                            colSpan={roles.length + 1}
+                                            className="px-4 py-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase"
                                         >
-                                            <td
-                                                colSpan={roles.length + 1}
-                                                className="px-4 py-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase"
-                                            >
-                                                {group}
+                                            {group}
+                                        </td>
+                                    </tr>
+                                    {perms.map((perm) => (
+                                        <tr
+                                            key={perm.name}
+                                            className="border-b last:border-0"
+                                        >
+                                            <td className="px-4 py-2.5 pl-8 text-muted-foreground">
+                                                {perm.label}
                                             </td>
-                                        </tr>
-                                        {perms.map((perm) => (
-                                                <tr
-                                                    key={perm.name}
-                                                    className="border-b last:border-0"
+                                            {roles.map((role) => (
+                                                <td
+                                                    key={`${role.id}-${perm.name}`}
+                                                    className="px-4 py-2.5 text-center"
                                                 >
-                                                    <td className="px-4 py-2.5 pl-8 text-muted-foreground">
-                                                        {perm.label}
-                                                    </td>
-                                                    {roles.map((role) => (
-                                                        <td
-                                                            key={`${role.id}-${perm.name}`}
-                                                            className="px-4 py-2.5 text-center"
-                                                        >
-                                                            <Checkbox
-                                                                checked={role.permissions.includes(
-                                                                    perm.name,
-                                                                )}
-                                                                onCheckedChange={() =>
-                                                                    togglePermission(
-                                                                        role,
-                                                                        perm.name,
-                                                                    )
-                                                                }
-                                                            />
-                                                        </td>
-                                                    ))}
-                                                </tr>
-                                        ))}
-                                    </>
-                                ),
-                            )}
+                                                    <Checkbox
+                                                        checked={role.permissions.includes(
+                                                            perm.name,
+                                                        )}
+                                                        onCheckedChange={() =>
+                                                            togglePermission(
+                                                                role,
+                                                                perm.name,
+                                                            )
+                                                        }
+                                                    />
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    ))}
+                                </>
+                            ))}
                         </tbody>
                     </table>
                 </div>

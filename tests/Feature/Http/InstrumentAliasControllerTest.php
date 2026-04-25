@@ -29,7 +29,7 @@ it('denies users without manage-instrument-aliases permission', function () {
     $user = User::factory()->create();
     $user->assignRole('member');
 
-    $this->actingAs($user)
+    $this->actingAs($user)->withSession(['roles' => ['member']])
         ->get('/admin/instrument-aliases')
         ->assertForbidden();
 });
@@ -39,7 +39,7 @@ it('denies update without manage-instrument-aliases permission', function () {
     $user->assignRole('member');
     $type = InstrumentType::factory()->create(['aliases' => ['old']]);
 
-    $this->actingAs($user)
+    $this->actingAs($user)->withSession(['roles' => ['member']])
         ->put("/admin/instrument-aliases/{$type->id}", ['aliases' => ['hacked']])
         ->assertForbidden();
 
@@ -55,7 +55,7 @@ it('allows admin to view instrument aliases page', function () {
     $user->assignRole('admin');
     InstrumentType::factory()->create(['aliases' => ['trumpet']]);
 
-    $this->actingAs($user)
+    $this->actingAs($user)->withSession(['roles' => ['admin']])
         ->get('/admin/instrument-aliases')
         ->assertOk()
         ->assertInertia(fn ($page) => $page
@@ -69,7 +69,7 @@ it('allows admin to update aliases', function () {
     $user->assignRole('admin');
     $type = InstrumentType::factory()->create(['aliases' => []]);
 
-    $this->actingAs($user)
+    $this->actingAs($user)->withSession(['roles' => ['admin']])
         ->put("/admin/instrument-aliases/{$type->id}", [
             'aliases' => ['Trumpet', ' TRP ', 'trumpet'],
         ])
@@ -83,7 +83,7 @@ it('allows admin to clear all aliases', function () {
     $user->assignRole('admin');
     $type = InstrumentType::factory()->create(['aliases' => ['trumpet', 'trp']]);
 
-    $this->actingAs($user)
+    $this->actingAs($user)->withSession(['roles' => ['admin']])
         ->put("/admin/instrument-aliases/{$type->id}", [
             'aliases' => [],
         ])
@@ -102,7 +102,7 @@ it('allows muziekbeheer to view instrument aliases page', function () {
 
     InstrumentType::factory()->create(['aliases' => ['trp']]);
 
-    $this->actingAs($user)
+    $this->actingAs($user)->withSession(['roles' => ['muziekbeheer']])
         ->get('/admin/instrument-aliases')
         ->assertOk();
 });
@@ -112,7 +112,7 @@ it('allows muziekbeheer to update aliases', function () {
     $user->assignRole('muziekbeheer');
     $type = InstrumentType::factory()->create(['aliases' => []]);
 
-    $this->actingAs($user)
+    $this->actingAs($user)->withSession(['roles' => ['muziekbeheer']])
         ->put("/admin/instrument-aliases/{$type->id}", [
             'aliases' => ['flute'],
         ])

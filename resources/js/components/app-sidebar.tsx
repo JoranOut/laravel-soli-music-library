@@ -30,9 +30,7 @@ export function AppSidebar() {
     const { auth } = usePage().props;
     const { t } = useTranslation();
     const roles: string[] = auth.roles ?? [];
-    const isEditor =
-        roles.includes('admin') ||
-        roles.includes('muziekbeheer');
+    const isEditor = roles.includes('admin') || roles.includes('muziekbeheer');
     const canSeeAllPieces = isEditor || roles.includes('dirigent');
 
     const navItems: NavItem[] = [
@@ -44,10 +42,12 @@ export function AppSidebar() {
     ];
 
     if (canSeeAllPieces) {
-        const orchestraChildren: NavItem[] = (auth.orchestras ?? []).map((o) => ({
-            title: o.abbreviation || o.name,
-            href: `/muziekstukken?orchestra=${o.id}`,
-        }));
+        const orchestraChildren: NavItem[] = (auth.orchestras ?? []).map(
+            (o) => ({
+                title: o.abbreviation || o.name,
+                href: `/muziekstukken?orchestra=${o.id}`,
+            }),
+        );
 
         navItems.push({
             title: t('All Pieces'),

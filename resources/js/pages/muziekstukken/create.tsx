@@ -11,7 +11,11 @@ type Props = {
     musicTypeSuggestions: string[];
 };
 
-export default function Create({ orchestras, genreSuggestions, musicTypeSuggestions }: Props) {
+export default function Create({
+    orchestras,
+    genreSuggestions,
+    musicTypeSuggestions,
+}: Props) {
     const { t } = useTranslation();
 
     return (

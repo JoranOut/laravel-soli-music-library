@@ -39,7 +39,8 @@ export function useCurrentUrl(): UseCurrentUrlReturn {
     ) => {
         const urlString = toUrl(urlToCheck);
         const hasQuery = urlString.includes('?');
-        const urlToCompare = currentUrl ?? (hasQuery ? currentUrlFull : currentUrlPath);
+        const urlToCompare =
+            currentUrl ?? (hasQuery ? currentUrlFull : currentUrlPath);
 
         const comparePath = (path: string): boolean =>
             startsWith ? urlToCompare.startsWith(path) : path === urlToCompare;

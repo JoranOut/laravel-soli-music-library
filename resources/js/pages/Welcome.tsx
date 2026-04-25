@@ -47,7 +47,10 @@ export default function Welcome({ orchestraGroups }: Props) {
                                 </h3>
                                 <div className="flex flex-wrap gap-1">
                                     {group.instruments.map((instrument) => (
-                                        <Badge key={instrument.id} variant="secondary">
+                                        <Badge
+                                            key={instrument.id}
+                                            variant="secondary"
+                                        >
                                             {instrument.name}
                                         </Badge>
                                     ))}
@@ -63,9 +66,15 @@ export default function Welcome({ orchestraGroups }: Props) {
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead>{t('Piece')}</TableHead>
-                                                <TableHead>{t('Composer')}</TableHead>
-                                                <TableHead>{t('Instrument')}</TableHead>
+                                                <TableHead>
+                                                    {t('Piece')}
+                                                </TableHead>
+                                                <TableHead>
+                                                    {t('Composer')}
+                                                </TableHead>
+                                                <TableHead>
+                                                    {t('Instrument')}
+                                                </TableHead>
                                                 <TableHead className="w-0" />
                                             </TableRow>
                                         </TableHeader>
@@ -73,25 +82,41 @@ export default function Welcome({ orchestraGroups }: Props) {
                                             {group.pieces.flatMap((piece) =>
                                                 piece.parts.map((part) => (
                                                     <TableRow key={part.id}>
-                                                        <TableCell>{piece.title}</TableCell>
+                                                        <TableCell>
+                                                            {piece.title}
+                                                        </TableCell>
                                                         <TableCell>
                                                             {piece.composer ?? (
-                                                                <span className="text-muted-foreground">—</span>
+                                                                <span className="text-muted-foreground">
+                                                                    —
+                                                                </span>
                                                             )}
                                                         </TableCell>
                                                         <TableCell>
-                                                            {part.instrument_type.name}
-                                                            {part.voice != null && ` ${part.voice}`}
+                                                            {
+                                                                part
+                                                                    .instrument_type
+                                                                    .name
+                                                            }
+                                                            {part.voice !=
+                                                                null &&
+                                                                ` ${part.voice}`}
                                                         </TableCell>
                                                         <TableCell>
                                                             <Button
                                                                 variant="ghost"
                                                                 size="icon"
-                                                                onClick={() => handleDownload(part.id)}
+                                                                onClick={() =>
+                                                                    handleDownload(
+                                                                        part.id,
+                                                                    )
+                                                                }
                                                             >
                                                                 <Download />
                                                                 <span className="sr-only">
-                                                                    {t('Download')}
+                                                                    {t(
+                                                                        'Download',
+                                                                    )}
                                                                 </span>
                                                             </Button>
                                                         </TableCell>

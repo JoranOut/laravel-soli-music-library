@@ -10,7 +10,9 @@ import AppLayout from '@/layouts/app-layout';
 import type { InstrumentFamily, InstrumentType } from '@/types/muziekstukken';
 
 type Props = {
-    instrumentTypes: (InstrumentType & { instrument_family: InstrumentFamily })[];
+    instrumentTypes: (InstrumentType & {
+        instrument_family: InstrumentFamily;
+    })[];
 };
 
 function AliasRow({ type }: { type: InstrumentType }) {
@@ -55,7 +57,11 @@ function AliasRow({ type }: { type: InstrumentType }) {
             <td className="px-4 py-2.5">
                 <div className="flex flex-wrap items-center gap-1.5">
                     {aliases.map((alias) => (
-                        <Badge key={alias} variant="secondary" className="gap-1">
+                        <Badge
+                            key={alias}
+                            variant="secondary"
+                            className="gap-1"
+                        >
                             {alias}
                             <button
                                 type="button"
@@ -95,7 +101,10 @@ export default function InstrumentAliases({ instrumentTypes }: Props) {
     const { t } = useTranslation();
 
     const grouped = instrumentTypes.reduce<
-        Record<string, (InstrumentType & { instrument_family: InstrumentFamily })[]>
+        Record<
+            string,
+            (InstrumentType & { instrument_family: InstrumentFamily })[]
+        >
     >((acc, type) => {
         const family = type.instrument_family?.name ?? 'Other';
         if (!acc[family]) acc[family] = [];
@@ -125,10 +134,26 @@ export default function InstrumentAliases({ instrumentTypes }: Props) {
                 <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200">
                     <p className="font-medium">{t('How matching works')}</p>
                     <ul className="mt-1.5 list-inside list-disc space-y-0.5 text-blue-800 dark:text-blue-300">
-                        <li>{t('When a PDF is uploaded, the filename is matched against these aliases to auto-detect the instrument.')}</li>
-                        <li>{t('The instrument name itself is always matched automatically (shown as outline badge) — no need to add it as an alias.')}</li>
-                        <li>{t('Longer aliases take priority over shorter ones, so "bass trombone" matches before "trombone".')}</li>
-                        <li>{t('Matching is case-insensitive and ignores underscores, dashes and other separators.')}</li>
+                        <li>
+                            {t(
+                                'When a PDF is uploaded, the filename is matched against these aliases to auto-detect the instrument.',
+                            )}
+                        </li>
+                        <li>
+                            {t(
+                                'The instrument name itself is always matched automatically (shown as outline badge) — no need to add it as an alias.',
+                            )}
+                        </li>
+                        <li>
+                            {t(
+                                'Longer aliases take priority over shorter ones, so "bass trombone" matches before "trombone".',
+                            )}
+                        </li>
+                        <li>
+                            {t(
+                                'Matching is case-insensitive and ignores underscores, dashes and other separators.',
+                            )}
+                        </li>
                     </ul>
                 </div>
 
