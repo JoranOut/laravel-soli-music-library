@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['oidc_sub', 'name', 'email', 'oidc_roles', 'last_synced_at'])]
+#[Fillable(['oidc_sub', 'name', 'email', 'oidc_roles', 'oidc_assignments', 'last_synced_at'])]
 #[Hidden(['remember_token'])]
 class User extends Authenticatable
 {
@@ -23,6 +23,7 @@ class User extends Authenticatable
     {
         return [
             'oidc_roles' => 'array',
+            'oidc_assignments' => 'array',
             'last_synced_at' => 'datetime',
         ];
     }

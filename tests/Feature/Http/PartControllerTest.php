@@ -197,8 +197,8 @@ it('denies non-editor users from deleting parts', function () {
     expect(Part::find($part->id))->not->toBeNull();
 });
 
-it('redirects users with no roles to login from part routes', function () {
-    $user = User::factory()->create();
+it('denies users with no roles from part routes', function () {
+    $user = User::factory()->create(['oidc_roles' => []]);
     $piece = Piece::factory()->create();
     $instrumentType = InstrumentType::factory()->create();
     $part = Part::factory()->create(['piece_id' => $piece->id]);
@@ -212,17 +212,17 @@ it('redirects users with no roles to login from part routes', function () {
                 ],
             ],
         ])
-        ->assertRedirect('/auth/redirect');
+        ->assertForbidden();
 
     $this->actingAs($user)
         ->delete("/muziekstukken/{$piece->id}/parts/{$part->id}")
-        ->assertRedirect('/auth/redirect');
+        ->assertForbidden();
 
     expect($piece->parts()->count())->toBe(1);
 });
 
-it('redirects users with empty roles array to login from part routes', function () {
-    $user = User::factory()->create();
+it('denies users with empty roles array from part routes', function () {
+    $user = User::factory()->create(['oidc_roles' => []]);
     $piece = Piece::factory()->create();
     $instrumentType = InstrumentType::factory()->create();
 
@@ -236,7 +236,7 @@ it('redirects users with empty roles array to login from part routes', function 
                 ],
             ],
         ])
-        ->assertRedirect('/auth/redirect');
+        ->assertForbidden();
 
     expect($piece->parts()->count())->toBe(0);
 });
@@ -815,14 +815,14 @@ it('download log records IP address', function () {
 });
 
 it('denies member without any roles on download route', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['oidc_roles' => []]);
     $part = Part::factory()->create();
 
     $url = URL::temporarySignedRoute('parts.download', now()->addDay(), ['part' => $part->id]);
 
     $this->actingAs($user)
         ->get($url)
-        ->assertRedirect('/auth/redirect');
+        ->assertForbidden();
 });
 
 it('denies member with only non-qualifying roles on download route', function () {

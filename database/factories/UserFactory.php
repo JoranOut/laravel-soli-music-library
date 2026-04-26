@@ -18,6 +18,7 @@ class UserFactory extends Factory
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'oidc_roles' => fake()->randomElements(['member', 'contributor', 'editor'], fake()->numberBetween(1, 3)),
+            'oidc_assignments' => [],
         ];
     }
 }
