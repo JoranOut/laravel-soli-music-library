@@ -345,8 +345,14 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                     <div className="space-y-2">
                         <Label>{t('Audio')}</Label>
                         <div className="flex gap-4">
-                            {(piece ? (['none', 'youtube', 'mp3'] as const) : (['none', 'youtube'] as const)).map((type) => (
-                                <label key={type} className="flex items-center gap-2 text-sm">
+                            {(piece
+                                ? (['none', 'youtube', 'mp3'] as const)
+                                : (['none', 'youtube'] as const)
+                            ).map((type) => (
+                                <label
+                                    key={type}
+                                    className="flex items-center gap-2 text-sm"
+                                >
                                     <input
                                         type="radio"
                                         name="audio_type"
@@ -355,7 +361,10 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                                             setAudioType(type);
                                             onAudioTypeChange?.(type);
                                             if (type !== 'youtube') {
-                                                setData('audio_youtube_url', '');
+                                                setData(
+                                                    'audio_youtube_url',
+                                                    '',
+                                                );
                                             }
                                         }}
                                     />
@@ -369,7 +378,12 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                             <div className="space-y-2">
                                 <Input
                                     value={data.audio_youtube_url}
-                                    onChange={(e) => setData('audio_youtube_url', e.target.value)}
+                                    onChange={(e) =>
+                                        setData(
+                                            'audio_youtube_url',
+                                            e.target.value,
+                                        )
+                                    }
                                     placeholder="https://www.youtube.com/watch?v=..."
                                 />
                                 {pageErrors.audio_youtube_url && (
@@ -381,7 +395,9 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                         )}
                         {!piece && (
                             <p className="text-sm text-muted-foreground">
-                                {t('MP3 audio and parts can be added after saving.')}
+                                {t(
+                                    'MP3 audio and parts can be added after saving.',
+                                )}
                             </p>
                         )}
                     </div>

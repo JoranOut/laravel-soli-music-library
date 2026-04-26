@@ -275,11 +275,25 @@ export default function Show({
                         </div>
                     )}
 
-                    {(!piece.composer || !piece.arranger || !piece.publisher || !piece.difficulty || !piece.bought_for || !piece.buy_date || !piece.archive_number || !piece.music_type || !piece.genre?.length || !piece.notes) && (
+                    {(!piece.composer ||
+                        !piece.arranger ||
+                        !piece.publisher ||
+                        !piece.difficulty ||
+                        !piece.bought_for ||
+                        !piece.buy_date ||
+                        !piece.archive_number ||
+                        !piece.music_type ||
+                        !piece.genre?.length ||
+                        !piece.notes) && (
                         <p className="text-sm text-muted-foreground">
                             {canEdit ? (
-                                <Link href={`/muziekstukken/${piece.id}/edit`} className="hover:underline">
-                                    {t('Some fields are not filled in yet. Click here to complete them.')}
+                                <Link
+                                    href={`/muziekstukken/${piece.id}/edit`}
+                                    className="hover:underline"
+                                >
+                                    {t(
+                                        'Some fields are not filled in yet. Click here to complete them.',
+                                    )}
                                 </Link>
                             ) : (
                                 t('Some fields are not filled in yet.')
@@ -340,10 +354,16 @@ export default function Show({
                     {/* Audio player */}
                     {piece.audio_youtube_url && (
                         <div className="space-y-1">
-                            <dt className="text-sm text-muted-foreground">{t('Audio')}</dt>
+                            <dt className="text-sm text-muted-foreground">
+                                {t('Audio')}
+                            </dt>
                             <dd>
                                 <Button variant="outline" size="sm" asChild>
-                                    <a href={piece.audio_youtube_url} target="_blank" rel="noopener noreferrer">
+                                    <a
+                                        href={piece.audio_youtube_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
                                         <YouTubeIcon />
                                         {t('Open on YouTube')}
                                     </a>
@@ -354,19 +374,29 @@ export default function Show({
 
                     {audioUrl && !piece.audio_youtube_url && (
                         <div className="space-y-1">
-                            <dt className="text-sm text-muted-foreground">{t('Audio')}</dt>
+                            <dt className="text-sm text-muted-foreground">
+                                {t('Audio')}
+                            </dt>
                             <dd>
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => toggle({
-                                        title: piece.title,
-                                        composer: piece.composer,
-                                        url: audioUrl,
-                                    })}
+                                    onClick={() =>
+                                        toggle({
+                                            title: piece.title,
+                                            composer: piece.composer,
+                                            url: audioUrl,
+                                        })
+                                    }
                                 >
-                                    {isCurrentTrack(audioUrl) && isPlaying ? <Pause /> : <Play />}
-                                    {isCurrentTrack(audioUrl) && isPlaying ? t('Pause') : t('Play')}
+                                    {isCurrentTrack(audioUrl) && isPlaying ? (
+                                        <Pause />
+                                    ) : (
+                                        <Play />
+                                    )}
+                                    {isCurrentTrack(audioUrl) && isPlaying
+                                        ? t('Pause')
+                                        : t('Play')}
                                 </Button>
                             </dd>
                         </div>

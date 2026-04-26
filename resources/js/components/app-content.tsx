@@ -6,7 +6,6 @@ export function AppContent({
     children,
     ...props
 }: React.ComponentProps<'main'>) {
-
     return (
         <SidebarInset {...props}>
             <div className="flex-1">{children}</div>

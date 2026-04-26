@@ -362,26 +362,46 @@ export default function Index({
                                                 size="icon"
                                                 asChild
                                             >
-                                                <a href={piece.audio_youtube_url} target="_blank" rel="noopener noreferrer">
+                                                <a
+                                                    href={
+                                                        piece.audio_youtube_url
+                                                    }
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                >
                                                     <YouTubeIcon />
-                                                    <span className="sr-only">{t('Open on YouTube')}</span>
+                                                    <span className="sr-only">
+                                                        {t('Open on YouTube')}
+                                                    </span>
                                                 </a>
                                             </Button>
                                         )}
-                                        {piece.audio_url && !piece.audio_youtube_url && (
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => toggle({
-                                                    title: piece.title,
-                                                    composer: piece.composer,
-                                                    url: piece.audio_url!,
-                                                })}
-                                            >
-                                                {isCurrentTrack(piece.audio_url) && isPlaying ? <Pause /> : <Play />}
-                                                <span className="sr-only">{t('Play')}</span>
-                                            </Button>
-                                        )}
+                                        {piece.audio_url &&
+                                            !piece.audio_youtube_url && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() =>
+                                                        toggle({
+                                                            title: piece.title,
+                                                            composer:
+                                                                piece.composer,
+                                                            url: piece.audio_url!,
+                                                        })
+                                                    }
+                                                >
+                                                    {isCurrentTrack(
+                                                        piece.audio_url,
+                                                    ) && isPlaying ? (
+                                                        <Pause />
+                                                    ) : (
+                                                        <Play />
+                                                    )}
+                                                    <span className="sr-only">
+                                                        {t('Play')}
+                                                    </span>
+                                                </Button>
+                                            )}
                                     </TableCell>
                                 </TableRow>
                             ))}

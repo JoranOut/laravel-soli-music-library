@@ -1,5 +1,13 @@
 import { Head, router } from '@inertiajs/react';
-import { Archive, Music, Plus, RotateCcw, Save, Trash2, Upload } from 'lucide-react';
+import {
+    Archive,
+    Music,
+    Plus,
+    RotateCcw,
+    Save,
+    Trash2,
+    Upload,
+} from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Heading } from '@/components/heading';
 import { Button } from '@/components/ui/button';
@@ -93,7 +101,11 @@ export default function Edit({
     const fileInputRef = useRef<HTMLInputElement>(null);
     const audioInputRef = useRef<HTMLInputElement>(null);
     const [audioType, setAudioType] = useState<AudioType>(
-        piece.audio_youtube_url ? 'youtube' : piece.audio_file_path ? 'mp3' : 'none',
+        piece.audio_youtube_url
+            ? 'youtube'
+            : piece.audio_file_path
+              ? 'mp3'
+              : 'none',
     );
     const [audioUploading, setAudioUploading] = useState(false);
     const [uploads, setUploads] = useState<PartUpload[]>([]);
@@ -362,12 +374,18 @@ export default function Edit({
                     <section className="space-y-6">
                         <Heading
                             title={t('Audio')}
-                            description={t('Upload an MP3 audio reference for this piece')}
+                            description={t(
+                                'Upload an MP3 audio reference for this piece',
+                            )}
                         />
 
                         {audioUrl && (
                             <div className="space-y-2">
-                                <audio controls src={audioUrl} className="w-full max-w-md" />
+                                <audio
+                                    controls
+                                    src={audioUrl}
+                                    className="w-full max-w-md"
+                                />
                             </div>
                         )}
 
@@ -385,7 +403,9 @@ export default function Edit({
                                 disabled={audioUploading}
                             >
                                 <Music />
-                                {piece.audio_file_path ? t('Replace MP3') : t('Upload MP3')}
+                                {piece.audio_file_path
+                                    ? t('Replace MP3')
+                                    : t('Upload MP3')}
                             </Button>
                             {piece.audio_file_path && (
                                 <Button

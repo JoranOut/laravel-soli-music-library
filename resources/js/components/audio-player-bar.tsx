@@ -13,7 +13,9 @@ function formatTime(seconds: number): string {
 }
 
 function nextSpeed(current: number): number {
-    const idx = SPEED_OPTIONS.indexOf(current as (typeof SPEED_OPTIONS)[number]);
+    const idx = SPEED_OPTIONS.indexOf(
+        current as (typeof SPEED_OPTIONS)[number],
+    );
     return SPEED_OPTIONS[(idx + 1) % SPEED_OPTIONS.length];
 }
 
@@ -38,7 +40,7 @@ export function AudioPlayerBar() {
         <div className="sticky bottom-0 z-50 border-t bg-background">
             <div className="flex items-center gap-3 px-4 py-2">
                 {/* Track info */}
-                <div className="min-w-0 shrink-0 max-w-[150px] sm:max-w-[200px]">
+                <div className="max-w-[150px] min-w-0 shrink-0 sm:max-w-[200px]">
                     <p className="truncate text-sm font-medium">
                         {currentTrack?.title}
                     </p>
@@ -70,7 +72,7 @@ export function AudioPlayerBar() {
                 />
 
                 {/* Time display */}
-                <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
                     {formatTime(currentTime)} / {formatTime(duration)}
                 </span>
 
@@ -78,7 +80,7 @@ export function AudioPlayerBar() {
                 <Button
                     variant="outline"
                     size="sm"
-                    className="shrink-0 w-14 tabular-nums text-xs"
+                    className="w-14 shrink-0 text-xs tabular-nums"
                     onClick={() => setSpeed(nextSpeed(speed))}
                 >
                     {speed}x
