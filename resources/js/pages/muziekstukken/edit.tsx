@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { Archive, Plus, RotateCcw, Save, Trash2, Upload } from 'lucide-react';
+import { Archive, Music, Plus, RotateCcw, Save, Trash2, Upload } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Heading } from '@/components/heading';
 import { Button } from '@/components/ui/button';
@@ -46,6 +46,7 @@ type PartUpload = {
 
 type Props = {
     piece: Piece;
+    audioUrl: string | null;
     orchestras: Orchestra[];
     instrumentTypes?: InstrumentType[];
     canEditAllFields?: boolean;
@@ -79,6 +80,7 @@ type PartEdit = {
 
 export default function Edit({
     piece,
+    audioUrl,
     orchestras,
     instrumentTypes = [],
     canEditAllFields = true,
@@ -89,6 +91,8 @@ export default function Edit({
     const { t } = useTranslation();
     const pieceFormRef = useRef<PieceFormHandle>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const audioInputRef = useRef<HTMLInputElement>(null);
+    const [audioUploading, setAudioUploading] = useState(false);
     const [uploads, setUploads] = useState<PartUpload[]>([]);
     const [uploading, setUploading] = useState(false);
     const [deletePart, setDeletePart] = useState<Part | null>(null);
@@ -291,6 +295,30 @@ export default function Edit({
         });
     }
 
+    function handleAudioUpload(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('audio', file);
+
+        setAudioUploading(true);
+        router.post(`/muziekstukken/${piece.id}/audio`, formData, {
+            forceFormData: true,
+            preserveScroll: true,
+            onFinish: () => {
+                setAudioUploading(false);
+                if (audioInputRef.current) audioInputRef.current.value = '';
+            },
+        });
+    }
+
+    function handleAudioDelete() {
+        router.delete(`/muziekstukken/${piece.id}/audio`, {
+            preserveScroll: true,
+        });
+    }
+
     return (
         <AppLayout
             breadcrumbs={[
@@ -324,6 +352,49 @@ export default function Edit({
                         musicTypeSuggestions={musicTypeSuggestions}
                     />
                 </section>
+
+                {/* Audio management */}
+                {canEditAllFields && (
+                    <section className="space-y-6">
+                        <Heading
+                            title={t('Audio')}
+                            description={t('Upload an MP3 audio reference for this piece')}
+                        />
+
+                        {audioUrl && (
+                            <div className="space-y-2">
+                                <audio controls src={audioUrl} className="w-full max-w-md" />
+                            </div>
+                        )}
+
+                        <div className="flex items-center gap-4">
+                            <input
+                                ref={audioInputRef}
+                                type="file"
+                                accept=".mp3,audio/mpeg"
+                                onChange={handleAudioUpload}
+                                className="hidden"
+                            />
+                            <Button
+                                variant="outline"
+                                onClick={() => audioInputRef.current?.click()}
+                                disabled={audioUploading}
+                            >
+                                <Music />
+                                {piece.audio_file_path ? t('Replace MP3') : t('Upload MP3')}
+                            </Button>
+                            {piece.audio_file_path && (
+                                <Button
+                                    variant="outline"
+                                    onClick={handleAudioDelete}
+                                >
+                                    <Trash2 className="text-destructive" />
+                                    {t('Remove audio')}
+                                </Button>
+                            )}
+                        </div>
+                    </section>
+                )}
 
                 {/* Parts management */}
                 {canEditAllFields && (

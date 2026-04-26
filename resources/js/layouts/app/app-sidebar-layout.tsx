@@ -11,7 +11,7 @@ export default function AppSidebarLayout({
     return (
         <AppShell>
             <AppSidebar />
-            <AppContent className="overflow-x-hidden">
+            <AppContent className="overflow-x-clip">
                 <AppSidebarHeader breadcrumbs={breadcrumbs} />
                 {children}
             </AppContent>

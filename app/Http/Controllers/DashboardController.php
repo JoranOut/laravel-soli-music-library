@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\InstrumentType;
 use App\Models\Orchestra;
+use Illuminate\Support\Facades\URL;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -38,6 +39,10 @@ class DashboardController extends Controller
                     'id' => $piece->id,
                     'title' => $piece->title,
                     'composer' => $piece->composer,
+                    'audio_youtube_url' => $piece->audio_youtube_url,
+                    'audio_url' => $piece->audio_file_path
+                        ? URL::temporarySignedRoute('muziekstukken.audio.stream', now()->addDay(), ['piece' => $piece->id])
+                        : null,
                     'parts' => $piece->parts->map(fn ($part) => $part->toArray())->values(),
                 ])
                 ->values();

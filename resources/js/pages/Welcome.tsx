@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { Download } from 'lucide-react';
+import { Download, Pause, Play } from 'lucide-react';
 import { Heading } from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { useAudioPlayer } from '@/hooks/use-audio-player';
 import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import type { OrchestraGroup } from '@/types/muziekstukken';
@@ -27,6 +28,7 @@ async function handleDownload(partId: number) {
 
 export default function Welcome({ orchestraGroups }: Props) {
     const { t } = useTranslation();
+    const { isPlaying, isCurrentTrack, toggle } = useAudioPlayer();
 
     return (
         <AppLayout breadcrumbs={[{ title: t('My Music'), href: '/' }]}>
@@ -80,7 +82,7 @@ export default function Welcome({ orchestraGroups }: Props) {
                                         </TableHeader>
                                         <TableBody>
                                             {group.pieces.flatMap((piece) =>
-                                                piece.parts.map((part) => (
+                                                piece.parts.map((part, partIndex) => (
                                                     <TableRow key={part.id}>
                                                         <TableCell>
                                                             {piece.title}
@@ -103,22 +105,48 @@ export default function Welcome({ orchestraGroups }: Props) {
                                                                 ` ${part.voice}`}
                                                         </TableCell>
                                                         <TableCell>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                onClick={() =>
-                                                                    handleDownload(
-                                                                        part.id,
-                                                                    )
-                                                                }
-                                                            >
-                                                                <Download />
-                                                                <span className="sr-only">
-                                                                    {t(
-                                                                        'Download',
-                                                                    )}
-                                                                </span>
-                                                            </Button>
+                                                            <div className="flex items-center gap-1">
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    onClick={() =>
+                                                                        handleDownload(
+                                                                            part.id,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <Download />
+                                                                    <span className="sr-only">
+                                                                        {t(
+                                                                            'Download',
+                                                                        )}
+                                                                    </span>
+                                                                </Button>
+                                                                {partIndex === 0 && piece.audio_youtube_url && (
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        onClick={() => window.open(piece.audio_youtube_url!, '_blank')}
+                                                                    >
+                                                                        <Play />
+                                                                        <span className="sr-only">{t('Play')}</span>
+                                                                    </Button>
+                                                                )}
+                                                                {partIndex === 0 && piece.audio_url && !piece.audio_youtube_url && (
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        onClick={() => toggle({
+                                                                            title: piece.title,
+                                                                            composer: piece.composer,
+                                                                            url: piece.audio_url!,
+                                                                        })}
+                                                                    >
+                                                                        {isCurrentTrack(piece.audio_url) && isPlaying ? <Pause /> : <Play />}
+                                                                        <span className="sr-only">{t('Play')}</span>
+                                                                    </Button>
+                                                                )}
+                                                            </div>
                                                         </TableCell>
                                                     </TableRow>
                                                 )),
