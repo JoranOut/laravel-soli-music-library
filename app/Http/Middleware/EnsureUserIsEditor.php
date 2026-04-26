@@ -13,7 +13,7 @@ class EnsureUserIsEditor
         $roles = session('roles', []);
 
         if (empty($roles)) {
-            return redirect()->route('login');
+            abort(403, __('You do not have permission to access this application.'));
         }
 
         if (! array_intersect(['admin', 'muziekbeheer'], $roles)) {
