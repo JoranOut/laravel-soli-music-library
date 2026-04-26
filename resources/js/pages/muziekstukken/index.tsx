@@ -1,5 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Filter, Plus } from 'lucide-react';
+import { Filter, Pause, Play, Plus } from 'lucide-react';
+import { YouTubeIcon } from '@/components/icons/youtube';
 import { useEffect, useRef, useState } from 'react';
 import { Heading } from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +26,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { useAudioPlayer } from '@/hooks/use-audio-player';
 import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import type {
@@ -73,6 +75,7 @@ export default function Index({
     canEditUsages,
 }: Props) {
     const { t } = useTranslation();
+    const { isPlaying, isCurrentTrack, toggle } = useAudioPlayer();
     const [usageDialogPieceId, setUsageDialogPieceId] = useState<number | null>(
         null,
     );
@@ -262,13 +265,14 @@ export default function Index({
                                 <TableHead>{t('Difficulty')}</TableHead>
                                 <TableHead>{t('Buy date')}</TableHead>
                                 <TableHead>{t('In use by')}</TableHead>
+                                <TableHead>{t('Audio')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {pieces.data.length === 0 && (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={9}
+                                        colSpan={10}
                                         className="text-center text-muted-foreground"
                                     >
                                         {filters.search ||
@@ -350,6 +354,34 @@ export default function Index({
                                                 </Button>
                                             )}
                                         </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        {piece.audio_youtube_url && (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                asChild
+                                            >
+                                                <a href={piece.audio_youtube_url} target="_blank" rel="noopener noreferrer">
+                                                    <YouTubeIcon />
+                                                    <span className="sr-only">{t('Open on YouTube')}</span>
+                                                </a>
+                                            </Button>
+                                        )}
+                                        {piece.audio_url && !piece.audio_youtube_url && (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => toggle({
+                                                    title: piece.title,
+                                                    composer: piece.composer,
+                                                    url: piece.audio_url!,
+                                                })}
+                                            >
+                                                {isCurrentTrack(piece.audio_url) && isPlaying ? <Pause /> : <Play />}
+                                                <span className="sr-only">{t('Play')}</span>
+                                            </Button>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             ))}

@@ -48,7 +48,14 @@ class PieceController extends Controller
             $query->whereHas('parts', fn ($q) => $q->whereIn('instrument_type_id', $ids));
         }
 
-        $pieces = $query->orderBy('title')->paginate(20)->withQueryString();
+        $pieces = $query->orderBy('title')->paginate(20)->withQueryString()->through(fn ($piece) => array_merge(
+            $piece->toArray(),
+            [
+                'audio_url' => $piece->audio_file_path
+                    ? URL::temporarySignedRoute('muziekstukken.audio.stream', now()->addDay(), ['piece' => $piece->id])
+                    : null,
+            ],
+        ));
 
         return Inertia::render('muziekstukken/index', [
             'pieces' => $pieces,

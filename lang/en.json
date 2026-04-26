@@ -90,5 +90,17 @@
     "When a PDF is uploaded, the filename is matched against these aliases to auto-detect the instrument.": "When a PDF is uploaded, the filename is matched against these aliases to auto-detect the instrument.",
     "The instrument name itself is always matched automatically (shown as outline badge) — no need to add it as an alias.": "The instrument name itself is always matched automatically (shown as outline badge) — no need to add it as an alias.",
     "Longer aliases take priority over shorter ones, so \"bass trombone\" matches before \"trombone\".": "Longer aliases take priority over shorter ones, so \"bass trombone\" matches before \"trombone\".",
-    "Matching is case-insensitive and ignores underscores, dashes and other separators.": "Matching is case-insensitive and ignores underscores, dashes and other separators."
+    "Matching is case-insensitive and ignores underscores, dashes and other separators.": "Matching is case-insensitive and ignores underscores, dashes and other separators.",
+    "Audio": "Audio",
+    "Open on YouTube": "Open on YouTube",
+    "Play": "Play",
+    "Pause": "Pause",
+    "None": "None",
+    "MP3 audio and parts can be added after saving.": "MP3 audio and parts can be added after saving.",
+    "Some fields are not filled in yet. Click here to complete them.": "Some fields are not filled in yet. Click here to complete them.",
+    "Some fields are not filled in yet.": "Some fields are not filled in yet.",
+    "Upload an MP3 audio reference for this piece": "Upload an MP3 audio reference for this piece",
+    "Replace MP3": "Replace MP3",
+    "Upload MP3": "Upload MP3",
+    "Remove audio": "Remove audio"
 }

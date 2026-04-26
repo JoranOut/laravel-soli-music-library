@@ -2,7 +2,6 @@ import { Pause, Play, Volume2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
-import { cn } from '@/lib/utils';
 
 const SPEED_OPTIONS = [0.8, 0.9, 1, 1.2] as const;
 
@@ -33,15 +32,10 @@ export function AudioPlayerBar() {
         setVolume,
     } = useAudioPlayer();
 
+    if (!currentTrack) return null;
+
     return (
-        <div
-            className={cn(
-                'sticky bottom-0 z-50 border-t bg-background transition-transform duration-300 ease-in-out',
-                currentTrack
-                    ? 'translate-y-0'
-                    : 'translate-y-full',
-            )}
-        >
+        <div className="sticky bottom-0 z-50 border-t bg-background">
             <div className="flex items-center gap-3 px-4 py-2">
                 {/* Track info */}
                 <div className="min-w-0 shrink-0 max-w-[150px] sm:max-w-[200px]">

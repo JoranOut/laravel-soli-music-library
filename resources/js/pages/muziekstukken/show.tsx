@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
-import { Download, ExternalLink, History, Pause, Pencil, Play } from 'lucide-react';
+import { Download, History, Pause, Pencil, Play } from 'lucide-react';
+import { YouTubeIcon } from '@/components/icons/youtube';
 import { useMemo, useState } from 'react';
 import { Heading } from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
@@ -274,6 +275,18 @@ export default function Show({
                         </div>
                     )}
 
+                    {(!piece.composer || !piece.arranger || !piece.publisher || !piece.difficulty || !piece.bought_for || !piece.buy_date || !piece.archive_number || !piece.music_type || !piece.genre?.length || !piece.notes) && (
+                        <p className="text-sm text-muted-foreground">
+                            {canEdit ? (
+                                <Link href={`/muziekstukken/${piece.id}/edit`} className="hover:underline">
+                                    {t('Some fields are not filled in yet. Click here to complete them.')}
+                                </Link>
+                            ) : (
+                                t('Some fields are not filled in yet.')
+                            )}
+                        </p>
+                    )}
+
                     {/* In use by */}
                     {visibleUsages.length > 0 && (
                         <div className="space-y-3">
@@ -331,7 +344,7 @@ export default function Show({
                             <dd>
                                 <Button variant="outline" size="sm" asChild>
                                     <a href={piece.audio_youtube_url} target="_blank" rel="noopener noreferrer">
-                                        <ExternalLink />
+                                        <YouTubeIcon />
                                         {t('Open on YouTube')}
                                     </a>
                                 </Button>

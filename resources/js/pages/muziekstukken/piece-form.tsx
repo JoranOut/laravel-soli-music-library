@@ -26,8 +26,11 @@ export type PieceFormData = {
     orchestras: number[];
 };
 
+export type AudioType = 'none' | 'youtube' | 'mp3';
+
 export type PieceFormHandle = {
     getData: () => PieceFormData;
+    audioType: AudioType;
 };
 
 type Props = {
@@ -39,6 +42,7 @@ type Props = {
     showOrchestraCheckboxes?: boolean;
     genreSuggestions?: string[];
     musicTypeSuggestions?: string[];
+    onAudioTypeChange?: (type: AudioType) => void;
 };
 
 const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
@@ -51,13 +55,13 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
         showOrchestraCheckboxes = true,
         genreSuggestions = [],
         musicTypeSuggestions = [],
+        onAudioTypeChange,
     },
     ref,
 ) {
     const { t } = useTranslation();
     const pageErrors = usePage().props.errors ?? {};
 
-    type AudioType = 'none' | 'youtube' | 'mp3';
     const initialAudioType: AudioType = piece?.audio_youtube_url
         ? 'youtube'
         : piece?.audio_file_path
@@ -83,6 +87,7 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
 
     useImperativeHandle(ref, () => ({
         getData: () => data,
+        audioType,
     }));
 
     function handleSubmit(e: React.FormEvent) {
@@ -340,7 +345,7 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                     <div className="space-y-2">
                         <Label>{t('Audio')}</Label>
                         <div className="flex gap-4">
-                            {(['none', 'youtube', 'mp3'] as const).map((type) => (
+                            {(piece ? (['none', 'youtube', 'mp3'] as const) : (['none', 'youtube'] as const)).map((type) => (
                                 <label key={type} className="flex items-center gap-2 text-sm">
                                     <input
                                         type="radio"
@@ -348,6 +353,7 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                                         checked={audioType === type}
                                         onChange={() => {
                                             setAudioType(type);
+                                            onAudioTypeChange?.(type);
                                             if (type !== 'youtube') {
                                                 setData('audio_youtube_url', '');
                                             }
@@ -373,11 +379,9 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                                 )}
                             </div>
                         )}
-                        {audioType === 'mp3' && (
+                        {!piece && (
                             <p className="text-sm text-muted-foreground">
-                                {piece?.audio_file_path
-                                    ? t('MP3 file uploaded. Manage on edit page.')
-                                    : t('Save first, then upload MP3 on the edit page.')}
+                                {t('MP3 audio and parts can be added after saving.')}
                             </p>
                         )}
                     </div>

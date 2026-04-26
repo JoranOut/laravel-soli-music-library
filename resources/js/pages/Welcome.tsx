@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { Download, Pause, Play } from 'lucide-react';
+import { YouTubeIcon } from '@/components/icons/youtube';
 import { Heading } from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -82,7 +83,7 @@ export default function Welcome({ orchestraGroups }: Props) {
                                         </TableHeader>
                                         <TableBody>
                                             {group.pieces.flatMap((piece) =>
-                                                piece.parts.map((part, partIndex) => (
+                                                piece.parts.map((part) => (
                                                     <TableRow key={part.id}>
                                                         <TableCell>
                                                             {piece.title}
@@ -122,17 +123,19 @@ export default function Welcome({ orchestraGroups }: Props) {
                                                                         )}
                                                                     </span>
                                                                 </Button>
-                                                                {partIndex === 0 && piece.audio_youtube_url && (
+                                                                {piece.audio_youtube_url && (
                                                                     <Button
                                                                         variant="ghost"
                                                                         size="icon"
-                                                                        onClick={() => window.open(piece.audio_youtube_url!, '_blank')}
+                                                                        asChild
                                                                     >
-                                                                        <Play />
-                                                                        <span className="sr-only">{t('Play')}</span>
+                                                                        <a href={piece.audio_youtube_url} target="_blank" rel="noopener noreferrer">
+                                                                            <YouTubeIcon />
+                                                                            <span className="sr-only">{t('Open on YouTube')}</span>
+                                                                        </a>
                                                                     </Button>
                                                                 )}
-                                                                {partIndex === 0 && piece.audio_url && !piece.audio_youtube_url && (
+                                                                {piece.audio_url && !piece.audio_youtube_url && (
                                                                     <Button
                                                                         variant="ghost"
                                                                         size="icon"

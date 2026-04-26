@@ -33,7 +33,7 @@ import type {
     Part,
     Piece,
 } from '@/types/muziekstukken';
-import type { PieceFormHandle } from './piece-form';
+import type { AudioType, PieceFormHandle } from './piece-form';
 import PieceForm from './piece-form';
 
 type PartUpload = {
@@ -92,6 +92,9 @@ export default function Edit({
     const pieceFormRef = useRef<PieceFormHandle>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const audioInputRef = useRef<HTMLInputElement>(null);
+    const [audioType, setAudioType] = useState<AudioType>(
+        piece.audio_youtube_url ? 'youtube' : piece.audio_file_path ? 'mp3' : 'none',
+    );
     const [audioUploading, setAudioUploading] = useState(false);
     const [uploads, setUploads] = useState<PartUpload[]>([]);
     const [uploading, setUploading] = useState(false);
@@ -350,11 +353,12 @@ export default function Edit({
                         showOrchestraCheckboxes={false}
                         genreSuggestions={genreSuggestions}
                         musicTypeSuggestions={musicTypeSuggestions}
+                        onAudioTypeChange={setAudioType}
                     />
                 </section>
 
                 {/* Audio management */}
-                {canEditAllFields && (
+                {canEditAllFields && audioType === 'mp3' && (
                     <section className="space-y-6">
                         <Heading
                             title={t('Audio')}
