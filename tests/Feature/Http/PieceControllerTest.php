@@ -62,21 +62,21 @@ it('denies member role on all piece routes', function () {
     expect($piece->fresh()->title)->toBe('Original');
 });
 
-it('redirects users with no roles in session to login', function () {
-    $user = User::factory()->create();
+it('denies users with no roles in session', function () {
+    $user = User::factory()->create(['oidc_roles' => []]);
 
-    $this->actingAs($user)->get('/muziekstukken')->assertRedirect('/auth/redirect');
-    $this->actingAs($user)->post('/muziekstukken', ['title' => 'Hack'])->assertRedirect('/auth/redirect');
+    $this->actingAs($user)->get('/muziekstukken')->assertForbidden();
+    $this->actingAs($user)->post('/muziekstukken', ['title' => 'Hack'])->assertForbidden();
     expect(Piece::count())->toBe(0);
 });
 
-it('redirects users with empty roles array to login', function () {
-    $user = User::factory()->create();
+it('denies users with empty roles array', function () {
+    $user = User::factory()->create(['oidc_roles' => []]);
 
     $this->actingAs($user)
         ->withSession(['roles' => []])
         ->get('/muziekstukken')
-        ->assertRedirect('/auth/redirect');
+        ->assertForbidden();
 });
 
 it('denies non-qualifying roles on read routes', function (string $role) {

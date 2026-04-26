@@ -24,19 +24,41 @@ class AuthController extends Controller
     {
         $socialiteUser = Socialite::driver('soli-admin')->user();
 
+        $raw = $socialiteUser->getRaw();
+
+        $roles = $raw['roles'] ?? [];
+        $assignments = $raw['assignments'] ?? [];
+
         $user = User::updateOrCreate(
             ['oidc_sub' => $socialiteUser->getId()],
             [
                 'name' => $socialiteUser->getName(),
                 'email' => $socialiteUser->getEmail(),
+                'oidc_roles' => $roles,
+                'oidc_assignments' => $assignments,
             ]
         );
 
-        $raw = $socialiteUser->getRaw();
+        $knownRoles = Role::whereIn('name', $roles)->pluck('name')->toArray();
+        $user->syncRoles($knownRoles);
 
-        $roles = $raw['roles'] ?? [];
+        self::populateSession($user);
 
-        $resolvedAssignments = collect($raw['assignments'] ?? [])->map(function ($a) {
+        auth()->login($user, remember: true);
+
+        return redirect()->intended('/');
+    }
+
+    /**
+     * Populate the session with OIDC data from the user model.
+     * Used by both the callback and the EnsureSessionHasRoles middleware.
+     */
+    public static function populateSession(User $user): void
+    {
+        $roles = $user->oidc_roles ?? [];
+        $assignments = $user->oidc_assignments ?? [];
+
+        $resolvedAssignments = collect($assignments)->map(function ($a) {
             $orchestra = Orchestra::where('external_id', $a['onderdeel_id'])->first();
             $instrumentType = InstrumentType::where('external_id', $a['instrument_soort_id'])->first();
 
@@ -48,16 +70,9 @@ class AuthController extends Controller
 
         session([
             'roles' => $roles,
-            'assignments' => $raw['assignments'] ?? [],
+            'assignments' => $assignments,
             'resolved_assignments' => $resolvedAssignments,
         ]);
-
-        $knownRoles = Role::whereIn('name', $roles)->pluck('name')->toArray();
-        $user->syncRoles($knownRoles);
-
-        auth()->login($user);
-
-        return redirect()->intended('/');
     }
 
     public function logout(Request $request): Response

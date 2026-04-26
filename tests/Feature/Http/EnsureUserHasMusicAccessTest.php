@@ -6,24 +6,24 @@ use App\Models\Piece;
 use App\Models\User;
 
 // ---------------------------------------------------------------------------
-// Redirect to login — no roles in session
+// Deny access — no roles in session
 // ---------------------------------------------------------------------------
 
-it('redirects to login when no roles key in session', function () {
-    $user = User::factory()->create();
+it('denies access when no roles key in session', function () {
+    $user = User::factory()->create(['oidc_roles' => []]);
 
     $this->actingAs($user)
         ->get('/muziekstukken')
-        ->assertRedirect('/auth/redirect');
+        ->assertForbidden();
 });
 
-it('redirects to login when roles array is empty', function () {
-    $user = User::factory()->create();
+it('denies access when roles array is empty', function () {
+    $user = User::factory()->create(['oidc_roles' => []]);
 
     $this->actingAs($user)
         ->withSession(['roles' => []])
         ->get('/muziekstukken')
-        ->assertRedirect('/auth/redirect');
+        ->assertForbidden();
 });
 
 // ---------------------------------------------------------------------------
