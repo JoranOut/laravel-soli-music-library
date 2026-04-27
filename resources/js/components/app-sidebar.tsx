@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     Globe,
+    Guitar,
     Library,
     Music,
     Rocket,
@@ -27,7 +28,7 @@ import { useTranslation } from '@/hooks/use-translation';
 import type { NavItem } from '@/types';
 
 export function AppSidebar() {
-    const { auth } = usePage().props;
+    const { auth, adminUrl } = usePage().props;
     const { t } = useTranslation();
     const roles: string[] = auth.roles ?? [];
     const isEditor = roles.includes('admin') || roles.includes('muziekbeheer');
@@ -68,6 +69,15 @@ export function AppSidebar() {
             title: t('Roles & permissions'),
             href: '/admin/roles',
             icon: Shield,
+        });
+    }
+
+    if (roles.includes('admin')) {
+        adminItems.push({
+            title: t('Instrument types'),
+            href: `${adminUrl}/admin/instrumentsoorten`,
+            icon: Guitar,
+            external: true,
         });
     }
 
