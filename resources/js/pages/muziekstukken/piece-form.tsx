@@ -1,4 +1,5 @@
 import { useForm, usePage } from '@inertiajs/react';
+import type { ReactNode } from 'react';
 import { forwardRef, useImperativeHandle, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -43,6 +44,7 @@ type Props = {
     genreSuggestions?: string[];
     musicTypeSuggestions?: string[];
     onAudioTypeChange?: (type: AudioType) => void;
+    renderAudioMp3?: ReactNode;
 };
 
 const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
@@ -56,6 +58,7 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
         genreSuggestions = [],
         musicTypeSuggestions = [],
         onAudioTypeChange,
+        renderAudioMp3,
     },
     ref,
 ) {
@@ -393,6 +396,7 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                                 )}
                             </div>
                         )}
+                        {audioType === 'mp3' && renderAudioMp3}
                         {!piece && (
                             <p className="text-sm text-muted-foreground">
                                 {t(
