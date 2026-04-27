@@ -1,7 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { Download, Pause, Play } from 'lucide-react';
-import { YouTubeIcon } from '@/components/icons/youtube';
 import { Heading } from '@/components/heading';
+import { YouTubeIcon } from '@/components/icons/youtube';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {

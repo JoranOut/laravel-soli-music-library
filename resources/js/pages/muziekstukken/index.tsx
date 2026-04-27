@@ -1,8 +1,8 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { Filter, Pause, Play, Plus } from 'lucide-react';
-import { YouTubeIcon } from '@/components/icons/youtube';
 import { useEffect, useRef, useState } from 'react';
 import { Heading } from '@/components/heading';
+import { YouTubeIcon } from '@/components/icons/youtube';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';

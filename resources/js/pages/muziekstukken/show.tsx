@@ -1,8 +1,8 @@
 import { Head, Link } from '@inertiajs/react';
 import { Download, History, Pause, Pencil, Play } from 'lucide-react';
-import { YouTubeIcon } from '@/components/icons/youtube';
 import { useMemo, useState } from 'react';
 import { Heading } from '@/components/heading';
+import { YouTubeIcon } from '@/components/icons/youtube';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
