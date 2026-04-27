@@ -90,5 +90,17 @@
     "When a PDF is uploaded, the filename is matched against these aliases to auto-detect the instrument.": "Bij het uploaden van een PDF wordt de bestandsnaam vergeleken met deze aliassen om het instrument automatisch te herkennen.",
     "The instrument name itself is always matched automatically (shown as outline badge) — no need to add it as an alias.": "De instrumentnaam zelf wordt altijd automatisch herkend (getoond als outline-badge) — het is niet nodig deze als alias toe te voegen.",
     "Longer aliases take priority over shorter ones, so \"bass trombone\" matches before \"trombone\".": "Langere aliassen hebben voorrang op kortere, dus \"bass trombone\" matcht vóór \"trombone\".",
-    "Matching is case-insensitive and ignores underscores, dashes and other separators.": "Matching is hoofdletterongevoelig en negeert underscores, streepjes en andere scheidingstekens."
+    "Matching is case-insensitive and ignores underscores, dashes and other separators.": "Matching is hoofdletterongevoelig en negeert underscores, streepjes en andere scheidingstekens.",
+    "Audio": "Audio",
+    "Open on YouTube": "Openen op YouTube",
+    "Play": "Afspelen",
+    "Pause": "Pauzeren",
+    "None": "Geen",
+    "MP3 audio and parts can be added after saving.": "MP3-audio en partijen kunnen na het opslaan worden toegevoegd.",
+    "Some fields are not filled in yet. Click here to complete them.": "Sommige velden zijn nog niet ingevuld. Klik hier om ze aan te vullen.",
+    "Some fields are not filled in yet.": "Sommige velden zijn nog niet ingevuld.",
+    "Upload an MP3 audio reference for this piece": "Upload een MP3-audiovoorbeeld voor dit muziekstuk",
+    "Replace MP3": "MP3 vervangen",
+    "Upload MP3": "MP3 uploaden",
+    "Remove audio": "Audio verwijderen"
 }

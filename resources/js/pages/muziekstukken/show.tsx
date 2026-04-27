@@ -1,7 +1,8 @@
 import { Head, Link } from '@inertiajs/react';
-import { Download, History, Pencil } from 'lucide-react';
+import { Download, History, Pause, Pencil, Play } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Heading } from '@/components/heading';
+import { YouTubeIcon } from '@/components/icons/youtube';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,6 +14,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAudioPlayer } from '@/hooks/use-audio-player';
 import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import type { InstrumentType, Part, Piece } from '@/types/muziekstukken';
@@ -20,6 +22,7 @@ import type { InstrumentType, Part, Piece } from '@/types/muziekstukken';
 type Props = {
     piece: Piece;
     parts: Part[];
+    audioUrl: string | null;
     instrumentTypes: InstrumentType[];
     canEdit: boolean;
 };
@@ -187,10 +190,12 @@ function PartsOverview({
 export default function Show({
     piece,
     parts,
+    audioUrl,
     instrumentTypes,
     canEdit,
 }: Props) {
     const { t } = useTranslation();
+    const { isPlaying, isCurrentTrack, toggle } = useAudioPlayer();
     const [showPreviousUsages, setShowPreviousUsages] = useState(false);
 
     const currentUsages = (piece.orchestra_usages ?? []).filter((u) => !u.tot);
@@ -270,6 +275,32 @@ export default function Show({
                         </div>
                     )}
 
+                    {(!piece.composer ||
+                        !piece.arranger ||
+                        !piece.publisher ||
+                        !piece.difficulty ||
+                        !piece.bought_for ||
+                        !piece.buy_date ||
+                        !piece.archive_number ||
+                        !piece.music_type ||
+                        !piece.genre?.length ||
+                        !piece.notes) && (
+                        <p className="text-sm text-muted-foreground">
+                            {canEdit ? (
+                                <Link
+                                    href={`/muziekstukken/${piece.id}/edit`}
+                                    className="hover:underline"
+                                >
+                                    {t(
+                                        'Some fields are not filled in yet. Click here to complete them.',
+                                    )}
+                                </Link>
+                            ) : (
+                                t('Some fields are not filled in yet.')
+                            )}
+                        </p>
+                    )}
+
                     {/* In use by */}
                     {visibleUsages.length > 0 && (
                         <div className="space-y-3">
@@ -316,6 +347,57 @@ export default function Show({
                                         )}
                                     </div>
                                 ))}
+                            </dd>
+                        </div>
+                    )}
+
+                    {/* Audio player */}
+                    {piece.audio_youtube_url && (
+                        <div className="space-y-1">
+                            <dt className="text-sm text-muted-foreground">
+                                {t('Audio')}
+                            </dt>
+                            <dd>
+                                <Button variant="outline" size="sm" asChild>
+                                    <a
+                                        href={piece.audio_youtube_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        <YouTubeIcon />
+                                        {t('Open on YouTube')}
+                                    </a>
+                                </Button>
+                            </dd>
+                        </div>
+                    )}
+
+                    {audioUrl && !piece.audio_youtube_url && (
+                        <div className="space-y-1">
+                            <dt className="text-sm text-muted-foreground">
+                                {t('Audio')}
+                            </dt>
+                            <dd>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                        toggle({
+                                            title: piece.title,
+                                            composer: piece.composer,
+                                            url: audioUrl,
+                                        })
+                                    }
+                                >
+                                    {isCurrentTrack(audioUrl) && isPlaying ? (
+                                        <Pause />
+                                    ) : (
+                                        <Play />
+                                    )}
+                                    {isCurrentTrack(audioUrl) && isPlaying
+                                        ? t('Pause')
+                                        : t('Play')}
+                                </Button>
                             </dd>
                         </div>
                     )}

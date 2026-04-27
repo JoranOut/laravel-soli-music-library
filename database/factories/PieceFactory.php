@@ -27,6 +27,11 @@ class PieceFactory extends Factory
             ),
             'music_type' => fake()->optional(0.5)->randomElement(['Origineel', 'Arrangement', 'Bewerking', 'Compositie']),
             'archive_number' => fake()->optional(0.4)->numerify('A-###'),
+            'audio_youtube_url' => fake()->optional(0.2)->randomElement([
+                'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'https://www.youtube.com/watch?v=9bZkp7q19f0',
+                'https://www.youtube.com/watch?v=kJQP7kiw5Fk',
+            ]),
         ];
     }
 }

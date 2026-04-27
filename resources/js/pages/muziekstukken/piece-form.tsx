@@ -1,5 +1,5 @@
 import { useForm, usePage } from '@inertiajs/react';
-import { forwardRef, useImperativeHandle } from 'react';
+import { forwardRef, useImperativeHandle, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -22,11 +22,15 @@ export type PieceFormData = {
     genre: string[];
     music_type: string;
     archive_number: string;
+    audio_youtube_url: string;
     orchestras: number[];
 };
 
+export type AudioType = 'none' | 'youtube' | 'mp3';
+
 export type PieceFormHandle = {
     getData: () => PieceFormData;
+    audioType: AudioType;
 };
 
 type Props = {
@@ -38,6 +42,7 @@ type Props = {
     showOrchestraCheckboxes?: boolean;
     genreSuggestions?: string[];
     musicTypeSuggestions?: string[];
+    onAudioTypeChange?: (type: AudioType) => void;
 };
 
 const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
@@ -50,11 +55,20 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
         showOrchestraCheckboxes = true,
         genreSuggestions = [],
         musicTypeSuggestions = [],
+        onAudioTypeChange,
     },
     ref,
 ) {
     const { t } = useTranslation();
     const pageErrors = usePage().props.errors ?? {};
+
+    const initialAudioType: AudioType = piece?.audio_youtube_url
+        ? 'youtube'
+        : piece?.audio_file_path
+          ? 'mp3'
+          : 'none';
+    const [audioType, setAudioType] = useState<AudioType>(initialAudioType);
+
     const { data, setData, post, put, processing } = useForm({
         title: piece?.title ?? '',
         composer: piece?.composer ?? '',
@@ -67,11 +81,13 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
         genre: piece?.genre ?? ([] as string[]),
         music_type: piece?.music_type ?? '',
         archive_number: piece?.archive_number ?? '',
+        audio_youtube_url: piece?.audio_youtube_url ?? '',
         orchestras: piece?.orchestras.map((o) => o.id) ?? ([] as number[]),
     });
 
     useImperativeHandle(ref, () => ({
         getData: () => data,
+        audioType,
     }));
 
     function handleSubmit(e: React.FormEvent) {
@@ -322,6 +338,66 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                         {pageErrors.genre && (
                             <p className="text-sm text-destructive">
                                 {pageErrors.genre}
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label>{t('Audio')}</Label>
+                        <div className="flex gap-4">
+                            {(piece
+                                ? (['none', 'youtube', 'mp3'] as const)
+                                : (['none', 'youtube'] as const)
+                            ).map((type) => (
+                                <label
+                                    key={type}
+                                    className="flex items-center gap-2 text-sm"
+                                >
+                                    <input
+                                        type="radio"
+                                        name="audio_type"
+                                        checked={audioType === type}
+                                        onChange={() => {
+                                            setAudioType(type);
+                                            onAudioTypeChange?.(type);
+                                            if (type !== 'youtube') {
+                                                setData(
+                                                    'audio_youtube_url',
+                                                    '',
+                                                );
+                                            }
+                                        }}
+                                    />
+                                    {type === 'none' && t('None')}
+                                    {type === 'youtube' && 'YouTube'}
+                                    {type === 'mp3' && 'MP3'}
+                                </label>
+                            ))}
+                        </div>
+                        {audioType === 'youtube' && (
+                            <div className="space-y-2">
+                                <Input
+                                    value={data.audio_youtube_url}
+                                    onChange={(e) =>
+                                        setData(
+                                            'audio_youtube_url',
+                                            e.target.value,
+                                        )
+                                    }
+                                    placeholder="https://www.youtube.com/watch?v=..."
+                                />
+                                {pageErrors.audio_youtube_url && (
+                                    <p className="text-sm text-destructive">
+                                        {pageErrors.audio_youtube_url}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                        {!piece && (
+                            <p className="text-sm text-muted-foreground">
+                                {t(
+                                    'MP3 audio and parts can be added after saving.',
+                                )}
                             </p>
                         )}
                     </div>

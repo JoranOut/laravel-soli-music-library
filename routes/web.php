@@ -36,6 +36,8 @@ Route::middleware(['auth', EnsureUserIsEditor::class])->group(function () {
     Route::post('/muziekstukken/{piece}/parts', [PartController::class, 'store'])->name('muziekstukken.parts.store');
     Route::put('/muziekstukken/{piece}/parts/{part}', [PartController::class, 'update'])->name('muziekstukken.parts.update');
     Route::delete('/muziekstukken/{piece}/parts/{part}', [PartController::class, 'destroy'])->name('muziekstukken.parts.destroy');
+    Route::post('/muziekstukken/{piece}/audio', [PieceController::class, 'updateAudio'])->name('muziekstukken.audio.update');
+    Route::delete('/muziekstukken/{piece}/audio', [PieceController::class, 'deleteAudio'])->name('muziekstukken.audio.destroy');
 });
 
 // Edit/update — editors AND dirigent (field restrictions enforced in controller)
@@ -55,6 +57,9 @@ Route::middleware(['auth', EnsureUserHasMusicAccess::class])->group(function () 
         ->middleware('signed');
     Route::get('/parts/{part}/download-url', [PartController::class, 'downloadUrl'])
         ->name('parts.download-url');
+    Route::get('/muziekstukken/{piece}/audio', [PieceController::class, 'streamAudio'])
+        ->name('muziekstukken.audio.stream')
+        ->middleware('signed');
 });
 
 Route::middleware(['auth', EnsureUserIsAdmin::class])->group(function () {

@@ -56,6 +56,9 @@ export type Piece = {
     genre: string[] | null;
     music_type: string | null;
     archive_number: string | null;
+    audio_youtube_url: string | null;
+    audio_file_path: string | null;
+    audio_url?: string | null;
     deleted_at: string | null;
     orchestras: Orchestra[];
     orchestra_usages: OrchestraUsage[];
@@ -73,6 +76,8 @@ export type DashboardPiece = {
     id: number;
     title: string;
     composer: string | null;
+    audio_youtube_url: string | null;
+    audio_url: string | null;
     parts: Part[];
 };
 

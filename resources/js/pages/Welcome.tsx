@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
-import { Download } from 'lucide-react';
+import { Download, Pause, Play } from 'lucide-react';
 import { Heading } from '@/components/heading';
+import { YouTubeIcon } from '@/components/icons/youtube';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,6 +12,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { useAudioPlayer } from '@/hooks/use-audio-player';
 import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import type { OrchestraGroup } from '@/types/muziekstukken';
@@ -27,6 +29,7 @@ async function handleDownload(partId: number) {
 
 export default function Welcome({ orchestraGroups }: Props) {
     const { t } = useTranslation();
+    const { isPlaying, isCurrentTrack, toggle } = useAudioPlayer();
 
     return (
         <AppLayout breadcrumbs={[{ title: t('My Music'), href: '/' }]}>
@@ -103,22 +106,77 @@ export default function Welcome({ orchestraGroups }: Props) {
                                                                 ` ${part.voice}`}
                                                         </TableCell>
                                                         <TableCell>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                onClick={() =>
-                                                                    handleDownload(
-                                                                        part.id,
-                                                                    )
-                                                                }
-                                                            >
-                                                                <Download />
-                                                                <span className="sr-only">
-                                                                    {t(
-                                                                        'Download',
+                                                            <div className="flex items-center gap-1">
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    onClick={() =>
+                                                                        handleDownload(
+                                                                            part.id,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <Download />
+                                                                    <span className="sr-only">
+                                                                        {t(
+                                                                            'Download',
+                                                                        )}
+                                                                    </span>
+                                                                </Button>
+                                                                {piece.audio_youtube_url && (
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        asChild
+                                                                    >
+                                                                        <a
+                                                                            href={
+                                                                                piece.audio_youtube_url
+                                                                            }
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                        >
+                                                                            <YouTubeIcon />
+                                                                            <span className="sr-only">
+                                                                                {t(
+                                                                                    'Open on YouTube',
+                                                                                )}
+                                                                            </span>
+                                                                        </a>
+                                                                    </Button>
+                                                                )}
+                                                                {piece.audio_url &&
+                                                                    !piece.audio_youtube_url && (
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            onClick={() =>
+                                                                                toggle(
+                                                                                    {
+                                                                                        title: piece.title,
+                                                                                        composer:
+                                                                                            piece.composer,
+                                                                                        url: piece.audio_url!,
+                                                                                    },
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            {isCurrentTrack(
+                                                                                piece.audio_url,
+                                                                            ) &&
+                                                                            isPlaying ? (
+                                                                                <Pause />
+                                                                            ) : (
+                                                                                <Play />
+                                                                            )}
+                                                                            <span className="sr-only">
+                                                                                {t(
+                                                                                    'Play',
+                                                                                )}
+                                                                            </span>
+                                                                        </Button>
                                                                     )}
-                                                                </span>
-                                                            </Button>
+                                                            </div>
                                                         </TableCell>
                                                     </TableRow>
                                                 )),

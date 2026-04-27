@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PieceController extends Controller
 {
@@ -47,7 +48,14 @@ class PieceController extends Controller
             $query->whereHas('parts', fn ($q) => $q->whereIn('instrument_type_id', $ids));
         }
 
-        $pieces = $query->orderBy('title')->paginate(20)->withQueryString();
+        $pieces = $query->orderBy('title')->paginate(20)->withQueryString()->through(fn ($piece) => array_merge(
+            $piece->toArray(),
+            [
+                'audio_url' => $piece->audio_file_path
+                    ? URL::temporarySignedRoute('muziekstukken.audio.stream', now()->addDay(), ['piece' => $piece->id])
+                    : null,
+            ],
+        ));
 
         return Inertia::render('muziekstukken/index', [
             'pieces' => $pieces,
@@ -69,9 +77,14 @@ class PieceController extends Controller
             'download_url' => URL::temporarySignedRoute('parts.download', now()->addDay(), ['part' => $part->id]),
         ]);
 
+        $audioUrl = $piece->audio_file_path
+            ? URL::temporarySignedRoute('muziekstukken.audio.stream', now()->addDay(), ['piece' => $piece->id])
+            : null;
+
         return Inertia::render('muziekstukken/show', [
             'piece' => $piece,
             'parts' => $parts,
+            'audioUrl' => $audioUrl,
             'instrumentTypes' => InstrumentType::with('instrumentFamily')->orderBy('sort_order')->get(),
             'canEdit' => $access->isEditor() || $access->isDirigent(),
         ]);
@@ -124,6 +137,7 @@ class PieceController extends Controller
             'genre.*' => ['string', 'max:255'],
             'music_type' => ['nullable', 'string', 'max:255'],
             'archive_number' => ['nullable', 'string', 'max:255'],
+            'audio_youtube_url' => ['nullable', 'url', 'max:500'],
             'orchestras' => ['nullable', 'array'],
             'orchestras.*' => ['integer', 'exists:orchestras,id'],
         ]);
@@ -146,8 +160,13 @@ class PieceController extends Controller
 
         $suggestions = $this->getSuggestions();
 
+        $audioUrl = $piece->audio_file_path
+            ? URL::temporarySignedRoute('muziekstukken.audio.stream', now()->addDay(), ['piece' => $piece->id])
+            : null;
+
         $props = [
             'piece' => $piece,
+            'audioUrl' => $audioUrl,
             'orchestras' => Orchestra::where('is_active', true)->orderBy('sort_order')->get(),
             'canEditAllFields' => $canEditAllFields,
             'canArchive' => $canEditAllFields,
@@ -182,6 +201,7 @@ class PieceController extends Controller
                 'genre.*' => ['string', 'max:255'],
                 'music_type' => ['nullable', 'string', 'max:255'],
                 'archive_number' => ['nullable', 'string', 'max:255'],
+                'audio_youtube_url' => ['nullable', 'url', 'max:500'],
                 'usages' => ['nullable', 'array'],
                 'usages.*.id' => ['nullable', 'integer'],
                 'usages.*.orchestra_id' => ['required', 'integer', 'exists:orchestras,id'],
@@ -195,6 +215,12 @@ class PieceController extends Controller
                 'parts.*.voice' => ['nullable', 'integer', 'min:1'],
                 'parts.*.amount_bought' => ['nullable', 'integer', 'min:0'],
             ]);
+
+            // When setting a YouTube URL, clear any existing MP3 file
+            if (! empty($validated['audio_youtube_url']) && $piece->audio_file_path) {
+                Storage::disk('sheets')->delete($piece->audio_file_path);
+                $validated['audio_file_path'] = null;
+            }
 
             $piece->update(collect($validated)->except('usages', 'parts')->toArray());
             $this->syncUsages($piece, $validated['usages'] ?? []);
@@ -255,6 +281,10 @@ class PieceController extends Controller
 
     public function destroy(Piece $piece): RedirectResponse
     {
+        if ($piece->audio_file_path) {
+            Storage::disk('sheets')->delete($piece->audio_file_path);
+        }
+
         foreach ($piece->parts as $part) {
             Storage::disk('sheets')->delete($part->file_path);
         }
@@ -262,6 +292,81 @@ class PieceController extends Controller
         $piece->forceDelete();
 
         return redirect('/muziekstukken');
+    }
+
+    public function updateAudio(Request $request, Piece $piece): RedirectResponse
+    {
+        $request->validate([
+            'audio' => ['required', 'file', 'mimes:mp3', 'max:51200'],
+        ]);
+
+        $path = "pieces/{$piece->id}/audio.mp3";
+
+        Storage::disk('sheets')->put($path, file_get_contents($request->file('audio')->getRealPath()));
+
+        $piece->update([
+            'audio_file_path' => $path,
+            'audio_youtube_url' => null,
+        ]);
+
+        return back();
+    }
+
+    public function deleteAudio(Piece $piece): RedirectResponse
+    {
+        if ($piece->audio_file_path) {
+            Storage::disk('sheets')->delete($piece->audio_file_path);
+        }
+
+        $piece->update([
+            'audio_file_path' => null,
+            'audio_youtube_url' => null,
+        ]);
+
+        return back();
+    }
+
+    public function streamAudio(Request $request, Piece $piece): StreamedResponse
+    {
+        abort_unless($piece->audio_file_path && Storage::disk('sheets')->exists($piece->audio_file_path), 404);
+
+        $disk = Storage::disk('sheets');
+        $size = $disk->size($piece->audio_file_path);
+        $headers = [
+            'Content-Type' => 'audio/mpeg',
+            'Accept-Ranges' => 'bytes',
+        ];
+
+        $range = $request->header('Range');
+        if ($range && preg_match('/bytes=(\d+)-(\d*)/', $range, $matches)) {
+            $start = (int) $matches[1];
+            $end = $matches[2] !== '' ? (int) $matches[2] : $size - 1;
+            $end = min($end, $size - 1);
+            $length = $end - $start + 1;
+
+            $stream = $disk->readStream($piece->audio_file_path);
+            fseek($stream, $start);
+
+            return response()->stream(function () use ($stream, $length) {
+                $remaining = $length;
+                while ($remaining > 0 && ! feof($stream)) {
+                    $chunk = fread($stream, min(8192, $remaining));
+                    if ($chunk === false) {
+                        break;
+                    }
+                    echo $chunk;
+                    $remaining -= strlen($chunk);
+                }
+                fclose($stream);
+            }, 206, array_merge($headers, [
+                'Content-Range' => "bytes {$start}-{$end}/{$size}",
+                'Content-Length' => $length,
+            ]));
+        }
+
+        return $disk->response($piece->audio_file_path, 'audio.mp3', array_merge($headers, [
+            'Content-Length' => $size,
+        ]));
     }
 
     /** @param array<int, array{id?: int|null, orchestra_id: int, van?: string|null, tot?: string|null, details?: string|null}> $usages */
