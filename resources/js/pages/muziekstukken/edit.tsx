@@ -50,6 +50,7 @@ type PartUpload = {
     is_conductor: boolean;
     voice: string;
     amount_bought: string;
+    note: string;
 };
 
 type Props = {
@@ -84,6 +85,7 @@ type PartEdit = {
     is_conductor: boolean;
     voice: string;
     amount_bought: string;
+    note: string;
 };
 
 export default function Edit({
@@ -138,6 +140,7 @@ export default function Edit({
                 is_conductor: part.is_conductor,
                 voice: part.voice?.toString() ?? '',
                 amount_bought: part.amount_bought?.toString() ?? '',
+                note: part.note ?? '',
             }
         );
     }
@@ -168,7 +171,8 @@ export default function Edit({
             edit.instrument_type_id !== part.instrument_type_id.toString() ||
             edit.is_conductor !== part.is_conductor ||
             edit.voice !== (part.voice?.toString() ?? '') ||
-            edit.amount_bought !== (part.amount_bought?.toString() ?? '')
+            edit.amount_bought !== (part.amount_bought?.toString() ?? '') ||
+            edit.note !== (part.note ?? '')
         );
     }
 
@@ -202,6 +206,7 @@ export default function Edit({
                         edit.amount_bought === ''
                             ? null
                             : Number(edit.amount_bought),
+                    note: edit.note === '' ? null : edit.note,
                 };
             });
 
@@ -246,6 +251,7 @@ export default function Edit({
                 is_conductor: guess.is_conductor ?? false,
                 voice: guess.voice ?? '',
                 amount_bought: '1',
+                note: '',
             };
         });
         setUploads((prev) => [...prev, ...newUploads]);
@@ -288,6 +294,9 @@ export default function Edit({
                     `parts[${i}][amount_bought]`,
                     upload.amount_bought,
                 );
+            }
+            if (upload.note !== '') {
+                formData.append(`parts[${i}][note]`, upload.note);
             }
         });
 
@@ -366,59 +375,49 @@ export default function Edit({
                         genreSuggestions={genreSuggestions}
                         musicTypeSuggestions={musicTypeSuggestions}
                         onAudioTypeChange={setAudioType}
+                        renderAudioMp3={
+                            <>
+                                {audioUrl && (
+                                    <audio
+                                        controls
+                                        src={audioUrl}
+                                        className="w-full max-w-md"
+                                    />
+                                )}
+                                <div className="flex items-center gap-4">
+                                    <input
+                                        ref={audioInputRef}
+                                        type="file"
+                                        accept=".mp3,audio/mpeg"
+                                        onChange={handleAudioUpload}
+                                        className="hidden"
+                                    />
+                                    <Button
+                                        variant="outline"
+                                        onClick={() =>
+                                            audioInputRef.current?.click()
+                                        }
+                                        disabled={audioUploading}
+                                    >
+                                        <Music />
+                                        {piece.audio_file_path
+                                            ? t('Replace MP3')
+                                            : t('Upload MP3')}
+                                    </Button>
+                                    {piece.audio_file_path && (
+                                        <Button
+                                            variant="outline"
+                                            onClick={handleAudioDelete}
+                                        >
+                                            <Trash2 className="text-destructive" />
+                                            {t('Remove audio')}
+                                        </Button>
+                                    )}
+                                </div>
+                            </>
+                        }
                     />
                 </section>
-
-                {/* Audio management */}
-                {canEditAllFields && audioType === 'mp3' && (
-                    <section className="space-y-6">
-                        <Heading
-                            title={t('Audio')}
-                            description={t(
-                                'Upload an MP3 audio reference for this piece',
-                            )}
-                        />
-
-                        {audioUrl && (
-                            <div className="space-y-2">
-                                <audio
-                                    controls
-                                    src={audioUrl}
-                                    className="w-full max-w-md"
-                                />
-                            </div>
-                        )}
-
-                        <div className="flex items-center gap-4">
-                            <input
-                                ref={audioInputRef}
-                                type="file"
-                                accept=".mp3,audio/mpeg"
-                                onChange={handleAudioUpload}
-                                className="hidden"
-                            />
-                            <Button
-                                variant="outline"
-                                onClick={() => audioInputRef.current?.click()}
-                                disabled={audioUploading}
-                            >
-                                <Music />
-                                {piece.audio_file_path
-                                    ? t('Replace MP3')
-                                    : t('Upload MP3')}
-                            </Button>
-                            {piece.audio_file_path && (
-                                <Button
-                                    variant="outline"
-                                    onClick={handleAudioDelete}
-                                >
-                                    <Trash2 className="text-destructive" />
-                                    {t('Remove audio')}
-                                </Button>
-                            )}
-                        </div>
-                    </section>
-                )}
 
                 {/* Parts management */}
                 {canEditAllFields && (
@@ -437,7 +436,13 @@ export default function Edit({
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>
+                                                {t('Original filename')}
+                                            </TableHead>
+                                            <TableHead>
                                                 {t('Instrument')}
+                                            </TableHead>
+                                            <TableHead className="w-[150px]">
+                                                {t('Note')}
                                             </TableHead>
                                             <TableHead className="w-[100px]">
                                                 {t('Voice')}
@@ -456,6 +461,9 @@ export default function Edit({
                                             const edit = getPartEdit(part);
                                             return (
                                                 <TableRow key={part.id}>
+                                                    <TableCell className="text-xs text-muted-foreground">
+                                                        {part.original_filename}
+                                                    </TableCell>
                                                     <TableCell>
                                                         <Combobox
                                                             options={
@@ -472,6 +480,22 @@ export default function Edit({
                                                                 )
                                                             }
                                                             className="max-w-[250px]"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Input
+                                                            maxLength={20}
+                                                            value={edit.note}
+                                                            onChange={(e) =>
+                                                                updatePartEdit(
+                                                                    part.id,
+                                                                    'note',
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="w-[130px]"
+                                                            placeholder="-"
                                                         />
                                                     </TableCell>
                                                     <TableCell>
@@ -580,6 +604,9 @@ export default function Edit({
                                                 <TableHead>
                                                     {t('Instrument')}
                                                 </TableHead>
+                                                <TableHead className="w-[150px]">
+                                                    {t('Note')}
+                                                </TableHead>
                                                 <TableHead className="w-[100px]">
                                                     {t('Voice')}
                                                 </TableHead>
@@ -614,6 +641,22 @@ export default function Edit({
                                                                 )
                                                             }
                                                             className="max-w-[250px]"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Input
+                                                            maxLength={20}
+                                                            value={upload.note}
+                                                            onChange={(e) =>
+                                                                updateUpload(
+                                                                    i,
+                                                                    'note',
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="w-[130px]"
+                                                            placeholder="-"
                                                         />
                                                     </TableCell>
                                                     <TableCell>
