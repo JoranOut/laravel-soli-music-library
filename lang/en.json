@@ -102,5 +102,7 @@
     "Upload an MP3 audio reference for this piece": "Upload an MP3 audio reference for this piece",
     "Replace MP3": "Replace MP3",
     "Upload MP3": "Upload MP3",
-    "Remove audio": "Remove audio"
+    "Remove audio": "Remove audio",
+    "Original filename": "Original filename",
+    "Note": "Note"
 }

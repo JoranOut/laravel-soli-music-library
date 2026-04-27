@@ -214,6 +214,7 @@ class PieceController extends Controller
                 'parts.*.is_conductor' => ['required', 'boolean'],
                 'parts.*.voice' => ['nullable', 'integer', 'min:1'],
                 'parts.*.amount_bought' => ['nullable', 'integer', 'min:0'],
+                'parts.*.note' => ['nullable', 'string', 'max:20'],
             ]);
 
             // When setting a YouTube URL, clear any existing MP3 file
@@ -231,6 +232,7 @@ class PieceController extends Controller
                     'is_conductor' => $partData['is_conductor'],
                     'voice' => $partData['voice'] ?? null,
                     'amount_bought' => $partData['amount_bought'] ?? null,
+                    'note' => $partData['note'] ?? null,
                 ]);
             }
         } else {

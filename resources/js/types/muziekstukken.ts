@@ -28,6 +28,7 @@ export type Part = {
     is_conductor: boolean;
     voice: number | null;
     amount_bought: number | null;
+    note: string | null;
     original_filename: string;
     instrument_type: InstrumentType;
     download_url?: string | null;
