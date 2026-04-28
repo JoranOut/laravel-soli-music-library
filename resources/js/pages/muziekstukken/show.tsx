@@ -445,7 +445,10 @@ export default function Show({
                                             {parts.map((part) => (
                                                 <TableRow key={part.id}>
                                                     <TableCell>
-                                                        {part.instrument_type.name}
+                                                        {
+                                                            part.instrument_type
+                                                                .name
+                                                        }
                                                         {part.note && (
                                                             <span className="text-muted-foreground">
                                                                 {' - '}

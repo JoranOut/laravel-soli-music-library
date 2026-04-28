@@ -96,7 +96,11 @@ export default function Welcome({ orchestraGroups }: Props) {
                                                             )}
                                                         </TableCell>
                                                         <TableCell>
-                                                            {part.instrument_type.name}
+                                                            {
+                                                                part
+                                                                    .instrument_type
+                                                                    .name
+                                                            }
                                                             {part.voice !=
                                                                 null &&
                                                                 ` ${part.voice}`}

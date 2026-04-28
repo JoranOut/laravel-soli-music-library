@@ -1001,10 +1001,16 @@ export default function Edit({
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-2">
-                        <Label>{t('Type ":title" to confirm', { title: piece.title })}</Label>
+                        <Label>
+                            {t('Type ":title" to confirm', {
+                                title: piece.title,
+                            })}
+                        </Label>
                         <Input
                             value={archiveConfirmTitle}
-                            onChange={(e) => setArchiveConfirmTitle(e.target.value)}
+                            onChange={(e) =>
+                                setArchiveConfirmTitle(e.target.value)
+                            }
                             placeholder={piece.title}
                         />
                     </div>

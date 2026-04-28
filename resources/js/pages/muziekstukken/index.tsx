@@ -1,5 +1,13 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ChevronDown, ChevronUp, Filter, Pause, Play, Plus, X } from 'lucide-react';
+import {
+    ChevronDown,
+    ChevronUp,
+    Filter,
+    Pause,
+    Play,
+    Plus,
+    X,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Heading } from '@/components/heading';
 import { YouTubeIcon } from '@/components/icons/youtube';
@@ -136,7 +144,10 @@ export default function Index({
     // Navigate with filters, preserving all current filters
     function navigate(overrides: Record<string, string | undefined>) {
         const params: Record<string, string | undefined> = {};
-        for (const [key, value] of Object.entries({ ...filters, ...overrides })) {
+        for (const [key, value] of Object.entries({
+            ...filters,
+            ...overrides,
+        })) {
             params[key] = value || undefined;
         }
         router.get('/muziekstukken', params, {
@@ -178,7 +189,11 @@ export default function Index({
         setSelectedInstruments([]);
         localStorage.removeItem(INSTRUMENTS_STORAGE_KEY);
         setShowMoreFilters(false);
-        router.get('/muziekstukken', {}, { preserveState: true, replace: true });
+        router.get(
+            '/muziekstukken',
+            {},
+            { preserveState: true, replace: true },
+        );
     }
 
     function openUsageDialog(pieceId: number) {
@@ -268,9 +283,7 @@ export default function Index({
                                 }
                                 className="max-w-[200px]"
                             >
-                                <option value="">
-                                    {t('All orchestras')}
-                                </option>
+                                <option value="">{t('All orchestras')}</option>
                                 {orchestras.map((o) => (
                                     <option key={o.id} value={o.id}>
                                         {o.name}
@@ -289,9 +302,7 @@ export default function Index({
                         </Button>
                         <Button
                             variant="ghost"
-                            onClick={() =>
-                                setShowMoreFilters((v) => !v)
-                            }
+                            onClick={() => setShowMoreFilters((v) => !v)}
                         >
                             {showMoreFilters ? (
                                 <ChevronUp className="h-4 w-4" />
@@ -303,10 +314,7 @@ export default function Index({
                                 : t('More filters')}
                         </Button>
                         {hasAnyFilter && (
-                            <Button
-                                variant="ghost"
-                                onClick={clearAllFilters}
-                            >
+                            <Button variant="ghost" onClick={clearAllFilters}>
                                 <X className="h-4 w-4" />
                                 {t('Clear filters')}
                             </Button>
@@ -320,12 +328,10 @@ export default function Index({
                                 <Combobox
                                     options={[
                                         { value: '', label: t('All') },
-                                        ...filterOptions.composers.map(
-                                            (v) => ({
-                                                value: v,
-                                                label: v,
-                                            }),
-                                        ),
+                                        ...filterOptions.composers.map((v) => ({
+                                            value: v,
+                                            label: v,
+                                        })),
                                     ]}
                                     value={filters.composer ?? ''}
                                     onChange={(v) =>
@@ -341,12 +347,10 @@ export default function Index({
                                 <Combobox
                                     options={[
                                         { value: '', label: t('All') },
-                                        ...filterOptions.arrangers.map(
-                                            (v) => ({
-                                                value: v,
-                                                label: v,
-                                            }),
-                                        ),
+                                        ...filterOptions.arrangers.map((v) => ({
+                                            value: v,
+                                            label: v,
+                                        })),
                                     ]}
                                     value={filters.arranger ?? ''}
                                     onChange={(v) =>
@@ -403,8 +407,7 @@ export default function Index({
                                     value={filters.genre ?? ''}
                                     onChange={(e) =>
                                         navigate({
-                                            genre:
-                                                e.target.value || undefined,
+                                            genre: e.target.value || undefined,
                                         })
                                     }
                                 >

@@ -31,7 +31,13 @@ const NavLink = forwardRef<
     if (external) {
         const url = typeof href === 'string' ? href : href.url;
         return (
-            <a ref={ref} href={url} target="_blank" rel="noopener noreferrer" {...props}>
+            <a
+                ref={ref}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                {...props}
+            >
                 {children}
             </a>
         );
@@ -91,7 +97,10 @@ export function NavMain({
                                                     item.href,
                                                 )}
                                             >
-                                                <NavLink href={item.href} external={item.external}>
+                                                <NavLink
+                                                    href={item.href}
+                                                    external={item.external}
+                                                >
                                                     <span>
                                                         {item.allLabel ??
                                                             item.title}
@@ -109,7 +118,12 @@ export function NavMain({
                                                         child.href,
                                                     )}
                                                 >
-                                                    <NavLink href={child.href} external={child.external}>
+                                                    <NavLink
+                                                        href={child.href}
+                                                        external={
+                                                            child.external
+                                                        }
+                                                    >
                                                         <span>
                                                             {child.title}
                                                         </span>
@@ -128,7 +142,10 @@ export function NavMain({
                                 isActive={isCurrentUrl(item.href)}
                                 tooltip={{ children: item.title }}
                             >
-                                <NavLink href={item.href} external={item.external}>
+                                <NavLink
+                                    href={item.href}
+                                    external={item.external}
+                                >
                                     {item.icon && <item.icon />}
                                     <span>{item.title}</span>
                                 </NavLink>
