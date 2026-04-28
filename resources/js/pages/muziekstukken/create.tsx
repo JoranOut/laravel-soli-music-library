@@ -9,12 +9,20 @@ type Props = {
     orchestras: Orchestra[];
     genreSuggestions: string[];
     musicTypeSuggestions: string[];
+    composerSuggestions: string[];
+    arrangerSuggestions: string[];
+    publisherSuggestions: string[];
+    difficultySuggestions: string[];
 };
 
 export default function Create({
     orchestras,
     genreSuggestions,
     musicTypeSuggestions,
+    composerSuggestions,
+    arrangerSuggestions,
+    publisherSuggestions,
+    difficultySuggestions,
 }: Props) {
     const { t } = useTranslation();
 
@@ -34,6 +42,10 @@ export default function Create({
                     method="post"
                     genreSuggestions={genreSuggestions}
                     musicTypeSuggestions={musicTypeSuggestions}
+                    composerSuggestions={composerSuggestions}
+                    arrangerSuggestions={arrangerSuggestions}
+                    publisherSuggestions={publisherSuggestions}
+                    difficultySuggestions={difficultySuggestions}
                 />
             </div>
         </AppLayout>

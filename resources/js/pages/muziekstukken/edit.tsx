@@ -23,6 +23,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import {
     Table,
@@ -62,6 +63,10 @@ type Props = {
     canArchive?: boolean;
     genreSuggestions?: string[];
     musicTypeSuggestions?: string[];
+    composerSuggestions?: string[];
+    arrangerSuggestions?: string[];
+    publisherSuggestions?: string[];
+    difficultySuggestions?: string[];
 };
 
 function instrumentOptions(types: InstrumentType[]): ComboboxOption[] {
@@ -97,6 +102,10 @@ export default function Edit({
     canArchive = false,
     genreSuggestions = [],
     musicTypeSuggestions = [],
+    composerSuggestions = [],
+    arrangerSuggestions = [],
+    publisherSuggestions = [],
+    difficultySuggestions = [],
 }: Props) {
     const { t } = useTranslation();
     const pieceFormRef = useRef<PieceFormHandle>(null);
@@ -117,12 +126,13 @@ export default function Edit({
     const [partEdits, setPartEdits] = useState<Record<number, PartEdit>>({});
     const [saving, setSaving] = useState(false);
     const [showArchiveDialog, setShowArchiveDialog] = useState(false);
+    const [archiveConfirmTitle, setArchiveConfirmTitle] = useState('');
     const [usages, setUsages] = useState<UsageEdit[]>(() =>
         (piece.orchestra_usages ?? []).map((u) => ({
             id: u.id,
             orchestra_id: u.orchestra_id.toString(),
-            van: u.van ?? '',
-            tot: u.tot ?? '',
+            van: u.van?.split('T')[0] ?? '',
+            tot: u.tot?.split('T')[0] ?? '',
             details: u.details ?? '',
         })),
     );
@@ -374,6 +384,10 @@ export default function Edit({
                         showOrchestraCheckboxes={false}
                         genreSuggestions={genreSuggestions}
                         musicTypeSuggestions={musicTypeSuggestions}
+                        composerSuggestions={composerSuggestions}
+                        arrangerSuggestions={arrangerSuggestions}
+                        publisherSuggestions={publisherSuggestions}
+                        difficultySuggestions={difficultySuggestions}
                         onAudioTypeChange={setAudioType}
                         renderAudioMp3={
                             <>
@@ -971,7 +985,10 @@ export default function Edit({
 
             <Dialog
                 open={showArchiveDialog}
-                onOpenChange={setShowArchiveDialog}
+                onOpenChange={(open) => {
+                    setShowArchiveDialog(open);
+                    if (!open) setArchiveConfirmTitle('');
+                }}
             >
                 <DialogContent>
                     <DialogHeader>
@@ -983,6 +1000,14 @@ export default function Edit({
                             )}
                         </DialogDescription>
                     </DialogHeader>
+                    <div className="space-y-2">
+                        <Label>{t('Type ":title" to confirm', { title: piece.title })}</Label>
+                        <Input
+                            value={archiveConfirmTitle}
+                            onChange={(e) => setArchiveConfirmTitle(e.target.value)}
+                            placeholder={piece.title}
+                        />
+                    </div>
                     <DialogFooter>
                         <Button
                             variant="outline"
@@ -992,8 +1017,10 @@ export default function Edit({
                         </Button>
                         <Button
                             variant="destructive"
+                            disabled={archiveConfirmTitle !== piece.title}
                             onClick={() => {
                                 setShowArchiveDialog(false);
+                                setArchiveConfirmTitle('');
                                 router.post(
                                     `/muziekstukken/${piece.id}/archive`,
                                 );

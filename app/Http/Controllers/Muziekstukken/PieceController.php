@@ -48,6 +48,38 @@ class PieceController extends Controller
             $query->whereHas('parts', fn ($q) => $q->whereIn('instrument_type_id', $ids));
         }
 
+        if ($composer = $request->input('composer')) {
+            $query->where('composer', $composer);
+        }
+
+        if ($arranger = $request->input('arranger')) {
+            $query->where('arranger', $arranger);
+        }
+
+        if ($publisher = $request->input('publisher')) {
+            $query->where('publisher', $publisher);
+        }
+
+        if ($musicType = $request->input('music_type')) {
+            $query->where('music_type', $musicType);
+        }
+
+        if ($genre = $request->input('genre')) {
+            $query->whereJsonContains('genre', $genre);
+        }
+
+        if ($difficulty = $request->input('difficulty')) {
+            $query->where('difficulty', $difficulty);
+        }
+
+        if ($buyDateFrom = $request->input('buy_date_from')) {
+            $query->where('buy_date', '>=', $buyDateFrom);
+        }
+
+        if ($buyDateTo = $request->input('buy_date_to')) {
+            $query->where('buy_date', '<=', $buyDateTo);
+        }
+
         $pieces = $query->orderBy('title')->paginate(20)->withQueryString()->through(fn ($piece) => array_merge(
             $piece->toArray(),
             [
@@ -61,7 +93,15 @@ class PieceController extends Controller
             'pieces' => $pieces,
             'orchestras' => Orchestra::where('is_active', true)->orderBy('sort_order')->get(),
             'instrumentTypes' => InstrumentType::with('instrumentFamily')->orderBy('sort_order')->get(),
-            'filters' => $request->only(['search', 'orchestra', 'instruments']),
+            'filterOptions' => [
+                'composers' => Piece::whereNotNull('composer')->where('composer', '!=', '')->distinct()->pluck('composer')->sort()->values(),
+                'arrangers' => Piece::whereNotNull('arranger')->where('arranger', '!=', '')->distinct()->pluck('arranger')->sort()->values(),
+                'publishers' => Piece::whereNotNull('publisher')->where('publisher', '!=', '')->distinct()->pluck('publisher')->sort()->values(),
+                'musicTypes' => Piece::whereNotNull('music_type')->where('music_type', '!=', '')->distinct()->pluck('music_type')->sort()->values(),
+                'genres' => Piece::whereNotNull('genre')->pluck('genre')->flatten()->unique()->sort()->values(),
+                'difficulties' => Piece::whereNotNull('difficulty')->where('difficulty', '!=', '')->distinct()->pluck('difficulty')->sort()->values(),
+            ],
+            'filters' => $request->only(['search', 'orchestra', 'instruments', 'composer', 'arranger', 'publisher', 'music_type', 'genre', 'difficulty', 'buy_date_from', 'buy_date_to']),
             'canEdit' => $canEdit,
             'canEditUsages' => $canEdit || $access->isDirigent(),
         ]);
@@ -119,6 +159,10 @@ class PieceController extends Controller
             'orchestras' => Orchestra::where('is_active', true)->orderBy('sort_order')->get(),
             'genreSuggestions' => $suggestions['genres'],
             'musicTypeSuggestions' => $suggestions['musicTypes'],
+            'composerSuggestions' => $suggestions['composers'],
+            'arrangerSuggestions' => $suggestions['arrangers'],
+            'publisherSuggestions' => $suggestions['publishers'],
+            'difficultySuggestions' => $suggestions['difficulties'],
         ]);
     }
 
@@ -172,6 +216,10 @@ class PieceController extends Controller
             'canArchive' => $canEditAllFields,
             'genreSuggestions' => $suggestions['genres'],
             'musicTypeSuggestions' => $suggestions['musicTypes'],
+            'composerSuggestions' => $suggestions['composers'],
+            'arrangerSuggestions' => $suggestions['arrangers'],
+            'publisherSuggestions' => $suggestions['publishers'],
+            'difficultySuggestions' => $suggestions['difficulties'],
         ];
 
         if ($canEditAllFields) {
@@ -400,7 +448,6 @@ class PieceController extends Controller
         }
     }
 
-    /** @return array{genres: Collection<int, string>, musicTypes: Collection<int, string>} */
     private function getSuggestions(): array
     {
         $genres = Piece::whereNotNull('genre')
@@ -416,9 +463,25 @@ class PieceController extends Controller
             ->sort()
             ->values();
 
+        $composers = Piece::whereNotNull('composer')->where('composer', '!=', '')
+            ->distinct()->pluck('composer')->sort()->values();
+
+        $arrangers = Piece::whereNotNull('arranger')->where('arranger', '!=', '')
+            ->distinct()->pluck('arranger')->sort()->values();
+
+        $publishers = Piece::whereNotNull('publisher')->where('publisher', '!=', '')
+            ->distinct()->pluck('publisher')->sort()->values();
+
+        $difficulties = Piece::whereNotNull('difficulty')->where('difficulty', '!=', '')
+            ->distinct()->pluck('difficulty')->sort()->values();
+
         return [
             'genres' => $genres,
             'musicTypes' => $musicTypes,
+            'composers' => $composers,
+            'arrangers' => $arrangers,
+            'publishers' => $publishers,
+            'difficulties' => $difficulties,
         ];
     }
 }

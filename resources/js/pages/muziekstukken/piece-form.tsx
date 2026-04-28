@@ -43,6 +43,10 @@ type Props = {
     showOrchestraCheckboxes?: boolean;
     genreSuggestions?: string[];
     musicTypeSuggestions?: string[];
+    composerSuggestions?: string[];
+    arrangerSuggestions?: string[];
+    publisherSuggestions?: string[];
+    difficultySuggestions?: string[];
     onAudioTypeChange?: (type: AudioType) => void;
     renderAudioMp3?: ReactNode;
 };
@@ -57,6 +61,10 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
         showOrchestraCheckboxes = true,
         genreSuggestions = [],
         musicTypeSuggestions = [],
+        composerSuggestions = [],
+        arrangerSuggestions = [],
+        publisherSuggestions = [],
+        difficultySuggestions = [],
         onAudioTypeChange,
         renderAudioMp3,
     },
@@ -152,12 +160,15 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
 
                         <div className="space-y-2">
                             <Label htmlFor="composer">{t('Composer')}</Label>
-                            <Input
-                                id="composer"
+                            <Combobox
+                                options={composerSuggestions.map((s) => ({
+                                    value: s,
+                                    label: s,
+                                }))}
                                 value={data.composer}
-                                onChange={(e) =>
-                                    setData('composer', e.target.value)
-                                }
+                                onChange={(v) => setData('composer', v)}
+                                placeholder={t('Composer')}
+                                allowCustom
                             />
                             {pageErrors.composer && (
                                 <p className="text-sm text-destructive">
@@ -168,12 +179,15 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
 
                         <div className="space-y-2">
                             <Label htmlFor="arranger">{t('Arranger')}</Label>
-                            <Input
-                                id="arranger"
+                            <Combobox
+                                options={arrangerSuggestions.map((s) => ({
+                                    value: s,
+                                    label: s,
+                                }))}
                                 value={data.arranger}
-                                onChange={(e) =>
-                                    setData('arranger', e.target.value)
-                                }
+                                onChange={(v) => setData('arranger', v)}
+                                placeholder={t('Arranger')}
+                                allowCustom
                             />
                             {pageErrors.arranger && (
                                 <p className="text-sm text-destructive">
@@ -184,12 +198,15 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
 
                         <div className="space-y-2">
                             <Label htmlFor="publisher">{t('Publisher')}</Label>
-                            <Input
-                                id="publisher"
+                            <Combobox
+                                options={publisherSuggestions.map((s) => ({
+                                    value: s,
+                                    label: s,
+                                }))}
                                 value={data.publisher}
-                                onChange={(e) =>
-                                    setData('publisher', e.target.value)
-                                }
+                                onChange={(v) => setData('publisher', v)}
+                                placeholder={t('Publisher')}
+                                allowCustom
                             />
                             {pageErrors.publisher && (
                                 <p className="text-sm text-destructive">
@@ -202,12 +219,15 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                             <Label htmlFor="difficulty">
                                 {t('Difficulty')}
                             </Label>
-                            <Input
-                                id="difficulty"
+                            <Combobox
+                                options={difficultySuggestions.map((s) => ({
+                                    value: s,
+                                    label: s,
+                                }))}
                                 value={data.difficulty}
-                                onChange={(e) =>
-                                    setData('difficulty', e.target.value)
-                                }
+                                onChange={(v) => setData('difficulty', v)}
+                                placeholder={t('Difficulty')}
+                                allowCustom
                             />
                             {pageErrors.difficulty && (
                                 <p className="text-sm text-destructive">

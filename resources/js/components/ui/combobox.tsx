@@ -69,7 +69,10 @@ function Combobox({ options, value, onChange, placeholder, className, allowCusto
                     )}
                 >
                     {!search && selectedLabel && (
-                        <span className="pointer-events-none absolute inset-0 flex items-center px-3 text-muted-foreground">
+                        <span className={cn(
+                            'pointer-events-none absolute inset-0 flex items-center px-3',
+                            open ? 'text-muted-foreground' : 'text-foreground',
+                        )}>
                             {selectedLabel}
                         </span>
                     )}

@@ -105,5 +105,11 @@
     "Remove audio": "Remove audio",
     "Original filename": "Original filename",
     "Note": "Note",
-    "Instrument types": "Instrument types"
+    "Instrument types": "Instrument types",
+    "More filters": "More filters",
+    "All": "All",
+    "Buy date from": "Buy date from",
+    "Buy date to": "Buy date to",
+    "Type \":title\" to confirm": "Type \":title\" to confirm",
+    "Clear filters": "Clear filters"
 }

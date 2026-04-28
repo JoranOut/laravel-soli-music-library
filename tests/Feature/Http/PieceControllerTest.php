@@ -1057,3 +1057,295 @@ it('destroy force-deletes an archived piece', function () {
 
     expect(Piece::withTrashed()->find($piece->id))->toBeNull();
 });
+
+// ---------------------------------------------------------------------------
+// Index filters — verify all filter parameters work correctly
+// ---------------------------------------------------------------------------
+
+it('filters pieces by composer', function () {
+    $user = User::factory()->create();
+    Piece::factory()->create(['composer' => 'Bach']);
+    Piece::factory()->create(['composer' => 'Mozart']);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get('/muziekstukken?composer=Bach')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+it('filters pieces by arranger', function () {
+    $user = User::factory()->create();
+    Piece::factory()->create(['arranger' => 'Jan de Haan']);
+    Piece::factory()->create(['arranger' => 'Jacob de Haan']);
+    Piece::factory()->create(['arranger' => null]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get('/muziekstukken?arranger='.urlencode('Jan de Haan'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+it('filters pieces by publisher', function () {
+    $user = User::factory()->create();
+    Piece::factory()->create(['publisher' => 'De Haske']);
+    Piece::factory()->create(['publisher' => 'Molenaar']);
+    Piece::factory()->create(['publisher' => null]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get('/muziekstukken?publisher='.urlencode('De Haske'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+it('filters pieces by music type', function () {
+    $user = User::factory()->create();
+    Piece::factory()->create(['music_type' => 'Origineel']);
+    Piece::factory()->create(['music_type' => 'Arrangement']);
+    Piece::factory()->create(['music_type' => null]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get('/muziekstukken?music_type=Origineel')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+it('filters pieces by genre', function () {
+    $user = User::factory()->create();
+    Piece::factory()->create(['genre' => ['Mars', 'Pop']]);
+    Piece::factory()->create(['genre' => ['Klassiek']]);
+    Piece::factory()->create(['genre' => null]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get('/muziekstukken?genre=Mars')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+it('genre filter matches pieces that contain the genre in their array', function () {
+    $user = User::factory()->create();
+    Piece::factory()->create(['genre' => ['Mars', 'Pop', 'Jazz']]);
+    Piece::factory()->create(['genre' => ['Pop', 'Klassiek']]);
+    Piece::factory()->create(['genre' => ['Klassiek']]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get('/muziekstukken?genre=Pop')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 2)
+        );
+});
+
+it('filters pieces by difficulty', function () {
+    $user = User::factory()->create();
+    Piece::factory()->create(['difficulty' => 'easy']);
+    Piece::factory()->create(['difficulty' => 'hard']);
+    Piece::factory()->create(['difficulty' => null]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get('/muziekstukken?difficulty=easy')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+it('filters pieces by buy date from', function () {
+    $user = User::factory()->create();
+    Piece::factory()->create(['buy_date' => '2024-01-15']);
+    Piece::factory()->create(['buy_date' => '2023-06-01']);
+    Piece::factory()->create(['buy_date' => null]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get('/muziekstukken?buy_date_from=2024-01-01')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+it('filters pieces by buy date to', function () {
+    $user = User::factory()->create();
+    Piece::factory()->create(['buy_date' => '2023-06-01']);
+    Piece::factory()->create(['buy_date' => '2024-01-15']);
+    Piece::factory()->create(['buy_date' => null]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get('/muziekstukken?buy_date_to=2023-12-31')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+it('filters pieces by buy date range', function () {
+    $user = User::factory()->create();
+    Piece::factory()->create(['buy_date' => '2023-01-01']);
+    Piece::factory()->create(['buy_date' => '2023-06-15']);
+    Piece::factory()->create(['buy_date' => '2024-01-01']);
+    Piece::factory()->create(['buy_date' => null]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get('/muziekstukken?buy_date_from=2023-03-01&buy_date_to=2023-12-31')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+it('filters pieces by instruments', function () {
+    $user = User::factory()->create();
+    $instrumentType = InstrumentType::factory()->create();
+    $otherInstrumentType = InstrumentType::factory()->create();
+
+    $piece1 = Piece::factory()->create();
+    Part::factory()->create(['piece_id' => $piece1->id, 'instrument_type_id' => $instrumentType->id]);
+
+    $piece2 = Piece::factory()->create();
+    Part::factory()->create(['piece_id' => $piece2->id, 'instrument_type_id' => $otherInstrumentType->id]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get("/muziekstukken?instruments={$instrumentType->id}")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+it('combines multiple filters', function () {
+    $user = User::factory()->create();
+    Piece::factory()->create(['composer' => 'Bach', 'difficulty' => 'hard']);
+    Piece::factory()->create(['composer' => 'Bach', 'difficulty' => 'easy']);
+    Piece::factory()->create(['composer' => 'Mozart', 'difficulty' => 'hard']);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get('/muziekstukken?composer=Bach&difficulty=hard')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+it('combines search with more filters', function () {
+    $user = User::factory()->create();
+    Piece::factory()->create(['title' => 'Symphony No. 5', 'composer' => 'Beethoven', 'difficulty' => 'hard']);
+    Piece::factory()->create(['title' => 'Symphony No. 9', 'composer' => 'Beethoven', 'difficulty' => 'easy']);
+    Piece::factory()->create(['title' => 'March of Glory', 'composer' => 'Beethoven', 'difficulty' => 'hard']);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get('/muziekstukken?search=Symphony&composer=Beethoven&difficulty=hard')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+it('returns filterOptions on index', function () {
+    $user = User::factory()->create();
+    Piece::factory()->create([
+        'composer' => 'Bach',
+        'arranger' => 'Smith',
+        'publisher' => 'Publisher A',
+        'music_type' => 'Origineel',
+        'difficulty' => 'easy',
+        'genre' => ['Mars', 'Pop'],
+    ]);
+    Piece::factory()->create([
+        'composer' => 'Mozart',
+        'arranger' => null,
+        'publisher' => null,
+        'music_type' => null,
+        'difficulty' => null,
+        'genre' => null,
+    ]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get('/muziekstukken')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('filterOptions.composers', 2)
+            ->has('filterOptions.arrangers', 1)
+            ->has('filterOptions.publishers', 1)
+            ->has('filterOptions.musicTypes', 1)
+            ->has('filterOptions.genres', 2)
+            ->has('filterOptions.difficulties', 1)
+        );
+});
+
+it('returns current filter values in filters prop', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get('/muziekstukken?composer=Bach&difficulty=easy&buy_date_from=2024-01-01')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.composer', 'Bach')
+            ->where('filters.difficulty', 'easy')
+            ->where('filters.buy_date_from', '2024-01-01')
+        );
+});
+
+it('member can use more filters within their orchestras', function () {
+    $user = User::factory()->create();
+    $orchestra = Orchestra::factory()->create();
+    $instrumentType = InstrumentType::factory()->create();
+
+    $bachPiece = Piece::factory()->create(['composer' => 'Bach']);
+    $bachPiece->orchestraUsages()->create(['orchestra_id' => $orchestra->id]);
+
+    $mozartPiece = Piece::factory()->create(['composer' => 'Mozart']);
+    $mozartPiece->orchestraUsages()->create(['orchestra_id' => $orchestra->id]);
+
+    $session = [
+        'roles' => ['member'],
+        'resolved_assignments' => [
+            ['orchestra_id' => $orchestra->id, 'instrument_type_id' => $instrumentType->id],
+        ],
+    ];
+
+    $this->actingAs($user)
+        ->withSession($session)
+        ->get('/muziekstukken?composer=Bach')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+it('dirigent can use more filters on index', function () {
+    $user = User::factory()->create();
+    Piece::factory()->create(['music_type' => 'Origineel']);
+    Piece::factory()->create(['music_type' => 'Arrangement']);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['dirigent']])
+        ->get('/muziekstukken?music_type=Origineel')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});

@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Filter, Pause, Play, Plus } from 'lucide-react';
+import { ChevronDown, ChevronUp, Filter, Pause, Play, Plus, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Heading } from '@/components/heading';
 import { YouTubeIcon } from '@/components/icons/youtube';
@@ -57,10 +57,26 @@ type Props = {
     pieces: PaginatedData<Piece>;
     orchestras: Orchestra[];
     instrumentTypes: InstrumentType[];
+    filterOptions: {
+        composers: string[];
+        arrangers: string[];
+        publishers: string[];
+        musicTypes: string[];
+        genres: string[];
+        difficulties: string[];
+    };
     filters: {
         search?: string;
         orchestra?: string;
         instruments?: string;
+        composer?: string;
+        arranger?: string;
+        publisher?: string;
+        music_type?: string;
+        genre?: string;
+        difficulty?: string;
+        buy_date_from?: string;
+        buy_date_to?: string;
     };
     canEdit: boolean;
     canEditUsages: boolean;
@@ -70,6 +86,7 @@ export default function Index({
     pieces,
     orchestras,
     instrumentTypes,
+    filterOptions,
     filters,
     canEdit,
     canEditUsages,
@@ -101,21 +118,40 @@ export default function Index({
     const [instrumentDialogOpen, setInstrumentDialogOpen] = useState(false);
     const [dialogSelection, setDialogSelection] = useState<number[]>([]);
 
+    // More filters toggle — auto-expand when any are active
+    const [showMoreFilters, setShowMoreFilters] = useState(
+        () =>
+            !!(
+                filters.composer ||
+                filters.arranger ||
+                filters.publisher ||
+                filters.music_type ||
+                filters.genre ||
+                filters.difficulty ||
+                filters.buy_date_from ||
+                filters.buy_date_to
+            ),
+    );
+
+    // Navigate with filters, preserving all current filters
+    function navigate(overrides: Record<string, string | undefined>) {
+        const params: Record<string, string | undefined> = {};
+        for (const [key, value] of Object.entries({ ...filters, ...overrides })) {
+            params[key] = value || undefined;
+        }
+        router.get('/muziekstukken', params, {
+            preserveState: true,
+            replace: true,
+        });
+    }
+
     // On first load: sync localStorage → URL if URL has no instruments param
     const initialSyncDone = useRef(false);
     useEffect(() => {
         if (initialSyncDone.current) return;
         initialSyncDone.current = true;
         if (!filters.instruments && selectedInstruments.length > 0) {
-            router.get(
-                '/muziekstukken',
-                {
-                    search: filters.search || undefined,
-                    orchestra: filters.orchestra || undefined,
-                    instruments: selectedInstruments.join(','),
-                },
-                { preserveState: true, replace: true },
-            );
+            navigate({ instruments: selectedInstruments.join(',') });
         }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -125,6 +161,25 @@ export default function Index({
     }));
 
     const familyGroups = groupByFamily(instrumentTypes);
+
+    const moreFilterCount = [
+        filters.composer,
+        filters.arranger,
+        filters.publisher,
+        filters.music_type,
+        filters.genre,
+        filters.difficulty,
+        filters.buy_date_from || filters.buy_date_to,
+    ].filter(Boolean).length;
+
+    const hasAnyFilter = Object.values(filters).some(Boolean);
+
+    function clearAllFilters() {
+        setSelectedInstruments([]);
+        localStorage.removeItem(INSTRUMENTS_STORAGE_KEY);
+        setShowMoreFilters(false);
+        router.get('/muziekstukken', {}, { preserveState: true, replace: true });
+    }
 
     function openUsageDialog(pieceId: number) {
         setUsageForm({ orchestra_id: '', van: '', tot: '', details: '' });
@@ -153,27 +208,11 @@ export default function Index({
     }
 
     function handleSearch(search: string) {
-        router.get(
-            '/muziekstukken',
-            {
-                search: search || undefined,
-                orchestra: filters.orchestra || undefined,
-                instruments: filters.instruments || undefined,
-            },
-            { preserveState: true, replace: true },
-        );
+        navigate({ search: search || undefined });
     }
 
     function handleOrchestraFilter(orchestra: string) {
-        router.get(
-            '/muziekstukken',
-            {
-                search: filters.search || undefined,
-                orchestra: orchestra || undefined,
-                instruments: filters.instruments || undefined,
-            },
-            { preserveState: true, replace: true },
-        );
+        navigate({ orchestra: orchestra || undefined });
     }
 
     function openInstrumentDialog() {
@@ -191,15 +230,7 @@ export default function Index({
         setSelectedInstruments(ids);
         localStorage.setItem(INSTRUMENTS_STORAGE_KEY, JSON.stringify(ids));
         setInstrumentDialogOpen(false);
-        router.get(
-            '/muziekstukken',
-            {
-                search: filters.search || undefined,
-                orchestra: filters.orchestra || undefined,
-                instruments: ids.length ? ids.join(',') : undefined,
-            },
-            { preserveState: true, replace: true },
-        );
+        navigate({ instruments: ids.length ? ids.join(',') : undefined });
     }
 
     return (
@@ -220,36 +251,218 @@ export default function Index({
                     )}
                 </div>
 
-                <div className="flex items-end gap-4">
-                    <Input
-                        placeholder={t('Search...')}
-                        defaultValue={filters.search ?? ''}
-                        onChange={(e) => handleSearch(e.target.value)}
-                        className="max-w-sm"
-                    />
-                    <div className="space-y-1">
-                        <Label>{t('In use by')}</Label>
-                        <Select
-                            value={filters.orchestra ?? ''}
-                            onChange={(e) =>
-                                handleOrchestraFilter(e.target.value)
-                            }
-                            className="max-w-[200px]"
-                        >
-                            <option value="">{t('All orchestras')}</option>
-                            {orchestras.map((o) => (
-                                <option key={o.id} value={o.id}>
-                                    {o.name}
+                <div className="space-y-4">
+                    <div className="flex items-end gap-4">
+                        <Input
+                            placeholder={t('Search...')}
+                            defaultValue={filters.search ?? ''}
+                            onChange={(e) => handleSearch(e.target.value)}
+                            className="max-w-sm"
+                        />
+                        <div className="space-y-1">
+                            <Label>{t('In use by')}</Label>
+                            <Select
+                                value={filters.orchestra ?? ''}
+                                onChange={(e) =>
+                                    handleOrchestraFilter(e.target.value)
+                                }
+                                className="max-w-[200px]"
+                            >
+                                <option value="">
+                                    {t('All orchestras')}
                                 </option>
-                            ))}
-                        </Select>
+                                {orchestras.map((o) => (
+                                    <option key={o.id} value={o.id}>
+                                        {o.name}
+                                    </option>
+                                ))}
+                            </Select>
+                        </div>
+                        <Button
+                            variant="outline"
+                            onClick={openInstrumentDialog}
+                        >
+                            <Filter className="h-4 w-4" />
+                            {selectedInstruments.length > 0
+                                ? `${t('Parts')} (${selectedInstruments.length})`
+                                : t('Filter by parts')}
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            onClick={() =>
+                                setShowMoreFilters((v) => !v)
+                            }
+                        >
+                            {showMoreFilters ? (
+                                <ChevronUp className="h-4 w-4" />
+                            ) : (
+                                <ChevronDown className="h-4 w-4" />
+                            )}
+                            {moreFilterCount > 0
+                                ? `${t('More filters')} (${moreFilterCount})`
+                                : t('More filters')}
+                        </Button>
+                        {hasAnyFilter && (
+                            <Button
+                                variant="ghost"
+                                onClick={clearAllFilters}
+                            >
+                                <X className="h-4 w-4" />
+                                {t('Clear filters')}
+                            </Button>
+                        )}
                     </div>
-                    <Button variant="outline" onClick={openInstrumentDialog}>
-                        <Filter className="h-4 w-4" />
-                        {selectedInstruments.length > 0
-                            ? `${t('Parts')} (${selectedInstruments.length})`
-                            : t('Filter by parts')}
-                    </Button>
+
+                    {showMoreFilters && (
+                        <div className="flex flex-wrap items-end gap-4">
+                            <div className="space-y-1">
+                                <Label>{t('Composer')}</Label>
+                                <Combobox
+                                    options={[
+                                        { value: '', label: t('All') },
+                                        ...filterOptions.composers.map(
+                                            (v) => ({
+                                                value: v,
+                                                label: v,
+                                            }),
+                                        ),
+                                    ]}
+                                    value={filters.composer ?? ''}
+                                    onChange={(v) =>
+                                        navigate({
+                                            composer: v || undefined,
+                                        })
+                                    }
+                                    placeholder={t('All')}
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <Label>{t('Arranger')}</Label>
+                                <Combobox
+                                    options={[
+                                        { value: '', label: t('All') },
+                                        ...filterOptions.arrangers.map(
+                                            (v) => ({
+                                                value: v,
+                                                label: v,
+                                            }),
+                                        ),
+                                    ]}
+                                    value={filters.arranger ?? ''}
+                                    onChange={(v) =>
+                                        navigate({
+                                            arranger: v || undefined,
+                                        })
+                                    }
+                                    placeholder={t('All')}
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <Label>{t('Publisher')}</Label>
+                                <Combobox
+                                    options={[
+                                        { value: '', label: t('All') },
+                                        ...filterOptions.publishers.map(
+                                            (v) => ({
+                                                value: v,
+                                                label: v,
+                                            }),
+                                        ),
+                                    ]}
+                                    value={filters.publisher ?? ''}
+                                    onChange={(v) =>
+                                        navigate({
+                                            publisher: v || undefined,
+                                        })
+                                    }
+                                    placeholder={t('All')}
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <Label>{t('Music type')}</Label>
+                                <Select
+                                    value={filters.music_type ?? ''}
+                                    onChange={(e) =>
+                                        navigate({
+                                            music_type:
+                                                e.target.value || undefined,
+                                        })
+                                    }
+                                >
+                                    <option value="">{t('All')}</option>
+                                    {filterOptions.musicTypes.map((v) => (
+                                        <option key={v} value={v}>
+                                            {v}
+                                        </option>
+                                    ))}
+                                </Select>
+                            </div>
+                            <div className="space-y-1">
+                                <Label>{t('Genre')}</Label>
+                                <Select
+                                    value={filters.genre ?? ''}
+                                    onChange={(e) =>
+                                        navigate({
+                                            genre:
+                                                e.target.value || undefined,
+                                        })
+                                    }
+                                >
+                                    <option value="">{t('All')}</option>
+                                    {filterOptions.genres.map((v) => (
+                                        <option key={v} value={v}>
+                                            {v}
+                                        </option>
+                                    ))}
+                                </Select>
+                            </div>
+                            <div className="space-y-1">
+                                <Label>{t('Difficulty')}</Label>
+                                <Select
+                                    value={filters.difficulty ?? ''}
+                                    onChange={(e) =>
+                                        navigate({
+                                            difficulty:
+                                                e.target.value || undefined,
+                                        })
+                                    }
+                                >
+                                    <option value="">{t('All')}</option>
+                                    {filterOptions.difficulties.map((v) => (
+                                        <option key={v} value={v}>
+                                            {v}
+                                        </option>
+                                    ))}
+                                </Select>
+                            </div>
+                            <div className="space-y-1">
+                                <Label>{t('Buy date from')}</Label>
+                                <Input
+                                    type="date"
+                                    value={filters.buy_date_from ?? ''}
+                                    onChange={(e) =>
+                                        navigate({
+                                            buy_date_from:
+                                                e.target.value || undefined,
+                                        })
+                                    }
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <Label>{t('Buy date to')}</Label>
+                                <Input
+                                    type="date"
+                                    value={filters.buy_date_to ?? ''}
+                                    onChange={(e) =>
+                                        navigate({
+                                            buy_date_to:
+                                                e.target.value || undefined,
+                                        })
+                                    }
+                                />
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="rounded-lg border">
@@ -275,9 +488,7 @@ export default function Index({
                                         colSpan={10}
                                         className="text-center text-muted-foreground"
                                     >
-                                        {filters.search ||
-                                        filters.orchestra ||
-                                        filters.instruments
+                                        {Object.values(filters).some(Boolean)
                                             ? t(
                                                   'No pieces found with the applied filters.',
                                               )
