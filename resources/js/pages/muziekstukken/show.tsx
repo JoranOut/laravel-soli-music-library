@@ -28,11 +28,14 @@ type Props = {
 };
 
 function Field({ label, value }: { label: string; value: string | null }) {
-    if (!value) return null;
     return (
         <div className="space-y-1">
             <dt className="text-sm text-muted-foreground">{label}</dt>
-            <dd className="text-sm">{value}</dd>
+            <dd className="text-sm">
+                {value || (
+                    <span className="text-muted-foreground">&mdash;</span>
+                )}
+            </dd>
         </div>
     );
 }
@@ -249,57 +252,37 @@ export default function Show({
                         />
                     </dl>
 
-                    {piece.genre && piece.genre.length > 0 && (
-                        <div className="space-y-1">
-                            <dt className="text-sm text-muted-foreground">
-                                {t('Genre')}
-                            </dt>
-                            <dd className="flex flex-wrap gap-1">
-                                {piece.genre.map((g) => (
+                    <div className="space-y-1">
+                        <dt className="text-sm text-muted-foreground">
+                            {t('Genre')}
+                        </dt>
+                        <dd className="flex flex-wrap gap-1">
+                            {piece.genre && piece.genre.length > 0 ? (
+                                piece.genre.map((g) => (
                                     <Badge key={g} variant="secondary">
                                         {g}
                                     </Badge>
-                                ))}
-                            </dd>
-                        </div>
-                    )}
-
-                    {piece.notes && (
-                        <div className="space-y-1">
-                            <dt className="text-sm text-muted-foreground">
-                                {t('Notes')}
-                            </dt>
-                            <dd className="text-sm whitespace-pre-line">
-                                {piece.notes}
-                            </dd>
-                        </div>
-                    )}
-
-                    {(!piece.composer ||
-                        !piece.arranger ||
-                        !piece.publisher ||
-                        !piece.difficulty ||
-                        !piece.bought_for ||
-                        !piece.buy_date ||
-                        !piece.archive_number ||
-                        !piece.music_type ||
-                        !piece.genre?.length ||
-                        !piece.notes) && (
-                        <p className="text-sm text-muted-foreground">
-                            {canEdit ? (
-                                <Link
-                                    href={`/muziekstukken/${piece.id}/edit`}
-                                    className="hover:underline"
-                                >
-                                    {t(
-                                        'Some fields are not filled in yet. Click here to complete them.',
-                                    )}
-                                </Link>
+                                ))
                             ) : (
-                                t('Some fields are not filled in yet.')
+                                <span className="text-sm text-muted-foreground">
+                                    &mdash;
+                                </span>
                             )}
-                        </p>
-                    )}
+                        </dd>
+                    </div>
+
+                    <div className="space-y-1">
+                        <dt className="text-sm text-muted-foreground">
+                            {t('Notes')}
+                        </dt>
+                        <dd className="text-sm whitespace-pre-line">
+                            {piece.notes || (
+                                <span className="text-muted-foreground">
+                                    &mdash;
+                                </span>
+                            )}
+                        </dd>
+                    </div>
 
                     {/* In use by */}
                     {visibleUsages.length > 0 && (
