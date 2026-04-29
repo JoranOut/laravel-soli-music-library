@@ -111,7 +111,7 @@ export default function Edit({
     const pieceFormRef = useRef<PieceFormHandle>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const audioInputRef = useRef<HTMLInputElement>(null);
-    const [_audioType, setAudioType] = useState<AudioType>(
+    const [, setAudioType] = useState<AudioType>(
         piece.audio_youtube_url
             ? 'youtube'
             : piece.audio_file_path
