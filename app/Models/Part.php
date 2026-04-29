@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['piece_id', 'instrument_type_id', 'is_conductor', 'voice', 'amount_bought', 'file_path', 'original_filename'])]
+#[Fillable(['piece_id', 'instrument_type_id', 'is_conductor', 'voice', 'amount_bought', 'note', 'file_path', 'original_filename'])]
 #[Hidden(['file_path'])]
 class Part extends Model
 {

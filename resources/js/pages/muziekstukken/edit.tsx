@@ -23,6 +23,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import {
     Table,
@@ -50,6 +51,7 @@ type PartUpload = {
     is_conductor: boolean;
     voice: string;
     amount_bought: string;
+    note: string;
 };
 
 type Props = {
@@ -61,6 +63,10 @@ type Props = {
     canArchive?: boolean;
     genreSuggestions?: string[];
     musicTypeSuggestions?: string[];
+    composerSuggestions?: string[];
+    arrangerSuggestions?: string[];
+    publisherSuggestions?: string[];
+    difficultySuggestions?: string[];
 };
 
 function instrumentOptions(types: InstrumentType[]): ComboboxOption[] {
@@ -84,6 +90,7 @@ type PartEdit = {
     is_conductor: boolean;
     voice: string;
     amount_bought: string;
+    note: string;
 };
 
 export default function Edit({
@@ -95,12 +102,16 @@ export default function Edit({
     canArchive = false,
     genreSuggestions = [],
     musicTypeSuggestions = [],
+    composerSuggestions = [],
+    arrangerSuggestions = [],
+    publisherSuggestions = [],
+    difficultySuggestions = [],
 }: Props) {
     const { t } = useTranslation();
     const pieceFormRef = useRef<PieceFormHandle>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const audioInputRef = useRef<HTMLInputElement>(null);
-    const [audioType, setAudioType] = useState<AudioType>(
+    const [, setAudioType] = useState<AudioType>(
         piece.audio_youtube_url
             ? 'youtube'
             : piece.audio_file_path
@@ -115,12 +126,13 @@ export default function Edit({
     const [partEdits, setPartEdits] = useState<Record<number, PartEdit>>({});
     const [saving, setSaving] = useState(false);
     const [showArchiveDialog, setShowArchiveDialog] = useState(false);
+    const [archiveConfirmTitle, setArchiveConfirmTitle] = useState('');
     const [usages, setUsages] = useState<UsageEdit[]>(() =>
         (piece.orchestra_usages ?? []).map((u) => ({
             id: u.id,
             orchestra_id: u.orchestra_id.toString(),
-            van: u.van ?? '',
-            tot: u.tot ?? '',
+            van: u.van?.split('T')[0] ?? '',
+            tot: u.tot?.split('T')[0] ?? '',
             details: u.details ?? '',
         })),
     );
@@ -138,6 +150,7 @@ export default function Edit({
                 is_conductor: part.is_conductor,
                 voice: part.voice?.toString() ?? '',
                 amount_bought: part.amount_bought?.toString() ?? '',
+                note: part.note ?? '',
             }
         );
     }
@@ -168,7 +181,8 @@ export default function Edit({
             edit.instrument_type_id !== part.instrument_type_id.toString() ||
             edit.is_conductor !== part.is_conductor ||
             edit.voice !== (part.voice?.toString() ?? '') ||
-            edit.amount_bought !== (part.amount_bought?.toString() ?? '')
+            edit.amount_bought !== (part.amount_bought?.toString() ?? '') ||
+            edit.note !== (part.note ?? '')
         );
     }
 
@@ -202,6 +216,7 @@ export default function Edit({
                         edit.amount_bought === ''
                             ? null
                             : Number(edit.amount_bought),
+                    note: edit.note === '' ? null : edit.note,
                 };
             });
 
@@ -246,6 +261,7 @@ export default function Edit({
                 is_conductor: guess.is_conductor ?? false,
                 voice: guess.voice ?? '',
                 amount_bought: '1',
+                note: '',
             };
         });
         setUploads((prev) => [...prev, ...newUploads]);
@@ -288,6 +304,9 @@ export default function Edit({
                     `parts[${i}][amount_bought]`,
                     upload.amount_bought,
                 );
+            }
+            if (upload.note !== '') {
+                formData.append(`parts[${i}][note]`, upload.note);
             }
         });
 
@@ -365,60 +384,54 @@ export default function Edit({
                         showOrchestraCheckboxes={false}
                         genreSuggestions={genreSuggestions}
                         musicTypeSuggestions={musicTypeSuggestions}
+                        composerSuggestions={composerSuggestions}
+                        arrangerSuggestions={arrangerSuggestions}
+                        publisherSuggestions={publisherSuggestions}
+                        difficultySuggestions={difficultySuggestions}
                         onAudioTypeChange={setAudioType}
+                        renderAudioMp3={
+                            <>
+                                {audioUrl && (
+                                    <audio
+                                        controls
+                                        src={audioUrl}
+                                        className="w-full max-w-md"
+                                    />
+                                )}
+                                <div className="flex items-center gap-4">
+                                    <input
+                                        ref={audioInputRef}
+                                        type="file"
+                                        accept=".mp3,audio/mpeg"
+                                        onChange={handleAudioUpload}
+                                        className="hidden"
+                                    />
+                                    <Button
+                                        variant="outline"
+                                        onClick={() =>
+                                            audioInputRef.current?.click()
+                                        }
+                                        disabled={audioUploading}
+                                    >
+                                        <Music />
+                                        {piece.audio_file_path
+                                            ? t('Replace MP3')
+                                            : t('Upload MP3')}
+                                    </Button>
+                                    {piece.audio_file_path && (
+                                        <Button
+                                            variant="outline"
+                                            onClick={handleAudioDelete}
+                                        >
+                                            <Trash2 className="text-destructive" />
+                                            {t('Remove audio')}
+                                        </Button>
+                                    )}
+                                </div>
+                            </>
+                        }
                     />
                 </section>
-
-                {/* Audio management */}
-                {canEditAllFields && audioType === 'mp3' && (
-                    <section className="space-y-6">
-                        <Heading
-                            title={t('Audio')}
-                            description={t(
-                                'Upload an MP3 audio reference for this piece',
-                            )}
-                        />
-
-                        {audioUrl && (
-                            <div className="space-y-2">
-                                <audio
-                                    controls
-                                    src={audioUrl}
-                                    className="w-full max-w-md"
-                                />
-                            </div>
-                        )}
-
-                        <div className="flex items-center gap-4">
-                            <input
-                                ref={audioInputRef}
-                                type="file"
-                                accept=".mp3,audio/mpeg"
-                                onChange={handleAudioUpload}
-                                className="hidden"
-                            />
-                            <Button
-                                variant="outline"
-                                onClick={() => audioInputRef.current?.click()}
-                                disabled={audioUploading}
-                            >
-                                <Music />
-                                {piece.audio_file_path
-                                    ? t('Replace MP3')
-                                    : t('Upload MP3')}
-                            </Button>
-                            {piece.audio_file_path && (
-                                <Button
-                                    variant="outline"
-                                    onClick={handleAudioDelete}
-                                >
-                                    <Trash2 className="text-destructive" />
-                                    {t('Remove audio')}
-                                </Button>
-                            )}
-                        </div>
-                    </section>
-                )}
 
                 {/* Parts management */}
                 {canEditAllFields && (
@@ -437,7 +450,13 @@ export default function Edit({
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>
+                                                {t('Original filename')}
+                                            </TableHead>
+                                            <TableHead>
                                                 {t('Instrument')}
+                                            </TableHead>
+                                            <TableHead className="w-[150px]">
+                                                {t('Note')}
                                             </TableHead>
                                             <TableHead className="w-[100px]">
                                                 {t('Voice')}
@@ -456,6 +475,9 @@ export default function Edit({
                                             const edit = getPartEdit(part);
                                             return (
                                                 <TableRow key={part.id}>
+                                                    <TableCell className="text-xs text-muted-foreground">
+                                                        {part.original_filename}
+                                                    </TableCell>
                                                     <TableCell>
                                                         <Combobox
                                                             options={
@@ -472,6 +494,22 @@ export default function Edit({
                                                                 )
                                                             }
                                                             className="max-w-[250px]"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Input
+                                                            maxLength={20}
+                                                            value={edit.note}
+                                                            onChange={(e) =>
+                                                                updatePartEdit(
+                                                                    part.id,
+                                                                    'note',
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="w-[130px]"
+                                                            placeholder="-"
                                                         />
                                                     </TableCell>
                                                     <TableCell>
@@ -580,6 +618,9 @@ export default function Edit({
                                                 <TableHead>
                                                     {t('Instrument')}
                                                 </TableHead>
+                                                <TableHead className="w-[150px]">
+                                                    {t('Note')}
+                                                </TableHead>
                                                 <TableHead className="w-[100px]">
                                                     {t('Voice')}
                                                 </TableHead>
@@ -614,6 +655,22 @@ export default function Edit({
                                                                 )
                                                             }
                                                             className="max-w-[250px]"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Input
+                                                            maxLength={20}
+                                                            value={upload.note}
+                                                            onChange={(e) =>
+                                                                updateUpload(
+                                                                    i,
+                                                                    'note',
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="w-[130px]"
+                                                            placeholder="-"
                                                         />
                                                     </TableCell>
                                                     <TableCell>
@@ -928,7 +985,10 @@ export default function Edit({
 
             <Dialog
                 open={showArchiveDialog}
-                onOpenChange={setShowArchiveDialog}
+                onOpenChange={(open) => {
+                    setShowArchiveDialog(open);
+                    if (!open) setArchiveConfirmTitle('');
+                }}
             >
                 <DialogContent>
                     <DialogHeader>
@@ -940,6 +1000,20 @@ export default function Edit({
                             )}
                         </DialogDescription>
                     </DialogHeader>
+                    <div className="space-y-2">
+                        <Label>
+                            {t('Type ":title" to confirm', {
+                                title: piece.title,
+                            })}
+                        </Label>
+                        <Input
+                            value={archiveConfirmTitle}
+                            onChange={(e) =>
+                                setArchiveConfirmTitle(e.target.value)
+                            }
+                            placeholder={piece.title}
+                        />
+                    </div>
                     <DialogFooter>
                         <Button
                             variant="outline"
@@ -949,8 +1023,10 @@ export default function Edit({
                         </Button>
                         <Button
                             variant="destructive"
+                            disabled={archiveConfirmTitle !== piece.title}
                             onClick={() => {
                                 setShowArchiveDialog(false);
+                                setArchiveConfirmTitle('');
                                 router.post(
                                     `/muziekstukken/${piece.id}/archive`,
                                 );

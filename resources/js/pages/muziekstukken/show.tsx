@@ -449,6 +449,12 @@ export default function Show({
                                                             part.instrument_type
                                                                 .name
                                                         }
+                                                        {part.note && (
+                                                            <span className="text-muted-foreground">
+                                                                {' - '}
+                                                                {part.note}
+                                                            </span>
+                                                        )}
                                                     </TableCell>
                                                     <TableCell>
                                                         {part.voice ?? (

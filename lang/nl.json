@@ -102,5 +102,14 @@
     "Upload an MP3 audio reference for this piece": "Upload een MP3-audiovoorbeeld voor dit muziekstuk",
     "Replace MP3": "MP3 vervangen",
     "Upload MP3": "MP3 uploaden",
-    "Remove audio": "Audio verwijderen"
+    "Remove audio": "Audio verwijderen",
+    "Original filename": "Originele bestandsnaam",
+    "Note": "Notitie",
+    "Instrument types": "Instrumentsoorten",
+    "More filters": "Meer filters",
+    "All": "Alle",
+    "Buy date from": "Aankoopdatum vanaf",
+    "Buy date to": "Aankoopdatum tot",
+    "Type \":title\" to confirm": "Typ \":title\" ter bevestiging",
+    "Clear filters": "Filters wissen"
 }

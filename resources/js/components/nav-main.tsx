@@ -1,5 +1,8 @@
+import type { InertiaLinkProps } from '@inertiajs/react';
 import { Link } from '@inertiajs/react';
 import { ChevronRight } from 'lucide-react';
+import { forwardRef } from 'react';
+import type { ComponentPropsWithoutRef } from 'react';
 import {
     Collapsible,
     CollapsibleContent,
@@ -17,6 +20,34 @@ import {
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { NavItem } from '@/types';
+
+const NavLink = forwardRef<
+    HTMLAnchorElement,
+    Omit<ComponentPropsWithoutRef<'a'>, 'href'> & {
+        href: NonNullable<InertiaLinkProps['href']>;
+        external?: boolean;
+    }
+>(function NavLink({ href, external, children, ...props }, ref) {
+    if (external) {
+        const url = typeof href === 'string' ? href : href.url;
+        return (
+            <a
+                ref={ref}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                {...props}
+            >
+                {children}
+            </a>
+        );
+    }
+    return (
+        <Link ref={ref} href={href} className={props.className}>
+            {children}
+        </Link>
+    );
+});
 
 export function NavMain({
     items = [],
@@ -66,12 +97,15 @@ export function NavMain({
                                                     item.href,
                                                 )}
                                             >
-                                                <Link href={item.href}>
+                                                <NavLink
+                                                    href={item.href}
+                                                    external={item.external}
+                                                >
                                                     <span>
                                                         {item.allLabel ??
                                                             item.title}
                                                     </span>
-                                                </Link>
+                                                </NavLink>
                                             </SidebarMenuSubButton>
                                         </SidebarMenuSubItem>
                                         {item.children.map((child) => (
@@ -84,11 +118,16 @@ export function NavMain({
                                                         child.href,
                                                     )}
                                                 >
-                                                    <Link href={child.href}>
+                                                    <NavLink
+                                                        href={child.href}
+                                                        external={
+                                                            child.external
+                                                        }
+                                                    >
                                                         <span>
                                                             {child.title}
                                                         </span>
-                                                    </Link>
+                                                    </NavLink>
                                                 </SidebarMenuSubButton>
                                             </SidebarMenuSubItem>
                                         ))}
@@ -103,10 +142,13 @@ export function NavMain({
                                 isActive={isCurrentUrl(item.href)}
                                 tooltip={{ children: item.title }}
                             >
-                                <Link href={item.href}>
+                                <NavLink
+                                    href={item.href}
+                                    external={item.external}
+                                >
                                     {item.icon && <item.icon />}
                                     <span>{item.title}</span>
-                                </Link>
+                                </NavLink>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     ),

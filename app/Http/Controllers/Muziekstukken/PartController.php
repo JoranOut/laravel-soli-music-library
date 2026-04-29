@@ -25,6 +25,7 @@ class PartController extends Controller
             'parts.*.is_conductor' => ['sometimes', 'boolean'],
             'parts.*.voice' => ['nullable', 'integer', 'min:1'],
             'parts.*.amount_bought' => ['nullable', 'integer', 'min:0'],
+            'parts.*.note' => ['nullable', 'string', 'max:20'],
         ]);
 
         foreach ($validated['parts'] as $partData) {
@@ -36,6 +37,7 @@ class PartController extends Controller
                 'is_conductor' => $partData['is_conductor'] ?? false,
                 'voice' => $partData['voice'] ?? null,
                 'amount_bought' => $partData['amount_bought'] ?? null,
+                'note' => $partData['note'] ?? null,
                 'file_path' => $path,
                 'original_filename' => $file->getClientOriginalName(),
             ]);
@@ -55,6 +57,7 @@ class PartController extends Controller
             'is_conductor' => ['required', 'boolean'],
             'voice' => ['nullable', 'integer', 'min:1'],
             'amount_bought' => ['nullable', 'integer', 'min:0'],
+            'note' => ['nullable', 'string', 'max:20'],
         ]);
 
         $part->update($validated);
@@ -110,6 +113,9 @@ class PartController extends Controller
         $downloadName = str($piece->title)->slug().'-'.str($part->instrumentType->name)->slug();
         if ($part->voice !== null) {
             $downloadName .= '-'.$part->voice;
+        }
+        if ($part->note !== null && $part->note !== '') {
+            $downloadName .= '-'.str($part->note)->slug();
         }
         $downloadName .= '.pdf';
 

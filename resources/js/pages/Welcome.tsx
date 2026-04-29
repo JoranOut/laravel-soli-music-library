@@ -104,6 +104,12 @@ export default function Welcome({ orchestraGroups }: Props) {
                                                             {part.voice !=
                                                                 null &&
                                                                 ` ${part.voice}`}
+                                                            {part.note && (
+                                                                <span className="text-muted-foreground">
+                                                                    {' - '}
+                                                                    {part.note}
+                                                                </span>
+                                                            )}
                                                         </TableCell>
                                                         <TableCell>
                                                             <div className="flex items-center gap-1">

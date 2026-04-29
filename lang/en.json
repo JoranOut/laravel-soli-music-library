@@ -102,5 +102,14 @@
     "Upload an MP3 audio reference for this piece": "Upload an MP3 audio reference for this piece",
     "Replace MP3": "Replace MP3",
     "Upload MP3": "Upload MP3",
-    "Remove audio": "Remove audio"
+    "Remove audio": "Remove audio",
+    "Original filename": "Original filename",
+    "Note": "Note",
+    "Instrument types": "Instrument types",
+    "More filters": "More filters",
+    "All": "All",
+    "Buy date from": "Buy date from",
+    "Buy date to": "Buy date to",
+    "Type \":title\" to confirm": "Type \":title\" to confirm",
+    "Clear filters": "Clear filters"
 }
