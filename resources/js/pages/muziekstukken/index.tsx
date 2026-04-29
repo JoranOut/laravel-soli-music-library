@@ -472,6 +472,7 @@ export default function Index({
                     <Table>
                         <TableHeader>
                             <TableRow>
+                                <TableHead>{t('Archive number')}</TableHead>
                                 <TableHead>{t('Title')}</TableHead>
                                 <TableHead>{t('Composer')}</TableHead>
                                 <TableHead>{t('Arranger')}</TableHead>
@@ -488,7 +489,7 @@ export default function Index({
                             {pieces.data.length === 0 && (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={10}
+                                        colSpan={11}
                                         className="text-center text-muted-foreground"
                                     >
                                         {Object.values(filters).some(Boolean)
@@ -501,6 +502,9 @@ export default function Index({
                             )}
                             {pieces.data.map((piece) => (
                                 <TableRow key={piece.id}>
+                                    <TableCell>
+                                        {piece.archive_number ?? '-'}
+                                    </TableCell>
                                     <TableCell className="font-medium">
                                         <Link
                                             href={`/muziekstukken/${piece.id}`}
