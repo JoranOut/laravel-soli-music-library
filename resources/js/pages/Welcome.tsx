@@ -27,6 +27,12 @@ async function handleDownload(partId: number) {
     window.location.href = url;
 }
 
+async function handleView(partId: number) {
+    const response = await fetch(`/parts/${partId}/view-url`);
+    const { url } = await response.json();
+    window.open(url, '_blank');
+}
+
 export default function Welcome({ orchestraGroups }: Props) {
     const { t } = useTranslation();
     const { isPlaying, isCurrentTrack, toggle } = useAudioPlayer();
@@ -86,7 +92,17 @@ export default function Welcome({ orchestraGroups }: Props) {
                                                 piece.parts.map((part) => (
                                                     <TableRow key={part.id}>
                                                         <TableCell>
-                                                            {piece.title}
+                                                            <button
+                                                                type="button"
+                                                                className="cursor-pointer text-left hover:underline"
+                                                                onClick={() =>
+                                                                    handleView(
+                                                                        part.id,
+                                                                    )
+                                                                }
+                                                            >
+                                                                {piece.title}
+                                                            </button>
                                                         </TableCell>
                                                         <TableCell>
                                                             {piece.composer ?? (
