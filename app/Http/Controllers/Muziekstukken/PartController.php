@@ -91,6 +91,47 @@ class PartController extends Controller
         ]);
     }
 
+    public function viewUrl(Part $part): JsonResponse
+    {
+        $access = app(MusicAccessService::class);
+        $visibleIds = $access->visibleParts($part->piece)->pluck('id')->toArray();
+
+        if (! in_array($part->id, $visibleIds)) {
+            abort(403);
+        }
+
+        return response()->json([
+            'url' => URL::temporarySignedRoute('parts.view', now()->addDay(), ['part' => $part->id]),
+        ]);
+    }
+
+    public function view(Request $request, Part $part): StreamedResponse
+    {
+        $access = app(MusicAccessService::class);
+        $piece = $part->piece;
+
+        $visibleIds = $access->visibleParts($piece)->pluck('id')->toArray();
+
+        if (! in_array($part->id, $visibleIds)) {
+            abort(403);
+        }
+
+        $part->loadMissing('instrumentType');
+        $displayName = str($piece->title)->slug().'-'.str($part->instrumentType->name)->slug();
+        if ($part->voice !== null) {
+            $displayName .= '-'.$part->voice;
+        }
+        if ($part->note !== null && $part->note !== '') {
+            $displayName .= '-'.str($part->note)->slug();
+        }
+        $displayName .= '.pdf';
+
+        return Storage::disk('sheets')->response($part->file_path, $displayName, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$displayName.'"',
+        ]);
+    }
+
     public function download(Request $request, Part $part): StreamedResponse
     {
         $access = app(MusicAccessService::class);

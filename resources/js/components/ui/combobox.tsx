@@ -17,9 +17,10 @@ type ComboboxProps = {
     placeholder?: string;
     className?: string;
     allowCustom?: boolean;
+    onEnterCustom?: (value: string) => void;
 };
 
-function Combobox({ options, value, onChange, placeholder, className, allowCustom = false }: ComboboxProps) {
+function Combobox({ options, value, onChange, placeholder, className, allowCustom = false, onEnterCustom }: ComboboxProps) {
     const [open, setOpen] = useState(false);
     const [search, setSearch] = useState('');
     const inputRef = useRef<HTMLInputElement>(null);
@@ -56,6 +57,21 @@ function Combobox({ options, value, onChange, placeholder, className, allowCusto
         if (e.key === 'Escape') {
             setOpen(false);
             setSearch('');
+        }
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const trimmed = search.trim();
+            if (!trimmed) return;
+            const exact = options.find((o) => o.label.toLowerCase() === trimmed.toLowerCase());
+            if (exact) {
+                handleSelect(exact.value);
+            } else if (onEnterCustom) {
+                onEnterCustom(trimmed);
+                setSearch('');
+                setOpen(false);
+            } else if (allowCustom) {
+                handleSelect(trimmed);
+            }
         }
     }
 

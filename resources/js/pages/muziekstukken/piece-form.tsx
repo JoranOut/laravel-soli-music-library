@@ -355,8 +355,12 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                                     setData('genre', [...data.genre, trimmed]);
                                 }
                             }}
+                            onEnterCustom={(v) => {
+                                if (!data.genre.includes(v)) {
+                                    setData('genre', [...data.genre, v]);
+                                }
+                            }}
                             placeholder={t('Add genre...')}
-                            allowCustom
                         />
                         {pageErrors.genre && (
                             <p className="text-sm text-destructive">
