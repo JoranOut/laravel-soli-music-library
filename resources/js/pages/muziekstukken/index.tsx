@@ -15,7 +15,6 @@ import { YouTubeIcon } from '@/components/icons/youtube';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import type { ComboboxOption } from '@/components/ui/combobox';
 import { Combobox } from '@/components/ui/combobox';
 import {
     Dialog,
@@ -95,7 +94,6 @@ type Props = {
         buy_date_to?: string;
     };
     canEdit: boolean;
-    canEditUsages: boolean;
 };
 
 export default function Index({
@@ -105,21 +103,9 @@ export default function Index({
     filterOptions,
     filters,
     canEdit,
-    canEditUsages,
 }: Props) {
     const { t } = useTranslation();
     const { isPlaying, isCurrentTrack, toggle } = useAudioPlayer();
-    const [usageDialogPieceId, setUsageDialogPieceId] = useState<number | null>(
-        null,
-    );
-    const [usageForm, setUsageForm] = useState({
-        orchestra_id: '',
-        van: '',
-        tot: '',
-        details: '',
-    });
-    const [submitting, setSubmitting] = useState(false);
-
     // Instruments filter state: { instrumentTypeId: minVoiceCount }
     const [instrumentVoices, setInstrumentVoices] = useState<
         Record<string, number>
@@ -196,11 +182,6 @@ export default function Index({
         }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const orchestraOptions: ComboboxOption[] = orchestras.map((o) => ({
-        value: o.id.toString(),
-        label: o.name,
-    }));
-
     const familyGroups = groupByFamily(instrumentTypes);
 
     const moreFilterCount = [
@@ -226,32 +207,6 @@ export default function Index({
             '/muziekstukken',
             {},
             { preserveState: true, replace: true },
-        );
-    }
-
-    function openUsageDialog(pieceId: number) {
-        setUsageForm({ orchestra_id: '', van: '', tot: '', details: '' });
-        setUsageDialogPieceId(pieceId);
-    }
-
-    function submitUsage() {
-        if (!usageDialogPieceId || !usageForm.orchestra_id) return;
-        setSubmitting(true);
-        router.post(
-            `/muziekstukken/${usageDialogPieceId}/usages`,
-            {
-                orchestra_id: Number(usageForm.orchestra_id),
-                van: usageForm.van || null,
-                tot: usageForm.tot || null,
-                details: usageForm.details || null,
-            },
-            {
-                preserveScroll: true,
-                onFinish: () => {
-                    setSubmitting(false);
-                    setUsageDialogPieceId(null);
-                },
-            },
         );
     }
 
@@ -828,81 +783,6 @@ export default function Index({
                             onClick={() => applyInstrumentFilter(dialogVoices)}
                         >
                             {t('Apply')}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog
-                open={usageDialogPieceId !== null}
-                onOpenChange={(open) => {
-                    if (!open) setUsageDialogPieceId(null);
-                }}
-            >
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{t('Add usage')}</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <Label>{t('Orchestras')}</Label>
-                            <Combobox
-                                options={orchestraOptions}
-                                value={usageForm.orchestra_id}
-                                onChange={(v) =>
-                                    setUsageForm((f) => ({
-                                        ...f,
-                                        orchestra_id: v,
-                                    }))
-                                }
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>{t('From')}</Label>
-                            <Input
-                                type="date"
-                                value={usageForm.van}
-                                onChange={(e) =>
-                                    setUsageForm((f) => ({
-                                        ...f,
-                                        van: e.target.value,
-                                    }))
-                                }
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>{t('Until')}</Label>
-                            <Input
-                                type="date"
-                                value={usageForm.tot}
-                                onChange={(e) =>
-                                    setUsageForm((f) => ({
-                                        ...f,
-                                        tot: e.target.value,
-                                    }))
-                                }
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>{t('Details')}</Label>
-                            <Input
-                                value={usageForm.details}
-                                onChange={(e) =>
-                                    setUsageForm((f) => ({
-                                        ...f,
-                                        details: e.target.value,
-                                    }))
-                                }
-                                placeholder={t('Details')}
-                            />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button
-                            onClick={submitUsage}
-                            disabled={submitting || !usageForm.orchestra_id}
-                        >
-                            {t('Save')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
