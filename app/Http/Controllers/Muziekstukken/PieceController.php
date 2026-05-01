@@ -120,12 +120,16 @@ class PieceController extends Controller
             ? URL::temporarySignedRoute('muziekstukken.audio.stream', now()->addDay(), ['piece' => $piece->id])
             : null;
 
+        $canEdit = $access->isEditor() || $access->isDirigent();
+
         return Inertia::render('muziekstukken/show', [
             'piece' => $piece,
             'parts' => $parts,
             'audioUrl' => $audioUrl,
             'instrumentTypes' => InstrumentType::with('instrumentFamily')->orderBy('sort_order')->get(),
-            'canEdit' => $access->isEditor() || $access->isDirigent(),
+            'canEdit' => $canEdit,
+            'canEditUsages' => $canEdit || $access->isDirigent(),
+            'orchestras' => Orchestra::where('is_active', true)->orderBy('sort_order')->get(),
         ]);
     }
 

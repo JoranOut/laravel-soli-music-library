@@ -1,10 +1,21 @@
-import { Head, Link } from '@inertiajs/react';
-import { Download, History, Pause, Pencil, Play } from 'lucide-react';
+import { Head, Link, router } from '@inertiajs/react';
+import { Download, History, Pause, Pencil, Play, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Heading } from '@/components/heading';
 import { YouTubeIcon } from '@/components/icons/youtube';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import type { ComboboxOption } from '@/components/ui/combobox';
+import { Combobox } from '@/components/ui/combobox';
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
     Table,
     TableBody,
@@ -17,14 +28,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
 import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
-import type { InstrumentType, Part, Piece } from '@/types/muziekstukken';
+import type { InstrumentType, Orchestra, Part, Piece } from '@/types/muziekstukken';
 
 type Props = {
     piece: Piece;
     parts: Part[];
     audioUrl: string | null;
     instrumentTypes: InstrumentType[];
+    orchestras: Orchestra[];
     canEdit: boolean;
+    canEditUsages: boolean;
 };
 
 function Field({ label, value }: { label: string; value: string | null }) {
@@ -195,11 +208,47 @@ export default function Show({
     parts,
     audioUrl,
     instrumentTypes,
+    orchestras,
     canEdit,
+    canEditUsages,
 }: Props) {
     const { t } = useTranslation();
     const { isPlaying, isCurrentTrack, toggle } = useAudioPlayer();
     const [showPreviousUsages, setShowPreviousUsages] = useState(false);
+    const [usageDialogOpen, setUsageDialogOpen] = useState(false);
+    const [usageForm, setUsageForm] = useState({
+        orchestra_id: '',
+        van: '',
+        tot: '',
+        details: '',
+    });
+    const [submitting, setSubmitting] = useState(false);
+
+    const orchestraOptions: ComboboxOption[] = orchestras.map((o) => ({
+        value: o.id.toString(),
+        label: o.name,
+    }));
+
+    function submitUsage() {
+        if (!usageForm.orchestra_id) return;
+        setSubmitting(true);
+        router.post(
+            `/muziekstukken/${piece.id}/usages`,
+            {
+                orchestra_id: Number(usageForm.orchestra_id),
+                van: usageForm.van || null,
+                tot: usageForm.tot || null,
+                details: usageForm.details || null,
+            },
+            {
+                preserveScroll: true,
+                onFinish: () => {
+                    setSubmitting(false);
+                    setUsageDialogOpen(false);
+                },
+            },
+        );
+    }
 
     const currentUsages = (piece.orchestra_usages ?? []).filter((u) => !u.tot);
     const previousUsages = (piece.orchestra_usages ?? []).filter((u) => u.tot);
@@ -220,13 +269,27 @@ export default function Show({
                 <section className="space-y-6">
                     <div className="flex items-center justify-between">
                         <Heading title={`${piece.archive_number ? piece.archive_number + ' — ' : ''}${piece.title}`} />
-                        {canEdit && (
-                            <Button variant="outline" size="icon" asChild>
-                                <Link href={`/muziekstukken/${piece.id}/edit`}>
-                                    <Pencil />
-                                </Link>
-                            </Button>
-                        )}
+                        <div className="flex items-center gap-2">
+                            {canEditUsages && (
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        setUsageForm({ orchestra_id: '', van: '', tot: '', details: '' });
+                                        setUsageDialogOpen(true);
+                                    }}
+                                >
+                                    <Plus />
+                                    {t('Add usage')}
+                                </Button>
+                            )}
+                            {canEdit && (
+                                <Button variant="outline" size="icon" asChild>
+                                    <Link href={`/muziekstukken/${piece.id}/edit`}>
+                                        <Pencil />
+                                    </Link>
+                                </Button>
+                            )}
+                        </div>
                     </div>
 
                     <dl className="grid gap-4 sm:grid-cols-2">
@@ -505,6 +568,80 @@ export default function Show({
                     </Tabs>
                 </section>
             </div>
+            <Dialog
+                open={usageDialogOpen}
+                onOpenChange={(open) => {
+                    if (!open) setUsageDialogOpen(false);
+                }}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('Add usage')}</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label>{t('Orchestras')}</Label>
+                            <Combobox
+                                options={orchestraOptions}
+                                value={usageForm.orchestra_id}
+                                onChange={(v) =>
+                                    setUsageForm((f) => ({
+                                        ...f,
+                                        orchestra_id: v,
+                                    }))
+                                }
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>{t('From')}</Label>
+                            <Input
+                                type="date"
+                                value={usageForm.van}
+                                onChange={(e) =>
+                                    setUsageForm((f) => ({
+                                        ...f,
+                                        van: e.target.value,
+                                    }))
+                                }
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>{t('Until')}</Label>
+                            <Input
+                                type="date"
+                                value={usageForm.tot}
+                                onChange={(e) =>
+                                    setUsageForm((f) => ({
+                                        ...f,
+                                        tot: e.target.value,
+                                    }))
+                                }
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>{t('Details')}</Label>
+                            <Input
+                                value={usageForm.details}
+                                onChange={(e) =>
+                                    setUsageForm((f) => ({
+                                        ...f,
+                                        details: e.target.value,
+                                    }))
+                                }
+                                placeholder={t('Details')}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            onClick={submitUsage}
+                            disabled={submitting || !usageForm.orchestra_id}
+                        >
+                            {t('Save')}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }
