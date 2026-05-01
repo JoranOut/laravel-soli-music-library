@@ -476,6 +476,9 @@ export default function Show({
                                                     {t('Instrument')}
                                                 </TableHead>
                                                 <TableHead>
+                                                    {t('Original filename')}
+                                                </TableHead>
+                                                <TableHead>
                                                     {t('Voice')}
                                                 </TableHead>
                                                 <TableHead>
@@ -501,6 +504,9 @@ export default function Show({
                                                                 {part.note}
                                                             </span>
                                                         )}
+                                                    </TableCell>
+                                                    <TableCell className="text-muted-foreground">
+                                                        {part.original_filename}
                                                     </TableCell>
                                                     <TableCell>
                                                         {part.voice ?? (
