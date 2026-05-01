@@ -8,7 +8,7 @@ import {
     Trash2,
     Upload,
 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import { Heading } from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -34,6 +34,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { useTranslation } from '@/hooks/use-translation';
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
 import AppLayout from '@/layouts/app-layout';
 import { guessFromFilename } from '@/lib/instrument-guess';
 import type {
@@ -42,7 +43,8 @@ import type {
     Part,
     Piece,
 } from '@/types/muziekstukken';
-import type { AudioType, PieceFormHandle } from './piece-form';
+import PartsMatrix from './parts-matrix';
+import type { PieceFormHandle } from './piece-form';
 import PieceForm from './piece-form';
 
 type PartUpload = {
@@ -67,6 +69,7 @@ type Props = {
     arrangerSuggestions?: string[];
     publisherSuggestions?: string[];
     difficultySuggestions?: string[];
+    boughtForOccasionSuggestions?: string[];
 };
 
 function instrumentOptions(types: InstrumentType[]): ComboboxOption[] {
@@ -106,18 +109,12 @@ export default function Edit({
     arrangerSuggestions = [],
     publisherSuggestions = [],
     difficultySuggestions = [],
+    boughtForOccasionSuggestions = [],
 }: Props) {
     const { t } = useTranslation();
     const pieceFormRef = useRef<PieceFormHandle>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const audioInputRef = useRef<HTMLInputElement>(null);
-    const [, setAudioType] = useState<AudioType>(
-        piece.audio_youtube_url
-            ? 'youtube'
-            : piece.audio_file_path
-              ? 'mp3'
-              : 'none',
-    );
     const [audioUploading, setAudioUploading] = useState(false);
     const [uploads, setUploads] = useState<PartUpload[]>([]);
     const [uploading, setUploading] = useState(false);
@@ -125,6 +122,7 @@ export default function Edit({
     const [endUsageIndex, setEndUsageIndex] = useState<number | null>(null);
     const [partEdits, setPartEdits] = useState<Record<number, PartEdit>>({});
     const [saving, setSaving] = useState(false);
+    const [showPastUsages, setShowPastUsages] = useState(false);
     const [showArchiveDialog, setShowArchiveDialog] = useState(false);
     const [archiveConfirmTitle, setArchiveConfirmTitle] = useState('');
     const [usages, setUsages] = useState<UsageEdit[]>(() =>
@@ -135,6 +133,70 @@ export default function Edit({
             tot: u.tot?.split('T')[0] ?? '',
             details: u.details ?? '',
         })),
+    );
+
+    const [pieceFormDirty, setPieceFormDirty] = useState(false);
+    const [currentStatus, setCurrentStatus] = useState(piece.status);
+
+    // Matrix edits for fileless parts (non-digital pieces)
+    const [matrixEdits, setMatrixEdits] = useState<Record<string, number>>(
+        () => {
+            const edits: Record<string, number> = {};
+            // Initialize from existing fileless parts
+            for (const part of piece.parts.filter(
+                (p) => p.original_filename === null,
+            )) {
+                if (part.is_conductor) {
+                    edits['conductor'] =
+                        (edits['conductor'] ?? 0) + (part.amount_bought ?? 1);
+                } else {
+                    const voice = part.voice ?? 1;
+                    const key = `type_${part.instrument_type_id}_v${voice}`;
+                    edits[key] = (edits[key] ?? 0) + (part.amount_bought ?? 1);
+                }
+            }
+            return edits;
+        },
+    );
+    const [initialMatrixEdits] = useState(() => ({ ...matrixEdits }));
+
+    const initialUsages = useMemo(
+        () =>
+            (piece.orchestra_usages ?? []).map((u) => ({
+                id: u.id,
+                orchestra_id: u.orchestra_id.toString(),
+                van: u.van?.split('T')[0] ?? '',
+                tot: u.tot?.split('T')[0] ?? '',
+                details: u.details ?? '',
+            })),
+        [piece.orchestra_usages],
+    );
+
+    const hasPartChanges =
+        Object.keys(partEdits).length > 0 &&
+        piece.parts.some((p) => hasPartChanged(p));
+
+    const hasUsageChanges =
+        usages.length !== initialUsages.length ||
+        usages.some(
+            (u, i) =>
+                !initialUsages[i] ||
+                u.orchestra_id !== initialUsages[i].orchestra_id ||
+                u.van !== initialUsages[i].van ||
+                u.tot !== initialUsages[i].tot ||
+                u.details !== initialUsages[i].details,
+        );
+
+    const hasMatrixChanges =
+        Object.keys(matrixEdits).some(
+            (key) => (matrixEdits[key] ?? 0) !== (initialMatrixEdits[key] ?? 0),
+        ) ||
+        Object.keys(initialMatrixEdits).some(
+            (key) => (matrixEdits[key] ?? 0) !== (initialMatrixEdits[key] ?? 0),
+        );
+
+    useUnsavedChanges(
+        pieceFormDirty || hasPartChanges || hasUsageChanges || hasMatrixChanges,
     );
 
     const instOptions = instrumentOptions(instrumentTypes);
@@ -199,6 +261,64 @@ export default function Edit({
         );
     }
 
+    function handleMatrixChange(key: string, value: number) {
+        setMatrixEdits((prev) => {
+            const next = { ...prev, [key]: value };
+
+            // When setting a voice to 0, remove higher voices
+            const match = key.match(/^type_(\d+)_v(\d+)$/);
+            if (match && value === 0) {
+                const typeId = match[1];
+                let v = parseInt(match[2]) + 1;
+                while (`type_${typeId}_v${v}` in next) {
+                    delete next[`type_${typeId}_v${v}`];
+                    v++;
+                }
+            }
+
+            return next;
+        });
+    }
+
+    function buildMatrixPayload() {
+        const payload: {
+            instrument_type_id: number;
+            is_conductor: boolean;
+            voice: number | null;
+            amount_bought: number;
+        }[] = [];
+
+        // Conductor entry
+        if (matrixEdits['conductor'] !== undefined) {
+            // Use the first instrument type as a placeholder for conductor parts
+            const conductorTypeId = instrumentTypes[0]?.id;
+            if (conductorTypeId) {
+                payload.push({
+                    instrument_type_id: conductorTypeId,
+                    is_conductor: true,
+                    voice: null,
+                    amount_bought: matrixEdits['conductor'],
+                });
+            }
+        }
+
+        // Regular instrument types — include all voices present in matrixEdits
+        for (const type of instrumentTypes) {
+            let v = 1;
+            while (`type_${type.id}_v${v}` in matrixEdits) {
+                payload.push({
+                    instrument_type_id: type.id,
+                    is_conductor: false,
+                    voice: v,
+                    amount_bought: matrixEdits[`type_${type.id}_v${v}`],
+                });
+                v++;
+            }
+        }
+
+        return payload;
+    }
+
     function saveAll() {
         const pieceData = pieceFormRef.current?.getData();
         if (!pieceData) return;
@@ -230,6 +350,10 @@ export default function Edit({
                 details: u.details || null,
             }));
 
+        // Build matrix_parts payload for non-digital pieces
+        const matrixPartsPayload =
+            currentStatus !== 'digitaal' ? buildMatrixPayload() : undefined;
+
         setSaving(true);
         router.put(
             `/muziekstukken/${piece.id}`,
@@ -237,6 +361,9 @@ export default function Edit({
                 ...pieceData,
                 usages: usagePayload,
                 parts: changedParts,
+                ...(matrixPartsPayload
+                    ? { matrix_parts: matrixPartsPayload }
+                    : {}),
             },
             {
                 preserveScroll: true,
@@ -388,7 +515,11 @@ export default function Edit({
                         arrangerSuggestions={arrangerSuggestions}
                         publisherSuggestions={publisherSuggestions}
                         difficultySuggestions={difficultySuggestions}
-                        onAudioTypeChange={setAudioType}
+                        boughtForOccasionSuggestions={
+                            boughtForOccasionSuggestions
+                        }
+                        onDirtyChange={setPieceFormDirty}
+                        onStatusChange={setCurrentStatus}
                         renderAudioMp3={
                             <>
                                 {audioUrl && (
@@ -443,322 +574,227 @@ export default function Edit({
                             )}
                         />
 
-                        {/* Existing parts */}
-                        {piece.parts.length > 0 && (
-                            <div className="rounded-lg border">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>
-                                                {t('Original filename')}
-                                            </TableHead>
-                                            <TableHead>
-                                                {t('Instrument')}
-                                            </TableHead>
-                                            <TableHead className="w-[150px]">
-                                                {t('Note')}
-                                            </TableHead>
-                                            <TableHead className="w-[100px]">
-                                                {t('Voice')}
-                                            </TableHead>
-                                            <TableHead className="w-[120px]">
-                                                {t('Amount bought')}
-                                            </TableHead>
-                                            <TableHead>
-                                                {t('Partituur')}
-                                            </TableHead>
-                                            <TableHead className="w-[80px]" />
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {piece.parts.map((part) => {
-                                            const edit = getPartEdit(part);
-                                            return (
-                                                <TableRow key={part.id}>
-                                                    <TableCell className="text-xs text-muted-foreground">
-                                                        {part.original_filename}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Combobox
-                                                            options={
-                                                                instOptions
-                                                            }
-                                                            value={
-                                                                edit.instrument_type_id
-                                                            }
-                                                            onChange={(v) =>
-                                                                updatePartEdit(
-                                                                    part.id,
-                                                                    'instrument_type_id',
-                                                                    v,
-                                                                )
-                                                            }
-                                                            className="max-w-[250px]"
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Input
-                                                            maxLength={20}
-                                                            value={edit.note}
-                                                            onChange={(e) =>
-                                                                updatePartEdit(
-                                                                    part.id,
-                                                                    'note',
-                                                                    e.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                            className="w-[130px]"
-                                                            placeholder="-"
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Input
-                                                            type="number"
-                                                            min="1"
-                                                            value={edit.voice}
-                                                            onChange={(e) =>
-                                                                updatePartEdit(
-                                                                    part.id,
-                                                                    'voice',
-                                                                    e.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                            className="w-[80px]"
-                                                            placeholder="-"
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Input
-                                                            type="number"
-                                                            min="0"
-                                                            value={
-                                                                edit.amount_bought
-                                                            }
-                                                            onChange={(e) =>
-                                                                updatePartEdit(
-                                                                    part.id,
-                                                                    'amount_bought',
-                                                                    e.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                            className="w-[100px]"
-                                                            placeholder="-"
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Checkbox
-                                                            checked={
-                                                                edit.is_conductor
-                                                            }
-                                                            onCheckedChange={(
-                                                                checked,
-                                                            ) =>
-                                                                updatePartEdit(
-                                                                    part.id,
-                                                                    'is_conductor',
-                                                                    !!checked,
-                                                                )
-                                                            }
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            onClick={() =>
-                                                                setDeletePart(
-                                                                    part,
-                                                                )
-                                                            }
-                                                        >
-                                                            <Trash2 className="text-destructive" />
-                                                        </Button>
-                                                    </TableCell>
+                        {currentStatus === 'digitaal' ? (
+                            <>
+                                {/* Existing file-based parts */}
+                                {piece.parts.filter(
+                                    (p) => p.original_filename !== null,
+                                ).length > 0 && (
+                                    <div className="rounded-lg border">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead>
+                                                        {t('Original filename')}
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        {t('Instrument')}
+                                                    </TableHead>
+                                                    <TableHead className="w-[150px]">
+                                                        {t('Note')}
+                                                    </TableHead>
+                                                    <TableHead className="w-[100px]">
+                                                        {t('Voice')}
+                                                    </TableHead>
+                                                    <TableHead className="w-[120px]">
+                                                        {t('Amount bought')}
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        {t('Partituur')}
+                                                    </TableHead>
+                                                    <TableHead className="w-[80px]" />
                                                 </TableRow>
-                                            );
-                                        })}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                        )}
-
-                        {/* Upload new parts */}
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-4">
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    accept=".pdf"
-                                    multiple
-                                    onChange={handleFilesSelected}
-                                    className="hidden"
-                                />
-                                <Button
-                                    variant="outline"
-                                    onClick={() =>
-                                        fileInputRef.current?.click()
-                                    }
-                                >
-                                    <Upload />
-                                    {t('Select PDF files')}
-                                </Button>
-                            </div>
-
-                            {uploads.length > 0 && (
-                                <div className="rounded-lg border">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>
-                                                    {t('File')}
-                                                </TableHead>
-                                                <TableHead>
-                                                    {t('Instrument')}
-                                                </TableHead>
-                                                <TableHead className="w-[150px]">
-                                                    {t('Note')}
-                                                </TableHead>
-                                                <TableHead className="w-[100px]">
-                                                    {t('Voice')}
-                                                </TableHead>
-                                                <TableHead className="w-[120px]">
-                                                    {t('Amount bought')}
-                                                </TableHead>
-                                                <TableHead>
-                                                    {t('Partituur')}
-                                                </TableHead>
-                                                <TableHead className="w-[80px]" />
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {uploads.map((upload, i) => (
-                                                <TableRow key={i}>
-                                                    <TableCell>
-                                                        {upload.file.name}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Combobox
-                                                            options={
-                                                                instOptions
-                                                            }
-                                                            value={
-                                                                upload.instrument_type_id
-                                                            }
-                                                            onChange={(v) =>
-                                                                updateUpload(
-                                                                    i,
-                                                                    'instrument_type_id',
-                                                                    v,
-                                                                )
-                                                            }
-                                                            className="max-w-[250px]"
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Input
-                                                            maxLength={20}
-                                                            value={upload.note}
-                                                            onChange={(e) =>
-                                                                updateUpload(
-                                                                    i,
-                                                                    'note',
-                                                                    e.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                            className="w-[130px]"
-                                                            placeholder="-"
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Input
-                                                            type="number"
-                                                            min="1"
-                                                            value={upload.voice}
-                                                            onChange={(e) =>
-                                                                updateUpload(
-                                                                    i,
-                                                                    'voice',
-                                                                    e.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                            className="w-[80px]"
-                                                            placeholder="-"
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Input
-                                                            type="number"
-                                                            min="0"
-                                                            value={
-                                                                upload.amount_bought
-                                                            }
-                                                            onChange={(e) =>
-                                                                updateUpload(
-                                                                    i,
-                                                                    'amount_bought',
-                                                                    e.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                            className="w-[100px]"
-                                                            placeholder="-"
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Checkbox
-                                                            checked={
-                                                                upload.is_conductor
-                                                            }
-                                                            onCheckedChange={(
-                                                                checked,
-                                                            ) =>
-                                                                updateUpload(
-                                                                    i,
-                                                                    'is_conductor',
-                                                                    !!checked,
-                                                                )
-                                                            }
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            onClick={() =>
-                                                                removeUpload(i)
-                                                            }
-                                                        >
-                                                            <Trash2 className="text-destructive" />
-                                                        </Button>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-
-                                    <div className="border-t p-4">
-                                        <Button
-                                            onClick={submitUploads}
-                                            disabled={uploading}
-                                        >
-                                            <Upload />
-                                            {t('Upload parts')}
-                                        </Button>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {piece.parts
+                                                    .filter(
+                                                        (p) =>
+                                                            p.original_filename !==
+                                                            null,
+                                                    )
+                                                    .map((part) => {
+                                                        const edit =
+                                                            getPartEdit(part);
+                                                        return (
+                                                            <TableRow
+                                                                key={part.id}
+                                                            >
+                                                                <TableCell className="text-xs text-muted-foreground">
+                                                                    {
+                                                                        part.original_filename
+                                                                    }
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    <Combobox
+                                                                        options={
+                                                                            instOptions
+                                                                        }
+                                                                        value={
+                                                                            edit.instrument_type_id
+                                                                        }
+                                                                        onChange={(
+                                                                            v,
+                                                                        ) =>
+                                                                            updatePartEdit(
+                                                                                part.id,
+                                                                                'instrument_type_id',
+                                                                                v,
+                                                                            )
+                                                                        }
+                                                                        className="max-w-[250px]"
+                                                                    />
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    <Input
+                                                                        maxLength={
+                                                                            20
+                                                                        }
+                                                                        value={
+                                                                            edit.note
+                                                                        }
+                                                                        onChange={(
+                                                                            e,
+                                                                        ) =>
+                                                                            updatePartEdit(
+                                                                                part.id,
+                                                                                'note',
+                                                                                e
+                                                                                    .target
+                                                                                    .value,
+                                                                            )
+                                                                        }
+                                                                        className="w-[130px]"
+                                                                        placeholder="-"
+                                                                    />
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    <Input
+                                                                        type="number"
+                                                                        min="1"
+                                                                        value={
+                                                                            edit.voice
+                                                                        }
+                                                                        onChange={(
+                                                                            e,
+                                                                        ) =>
+                                                                            updatePartEdit(
+                                                                                part.id,
+                                                                                'voice',
+                                                                                e
+                                                                                    .target
+                                                                                    .value,
+                                                                            )
+                                                                        }
+                                                                        className="w-[80px]"
+                                                                        placeholder="-"
+                                                                    />
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    <Input
+                                                                        type="number"
+                                                                        min="0"
+                                                                        value={
+                                                                            edit.amount_bought
+                                                                        }
+                                                                        onChange={(
+                                                                            e,
+                                                                        ) =>
+                                                                            updatePartEdit(
+                                                                                part.id,
+                                                                                'amount_bought',
+                                                                                e
+                                                                                    .target
+                                                                                    .value,
+                                                                            )
+                                                                        }
+                                                                        className="w-[100px]"
+                                                                        placeholder="-"
+                                                                    />
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    <Checkbox
+                                                                        checked={
+                                                                            edit.is_conductor
+                                                                        }
+                                                                        onCheckedChange={(
+                                                                            checked,
+                                                                        ) =>
+                                                                            updatePartEdit(
+                                                                                part.id,
+                                                                                'is_conductor',
+                                                                                !!checked,
+                                                                            )
+                                                                        }
+                                                                    />
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        onClick={() =>
+                                                                            setDeletePart(
+                                                                                part,
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        <Trash2 className="text-destructive" />
+                                                                    </Button>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        );
+                                                    })}
+                                            </TableBody>
+                                        </Table>
                                     </div>
+                                )}
+
+                                {/* Upload new parts */}
+                                <div>
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept=".pdf"
+                                        multiple
+                                        onChange={handleFilesSelected}
+                                        className="hidden"
+                                    />
+                                    <Button
+                                        variant="outline"
+                                        onClick={() =>
+                                            fileInputRef.current?.click()
+                                        }
+                                    >
+                                        <Upload />
+                                        {t('Select PDF files')}
+                                    </Button>
                                 </div>
-                            )}
-                        </div>
+                            </>
+                        ) : (
+                            <PartsMatrix
+                                instrumentTypes={instrumentTypes}
+                                parts={piece.parts}
+                                matrixEdits={matrixEdits}
+                                onMatrixChange={handleMatrixChange}
+                            />
+                        )}
                     </section>
                 )}
 
                 {/* In use by — usage records */}
                 <section className="space-y-6">
                     <Heading title={t('In use by')} />
+
+                    {usages.some((u) => u.tot) && (
+                        <label className="flex items-center gap-2 text-sm">
+                            <Checkbox
+                                checked={showPastUsages}
+                                onCheckedChange={(checked) =>
+                                    setShowPastUsages(!!checked)
+                                }
+                            />
+                            {t('Show past usages')}
+                        </label>
+                    )}
 
                     {usages.length > 0 && (
                         <div className="rounded-lg border">
@@ -777,76 +813,90 @@ export default function Edit({
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {usages.map((usage, i) => (
-                                        <TableRow key={usage.id ?? `new-${i}`}>
-                                            <TableCell>
-                                                <Combobox
-                                                    options={orchestraOptions}
-                                                    value={usage.orchestra_id}
-                                                    onChange={(v) =>
-                                                        updateUsage(
-                                                            i,
-                                                            'orchestra_id',
-                                                            v,
-                                                        )
-                                                    }
-                                                    className="max-w-[250px]"
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Input
-                                                    type="date"
-                                                    value={usage.van}
-                                                    onChange={(e) =>
-                                                        updateUsage(
-                                                            i,
-                                                            'van',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Input
-                                                    type="date"
-                                                    value={usage.tot}
-                                                    onChange={(e) =>
-                                                        updateUsage(
-                                                            i,
-                                                            'tot',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Input
-                                                    value={usage.details}
-                                                    onChange={(e) =>
-                                                        updateUsage(
-                                                            i,
-                                                            'details',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    placeholder={t('Details')}
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                {!usage.tot && (
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() =>
-                                                            setEndUsageIndex(i)
+                                    {usages.map((usage, i) => {
+                                        if (!showPastUsages && usage.tot)
+                                            return null;
+                                        return (
+                                            <TableRow
+                                                key={usage.id ?? `new-${i}`}
+                                            >
+                                                <TableCell>
+                                                    <Combobox
+                                                        options={
+                                                            orchestraOptions
                                                         }
-                                                    >
-                                                        {t('End')}
-                                                    </Button>
-                                                )}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
+                                                        value={
+                                                            usage.orchestra_id
+                                                        }
+                                                        onChange={(v) =>
+                                                            updateUsage(
+                                                                i,
+                                                                'orchestra_id',
+                                                                v,
+                                                            )
+                                                        }
+                                                        className="max-w-[250px]"
+                                                    />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Input
+                                                        type="date"
+                                                        value={usage.van}
+                                                        onChange={(e) =>
+                                                            updateUsage(
+                                                                i,
+                                                                'van',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                    />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Input
+                                                        type="date"
+                                                        value={usage.tot}
+                                                        onChange={(e) =>
+                                                            updateUsage(
+                                                                i,
+                                                                'tot',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                    />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Input
+                                                        value={usage.details}
+                                                        onChange={(e) =>
+                                                            updateUsage(
+                                                                i,
+                                                                'details',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        placeholder={t(
+                                                            'Details',
+                                                        )}
+                                                    />
+                                                </TableCell>
+                                                <TableCell>
+                                                    {!usage.tot && (
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() =>
+                                                                setEndUsageIndex(
+                                                                    i,
+                                                                )
+                                                            }
+                                                        >
+                                                            {t('End')}
+                                                        </Button>
+                                                    )}
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
                                 </TableBody>
                             </Table>
                         </div>
@@ -900,6 +950,151 @@ export default function Edit({
             </div>
 
             <Dialog
+                open={uploads.length > 0}
+                onOpenChange={(open) => {
+                    if (!open) setUploads([]);
+                }}
+            >
+                <DialogContent className="max-w-5xl">
+                    <DialogHeader>
+                        <DialogTitle>{t('Upload parts')}</DialogTitle>
+                        <DialogDescription>
+                            {t(
+                                'Max :size per file, up to :count files, :total total.',
+                                { size: '8MB', count: '50', total: '100MB' },
+                            )}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="rounded-lg border">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>{t('File')}</TableHead>
+                                    <TableHead>{t('Instrument')}</TableHead>
+                                    <TableHead className="w-[150px]">
+                                        {t('Note')}
+                                    </TableHead>
+                                    <TableHead className="w-[100px]">
+                                        {t('Voice')}
+                                    </TableHead>
+                                    <TableHead className="w-[120px]">
+                                        {t('Amount bought')}
+                                    </TableHead>
+                                    <TableHead>{t('Partituur')}</TableHead>
+                                    <TableHead className="w-[80px]" />
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {uploads.map((upload, i) => (
+                                    <TableRow key={i}>
+                                        <TableCell>
+                                            {upload.file.name}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Combobox
+                                                options={instOptions}
+                                                value={
+                                                    upload.instrument_type_id
+                                                }
+                                                onChange={(v) =>
+                                                    updateUpload(
+                                                        i,
+                                                        'instrument_type_id',
+                                                        v,
+                                                    )
+                                                }
+                                                className="max-w-[250px]"
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Input
+                                                maxLength={20}
+                                                value={upload.note}
+                                                onChange={(e) =>
+                                                    updateUpload(
+                                                        i,
+                                                        'note',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                className="w-[130px]"
+                                                placeholder="-"
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Input
+                                                type="number"
+                                                min="1"
+                                                value={upload.voice}
+                                                onChange={(e) =>
+                                                    updateUpload(
+                                                        i,
+                                                        'voice',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                className="w-[80px]"
+                                                placeholder="-"
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Input
+                                                type="number"
+                                                min="0"
+                                                value={upload.amount_bought}
+                                                onChange={(e) =>
+                                                    updateUpload(
+                                                        i,
+                                                        'amount_bought',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                className="w-[100px]"
+                                                placeholder="-"
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Checkbox
+                                                checked={upload.is_conductor}
+                                                onCheckedChange={(checked) =>
+                                                    updateUpload(
+                                                        i,
+                                                        'is_conductor',
+                                                        !!checked,
+                                                    )
+                                                }
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => removeUpload(i)}
+                                            >
+                                                <Trash2 className="text-destructive" />
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setUploads([])}
+                        >
+                            {t('Cancel')}
+                        </Button>
+                        <Button onClick={submitUploads} disabled={uploading}>
+                            <Upload />
+                            {t('Upload parts')}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
                 open={!!deletePart}
                 onOpenChange={() => setDeletePart(null)}
             >
@@ -911,7 +1106,9 @@ export default function Edit({
                                 'Are you sure you want to delete ":filename"? This action cannot be undone.',
                                 {
                                     filename:
-                                        deletePart?.original_filename ?? '',
+                                        deletePart?.original_filename ??
+                                        deletePart?.instrument_type?.name ??
+                                        '',
                                 },
                             )}
                         </DialogDescription>

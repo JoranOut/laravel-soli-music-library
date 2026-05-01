@@ -735,6 +735,44 @@ it('show returns empty parts for member when piece is not in their orchestra', f
         );
 });
 
+it('orchestra filter excludes past usages by default', function () {
+    $user = User::factory()->create();
+    $orchestra = Orchestra::factory()->create();
+
+    $currentPiece = Piece::factory()->create();
+    $currentPiece->orchestraUsages()->create(['orchestra_id' => $orchestra->id, 'tot' => null]);
+
+    $pastPiece = Piece::factory()->create();
+    $pastPiece->orchestraUsages()->create(['orchestra_id' => $orchestra->id, 'tot' => '2024-01-01']);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get("/muziekstukken?orchestra={$orchestra->id}")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+it('orchestra filter includes past usages when include_past_usages is set', function () {
+    $user = User::factory()->create();
+    $orchestra = Orchestra::factory()->create();
+
+    $currentPiece = Piece::factory()->create();
+    $currentPiece->orchestraUsages()->create(['orchestra_id' => $orchestra->id, 'tot' => null]);
+
+    $pastPiece = Piece::factory()->create();
+    $pastPiece->orchestraUsages()->create(['orchestra_id' => $orchestra->id, 'tot' => '2024-01-01']);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get("/muziekstukken?orchestra={$orchestra->id}&include_past_usages=1")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 2)
+        );
+});
+
 it('dirigent can use orchestra filter on index', function () {
     $user = User::factory()->create();
     $orchestra1 = Orchestra::factory()->create();
@@ -1151,6 +1189,122 @@ it('genre filter matches pieces that contain the genre in their array', function
         );
 });
 
+it('filters pieces by status', function () {
+    $user = User::factory()->create();
+    Piece::factory()->create(['status' => 'analoog']);
+    Piece::factory()->create(['status' => 'digitaal']);
+    Piece::factory()->create(['status' => 'besteld']);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get('/muziekstukken?status=analoog')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+it('returns statuses in filterOptions on index', function () {
+    $user = User::factory()->create();
+    Piece::factory()->create(['status' => 'analoog']);
+    Piece::factory()->create(['status' => 'digitaal']);
+    Piece::factory()->create(['status' => 'analoog']);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get('/muziekstukken')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('filterOptions.statuses', 2)
+        );
+});
+
+it('returns status filter value in filters prop', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get('/muziekstukken?status=digitaal')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.status', 'digitaal')
+        );
+});
+
+it('stores a piece with status', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->post('/muziekstukken', [
+            'title' => 'New Piece',
+            'status' => 'digitaal',
+        ])
+        ->assertRedirect();
+
+    $piece = Piece::where('title', 'New Piece')->first();
+    expect($piece)->not->toBeNull();
+    expect($piece->status)->toBe('digitaal');
+});
+
+it('stores a piece with default status when not provided', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->post('/muziekstukken', [
+            'title' => 'Default Status Piece',
+        ])
+        ->assertRedirect();
+
+    $piece = Piece::where('title', 'Default Status Piece')->first();
+    expect($piece)->not->toBeNull();
+    expect($piece->status)->toBe('besteld');
+});
+
+it('updates piece status', function () {
+    $user = User::factory()->create();
+    $piece = Piece::factory()->create(['title' => 'Test', 'status' => 'besteld']);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->put("/muziekstukken/{$piece->id}", [
+            'title' => 'Test',
+            'status' => 'analoog',
+        ])
+        ->assertRedirect();
+
+    expect($piece->fresh()->status)->toBe('analoog');
+});
+
+it('combines status filter with other filters', function () {
+    $user = User::factory()->create();
+    Piece::factory()->create(['composer' => 'Bach', 'status' => 'analoog']);
+    Piece::factory()->create(['composer' => 'Bach', 'status' => 'digitaal']);
+    Piece::factory()->create(['composer' => 'Mozart', 'status' => 'analoog']);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get('/muziekstukken?composer=Bach&status=analoog')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+it('show page returns piece with status', function () {
+    $user = User::factory()->create();
+    $piece = Piece::factory()->create(['status' => 'analoog']);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get("/muziekstukken/{$piece->id}")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('piece.status', 'analoog')
+        );
+});
+
 it('filters pieces by difficulty', function () {
     $user = User::factory()->create();
     Piece::factory()->create(['difficulty' => 'easy']);
@@ -1271,6 +1425,7 @@ it('returns filterOptions on index', function () {
         'music_type' => 'Origineel',
         'difficulty' => 'easy',
         'genre' => ['Mars', 'Pop'],
+        'status' => 'analoog',
     ]);
     Piece::factory()->create([
         'composer' => 'Mozart',
@@ -1279,6 +1434,7 @@ it('returns filterOptions on index', function () {
         'music_type' => null,
         'difficulty' => null,
         'genre' => null,
+        'status' => 'digitaal',
     ]);
 
     $this->actingAs($user)
@@ -1292,6 +1448,7 @@ it('returns filterOptions on index', function () {
             ->has('filterOptions.musicTypes', 1)
             ->has('filterOptions.genres', 2)
             ->has('filterOptions.difficulties', 1)
+            ->has('filterOptions.statuses', 2)
         );
 });
 
@@ -1348,4 +1505,790 @@ it('dirigent can use more filters on index', function () {
         ->assertInertia(fn ($page) => $page
             ->has('pieces.data', 1)
         );
+});
+
+// ---------------------------------------------------------------------------
+// Matrix parts — fileless parts for non-digital pieces
+// ---------------------------------------------------------------------------
+
+it('creates fileless parts via matrix_parts for analoog piece', function () {
+    $user = User::factory()->create();
+    $piece = Piece::factory()->create(['title' => 'Test', 'status' => 'analoog']);
+    $type1 = InstrumentType::factory()->create();
+    $type2 = InstrumentType::factory()->create();
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->put("/muziekstukken/{$piece->id}", [
+            'title' => 'Test',
+            'status' => 'analoog',
+            'matrix_parts' => [
+                ['instrument_type_id' => $type1->id, 'is_conductor' => false, 'amount_bought' => 3],
+                ['instrument_type_id' => $type2->id, 'is_conductor' => false, 'amount_bought' => 5],
+            ],
+        ])
+        ->assertRedirect();
+
+    $parts = $piece->parts()->whereNull('file_path')->get();
+    expect($parts)->toHaveCount(2);
+    expect($parts->firstWhere('instrument_type_id', $type1->id)->amount_bought)->toBe(3);
+    expect($parts->firstWhere('instrument_type_id', $type2->id)->amount_bought)->toBe(5);
+});
+
+it('creates a fileless conductor part via matrix_parts', function () {
+    $user = User::factory()->create();
+    $piece = Piece::factory()->create(['title' => 'Test', 'status' => 'besteld']);
+    $type = InstrumentType::factory()->create();
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->put("/muziekstukken/{$piece->id}", [
+            'title' => 'Test',
+            'status' => 'besteld',
+            'matrix_parts' => [
+                ['instrument_type_id' => $type->id, 'is_conductor' => true, 'amount_bought' => 2],
+            ],
+        ])
+        ->assertRedirect();
+
+    $part = $piece->parts()->whereNull('file_path')->where('is_conductor', true)->first();
+    expect($part)->not->toBeNull();
+    expect($part->amount_bought)->toBe(2);
+    expect($part->original_filename)->toBeNull();
+});
+
+it('updates amount on existing fileless part', function () {
+    $user = User::factory()->create();
+    $type = InstrumentType::factory()->create();
+    $piece = Piece::factory()->create(['title' => 'Test', 'status' => 'analoog']);
+    Part::factory()->fileless()->create([
+        'piece_id' => $piece->id,
+        'instrument_type_id' => $type->id,
+        'is_conductor' => false,
+        'amount_bought' => 3,
+    ]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->put("/muziekstukken/{$piece->id}", [
+            'title' => 'Test',
+            'status' => 'analoog',
+            'matrix_parts' => [
+                ['instrument_type_id' => $type->id, 'is_conductor' => false, 'amount_bought' => 7],
+            ],
+        ])
+        ->assertRedirect();
+
+    $part = $piece->parts()->whereNull('file_path')->first();
+    expect($part->amount_bought)->toBe(7);
+    expect($piece->parts()->whereNull('file_path')->count())->toBe(1);
+});
+
+it('deletes fileless part when amount set to zero', function () {
+    $user = User::factory()->create();
+    $type = InstrumentType::factory()->create();
+    $piece = Piece::factory()->create(['title' => 'Test', 'status' => 'analoog']);
+    Part::factory()->fileless()->create([
+        'piece_id' => $piece->id,
+        'instrument_type_id' => $type->id,
+        'is_conductor' => false,
+        'amount_bought' => 5,
+    ]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->put("/muziekstukken/{$piece->id}", [
+            'title' => 'Test',
+            'status' => 'analoog',
+            'matrix_parts' => [
+                ['instrument_type_id' => $type->id, 'is_conductor' => false, 'amount_bought' => 0],
+            ],
+        ])
+        ->assertRedirect();
+
+    expect($piece->parts()->whereNull('file_path')->count())->toBe(0);
+});
+
+it('ignores matrix_parts when status is digitaal', function () {
+    $user = User::factory()->create();
+    $piece = Piece::factory()->create(['title' => 'Test', 'status' => 'digitaal']);
+    $type = InstrumentType::factory()->create();
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->put("/muziekstukken/{$piece->id}", [
+            'title' => 'Test',
+            'status' => 'digitaal',
+            'matrix_parts' => [
+                ['instrument_type_id' => $type->id, 'is_conductor' => false, 'amount_bought' => 3],
+            ],
+        ])
+        ->assertRedirect();
+
+    expect($piece->parts()->count())->toBe(0);
+});
+
+it('processes matrix_parts for all non-digital statuses', function (string $status) {
+    $user = User::factory()->create();
+    $piece = Piece::factory()->create(['title' => 'Test', 'status' => $status]);
+    $type = InstrumentType::factory()->create();
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->put("/muziekstukken/{$piece->id}", [
+            'title' => 'Test',
+            'status' => $status,
+            'matrix_parts' => [
+                ['instrument_type_id' => $type->id, 'is_conductor' => false, 'amount_bought' => 2],
+            ],
+        ])
+        ->assertRedirect();
+
+    expect($piece->parts()->whereNull('file_path')->count())->toBe(1);
+})->with(['besteld', 'analoog']);
+
+it('matrix_parts does not affect file-based parts', function () {
+    $user = User::factory()->create();
+    $type = InstrumentType::factory()->create();
+    $piece = Piece::factory()->create(['title' => 'Test', 'status' => 'analoog']);
+    $filePart = Part::factory()->create([
+        'piece_id' => $piece->id,
+        'instrument_type_id' => $type->id,
+        'is_conductor' => false,
+    ]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->put("/muziekstukken/{$piece->id}", [
+            'title' => 'Test',
+            'status' => 'analoog',
+            'matrix_parts' => [
+                ['instrument_type_id' => $type->id, 'is_conductor' => false, 'amount_bought' => 0],
+            ],
+        ])
+        ->assertRedirect();
+
+    // File-based part should still exist
+    expect(Part::find($filePart->id))->not->toBeNull();
+    expect(Part::find($filePart->id)->file_path)->not->toBeNull();
+});
+
+it('show returns null download_url for fileless parts', function () {
+    $user = User::factory()->create();
+    Permission::findOrCreate('download-all partijen');
+    $user->givePermissionTo('download-all partijen');
+    $piece = Piece::factory()->create(['status' => 'analoog']);
+    Part::factory()->fileless()->create(['piece_id' => $piece->id]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get("/muziekstukken/{$piece->id}")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('parts', 1)
+            ->where('parts.0.download_url', null)
+        );
+});
+
+// ---------------------------------------------------------------------------
+// Instrument voice filter — new ID:VOICE format on index
+// ---------------------------------------------------------------------------
+
+it('filters pieces by instrument with voice format (id:1)', function () {
+    $user = User::factory()->create();
+    $type = InstrumentType::factory()->create();
+    $otherType = InstrumentType::factory()->create();
+
+    $piece1 = Piece::factory()->create();
+    Part::factory()->create(['piece_id' => $piece1->id, 'instrument_type_id' => $type->id, 'voice' => 1]);
+
+    $piece2 = Piece::factory()->create();
+    Part::factory()->create(['piece_id' => $piece2->id, 'instrument_type_id' => $otherType->id, 'voice' => 1]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get("/muziekstukken?instruments={$type->id}:1")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+it('voice filter 1 matches parts with null voice', function () {
+    $user = User::factory()->create();
+    $type = InstrumentType::factory()->create();
+
+    $piece = Piece::factory()->create();
+    Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $type->id, 'voice' => null]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get("/muziekstukken?instruments={$type->id}:1")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+it('voice filter 2 excludes pieces with only voice 1', function () {
+    $user = User::factory()->create();
+    $type = InstrumentType::factory()->create();
+
+    $piece = Piece::factory()->create();
+    Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $type->id, 'voice' => 1]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get("/muziekstukken?instruments={$type->id}:2")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 0)
+        );
+});
+
+it('voice filter 2 matches pieces with voice 2', function () {
+    $user = User::factory()->create();
+    $type = InstrumentType::factory()->create();
+
+    $piece = Piece::factory()->create();
+    Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $type->id, 'voice' => 1]);
+    Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $type->id, 'voice' => 2]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get("/muziekstukken?instruments={$type->id}:2")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+it('voice filter 3 matches pieces with voice 3', function () {
+    $user = User::factory()->create();
+    $type = InstrumentType::factory()->create();
+
+    $piece = Piece::factory()->create();
+    Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $type->id, 'voice' => 1]);
+    Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $type->id, 'voice' => 2]);
+    Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $type->id, 'voice' => 3]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get("/muziekstukken?instruments={$type->id}:3")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+it('voice filter 3 excludes pieces with only voice 2', function () {
+    $user = User::factory()->create();
+    $type = InstrumentType::factory()->create();
+
+    $piece = Piece::factory()->create();
+    Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $type->id, 'voice' => 1]);
+    Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $type->id, 'voice' => 2]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get("/muziekstukken?instruments={$type->id}:3")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 0)
+        );
+});
+
+it('voice filter 2 excludes pieces with null voice', function () {
+    $user = User::factory()->create();
+    $type = InstrumentType::factory()->create();
+
+    $piece = Piece::factory()->create();
+    Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $type->id, 'voice' => null]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get("/muziekstukken?instruments={$type->id}:2")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 0)
+        );
+});
+
+it('multiple instrument voice filters use AND logic', function () {
+    $user = User::factory()->create();
+    $clarinet = InstrumentType::factory()->create();
+    $flute = InstrumentType::factory()->create();
+
+    // Piece with both instruments
+    $both = Piece::factory()->create();
+    Part::factory()->create(['piece_id' => $both->id, 'instrument_type_id' => $clarinet->id, 'voice' => 1]);
+    Part::factory()->create(['piece_id' => $both->id, 'instrument_type_id' => $flute->id, 'voice' => 1]);
+
+    // Piece with only clarinet
+    $clarinetOnly = Piece::factory()->create();
+    Part::factory()->create(['piece_id' => $clarinetOnly->id, 'instrument_type_id' => $clarinet->id, 'voice' => 1]);
+
+    // Piece with only flute
+    $fluteOnly = Piece::factory()->create();
+    Part::factory()->create(['piece_id' => $fluteOnly->id, 'instrument_type_id' => $flute->id, 'voice' => 1]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get("/muziekstukken?instruments={$clarinet->id}:1,{$flute->id}:1")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+it('multiple instruments with different voice levels', function () {
+    $user = User::factory()->create();
+    $clarinet = InstrumentType::factory()->create();
+    $trumpet = InstrumentType::factory()->create();
+
+    // Piece: clarinet v1+v2+v3, trumpet v1+v2
+    $piece1 = Piece::factory()->create();
+    Part::factory()->create(['piece_id' => $piece1->id, 'instrument_type_id' => $clarinet->id, 'voice' => 1]);
+    Part::factory()->create(['piece_id' => $piece1->id, 'instrument_type_id' => $clarinet->id, 'voice' => 2]);
+    Part::factory()->create(['piece_id' => $piece1->id, 'instrument_type_id' => $clarinet->id, 'voice' => 3]);
+    Part::factory()->create(['piece_id' => $piece1->id, 'instrument_type_id' => $trumpet->id, 'voice' => 1]);
+    Part::factory()->create(['piece_id' => $piece1->id, 'instrument_type_id' => $trumpet->id, 'voice' => 2]);
+
+    // Piece: clarinet v1+v2 only, trumpet v1+v2+v3
+    $piece2 = Piece::factory()->create();
+    Part::factory()->create(['piece_id' => $piece2->id, 'instrument_type_id' => $clarinet->id, 'voice' => 1]);
+    Part::factory()->create(['piece_id' => $piece2->id, 'instrument_type_id' => $clarinet->id, 'voice' => 2]);
+    Part::factory()->create(['piece_id' => $piece2->id, 'instrument_type_id' => $trumpet->id, 'voice' => 1]);
+    Part::factory()->create(['piece_id' => $piece2->id, 'instrument_type_id' => $trumpet->id, 'voice' => 2]);
+    Part::factory()->create(['piece_id' => $piece2->id, 'instrument_type_id' => $trumpet->id, 'voice' => 3]);
+
+    // Filter: clarinet >= 3 AND trumpet >= 2 → only piece1
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get("/muziekstukken?instruments={$clarinet->id}:3,{$trumpet->id}:2")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+it('legacy instrument filter format without colon still works', function () {
+    $user = User::factory()->create();
+    $type = InstrumentType::factory()->create();
+
+    $piece = Piece::factory()->create();
+    Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $type->id]);
+
+    Piece::factory()->create();
+
+    // Legacy format: just the ID without :voice
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get("/muziekstukken?instruments={$type->id}")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+it('voice filter combined with other filters', function () {
+    $user = User::factory()->create();
+    $type = InstrumentType::factory()->create();
+
+    $piece1 = Piece::factory()->create(['composer' => 'Bach']);
+    Part::factory()->create(['piece_id' => $piece1->id, 'instrument_type_id' => $type->id, 'voice' => 1]);
+    Part::factory()->create(['piece_id' => $piece1->id, 'instrument_type_id' => $type->id, 'voice' => 2]);
+
+    $piece2 = Piece::factory()->create(['composer' => 'Mozart']);
+    Part::factory()->create(['piece_id' => $piece2->id, 'instrument_type_id' => $type->id, 'voice' => 1]);
+    Part::factory()->create(['piece_id' => $piece2->id, 'instrument_type_id' => $type->id, 'voice' => 2]);
+
+    $piece3 = Piece::factory()->create(['composer' => 'Bach']);
+    Part::factory()->create(['piece_id' => $piece3->id, 'instrument_type_id' => $type->id, 'voice' => 1]);
+
+    // Bach + at least 2 voices → only piece1
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get("/muziekstukken?composer=Bach&instruments={$type->id}:2")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+it('voice filter with search', function () {
+    $user = User::factory()->create();
+    $type = InstrumentType::factory()->create();
+
+    $piece1 = Piece::factory()->create(['title' => 'Symphony No. 5']);
+    Part::factory()->create(['piece_id' => $piece1->id, 'instrument_type_id' => $type->id, 'voice' => 1]);
+    Part::factory()->create(['piece_id' => $piece1->id, 'instrument_type_id' => $type->id, 'voice' => 2]);
+
+    $piece2 = Piece::factory()->create(['title' => 'Symphony No. 9']);
+    Part::factory()->create(['piece_id' => $piece2->id, 'instrument_type_id' => $type->id, 'voice' => 1]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get("/muziekstukken?search=Symphony&instruments={$type->id}:2")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+it('voice filter returns empty when no pieces match', function () {
+    $user = User::factory()->create();
+    $type = InstrumentType::factory()->create();
+
+    $piece = Piece::factory()->create();
+    Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $type->id, 'voice' => 1]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get("/muziekstukken?instruments={$type->id}:5")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 0)
+        );
+});
+
+it('voice filter matches fileless parts too', function () {
+    $user = User::factory()->create();
+    $type = InstrumentType::factory()->create();
+
+    $piece = Piece::factory()->create(['status' => 'analoog']);
+    Part::factory()->fileless()->create(['piece_id' => $piece->id, 'instrument_type_id' => $type->id, 'voice' => 1]);
+    Part::factory()->fileless()->create(['piece_id' => $piece->id, 'instrument_type_id' => $type->id, 'voice' => 2]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get("/muziekstukken?instruments={$type->id}:2")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+it('member can use voice filter within their orchestras', function () {
+    $user = User::factory()->create();
+    $orchestra = Orchestra::factory()->create();
+    $type = InstrumentType::factory()->create();
+
+    $piece = Piece::factory()->create();
+    $piece->orchestraUsages()->create(['orchestra_id' => $orchestra->id]);
+    Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $type->id, 'voice' => 1]);
+    Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $type->id, 'voice' => 2]);
+
+    $session = [
+        'roles' => ['member'],
+        'resolved_assignments' => [
+            ['orchestra_id' => $orchestra->id, 'instrument_type_id' => $type->id],
+        ],
+    ];
+
+    $this->actingAs($user)
+        ->withSession($session)
+        ->get("/muziekstukken?instruments={$type->id}:2")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+it('dirigent can use voice filter', function () {
+    $user = User::factory()->create();
+    $type = InstrumentType::factory()->create();
+
+    $piece = Piece::factory()->create();
+    Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $type->id, 'voice' => 1]);
+    Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $type->id, 'voice' => 2]);
+
+    Piece::factory()->create(); // no parts
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['dirigent']])
+        ->get("/muziekstukken?instruments={$type->id}:2")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('pieces.data', 1)
+        );
+});
+
+// ---------------------------------------------------------------------------
+// Matrix parts — voice support
+// ---------------------------------------------------------------------------
+
+it('creates fileless parts with voice via matrix_parts', function () {
+    $user = User::factory()->create();
+    $piece = Piece::factory()->create(['title' => 'Test', 'status' => 'analoog']);
+    $type = InstrumentType::factory()->create();
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->put("/muziekstukken/{$piece->id}", [
+            'title' => 'Test',
+            'status' => 'analoog',
+            'matrix_parts' => [
+                ['instrument_type_id' => $type->id, 'is_conductor' => false, 'voice' => 1, 'amount_bought' => 3],
+                ['instrument_type_id' => $type->id, 'is_conductor' => false, 'voice' => 2, 'amount_bought' => 2],
+            ],
+        ])
+        ->assertRedirect();
+
+    $parts = $piece->parts()->whereNull('file_path')->orderBy('voice')->get();
+    expect($parts)->toHaveCount(2);
+    expect($parts[0]->voice)->toBe(1);
+    expect($parts[0]->amount_bought)->toBe(3);
+    expect($parts[1]->voice)->toBe(2);
+    expect($parts[1]->amount_bought)->toBe(2);
+});
+
+it('creates fileless parts with three voices', function () {
+    $user = User::factory()->create();
+    $piece = Piece::factory()->create(['title' => 'Test', 'status' => 'analoog']);
+    $type = InstrumentType::factory()->create();
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->put("/muziekstukken/{$piece->id}", [
+            'title' => 'Test',
+            'status' => 'analoog',
+            'matrix_parts' => [
+                ['instrument_type_id' => $type->id, 'is_conductor' => false, 'voice' => 1, 'amount_bought' => 5],
+                ['instrument_type_id' => $type->id, 'is_conductor' => false, 'voice' => 2, 'amount_bought' => 3],
+                ['instrument_type_id' => $type->id, 'is_conductor' => false, 'voice' => 3, 'amount_bought' => 1],
+            ],
+        ])
+        ->assertRedirect();
+
+    $parts = $piece->parts()->whereNull('file_path')->orderBy('voice')->get();
+    expect($parts)->toHaveCount(3);
+    expect($parts[0]->voice)->toBe(1);
+    expect($parts[0]->amount_bought)->toBe(5);
+    expect($parts[1]->voice)->toBe(2);
+    expect($parts[1]->amount_bought)->toBe(3);
+    expect($parts[2]->voice)->toBe(3);
+    expect($parts[2]->amount_bought)->toBe(1);
+});
+
+it('removes higher voices when voice 2 set to zero', function () {
+    $user = User::factory()->create();
+    $type = InstrumentType::factory()->create();
+    $piece = Piece::factory()->create(['title' => 'Test', 'status' => 'analoog']);
+    Part::factory()->fileless()->create(['piece_id' => $piece->id, 'instrument_type_id' => $type->id, 'voice' => 1, 'amount_bought' => 5]);
+    Part::factory()->fileless()->create(['piece_id' => $piece->id, 'instrument_type_id' => $type->id, 'voice' => 2, 'amount_bought' => 3]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->put("/muziekstukken/{$piece->id}", [
+            'title' => 'Test',
+            'status' => 'analoog',
+            'matrix_parts' => [
+                ['instrument_type_id' => $type->id, 'is_conductor' => false, 'voice' => 1, 'amount_bought' => 5],
+                ['instrument_type_id' => $type->id, 'is_conductor' => false, 'voice' => 2, 'amount_bought' => 0],
+            ],
+        ])
+        ->assertRedirect();
+
+    $parts = $piece->parts()->whereNull('file_path')->get();
+    expect($parts)->toHaveCount(1);
+    expect($parts->first()->voice)->toBe(1);
+    expect($parts->first()->amount_bought)->toBe(5);
+});
+
+it('updates amounts per voice correctly', function () {
+    $user = User::factory()->create();
+    $type = InstrumentType::factory()->create();
+    $piece = Piece::factory()->create(['title' => 'Test', 'status' => 'analoog']);
+    Part::factory()->fileless()->create(['piece_id' => $piece->id, 'instrument_type_id' => $type->id, 'voice' => 1, 'amount_bought' => 3]);
+    Part::factory()->fileless()->create(['piece_id' => $piece->id, 'instrument_type_id' => $type->id, 'voice' => 2, 'amount_bought' => 2]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->put("/muziekstukken/{$piece->id}", [
+            'title' => 'Test',
+            'status' => 'analoog',
+            'matrix_parts' => [
+                ['instrument_type_id' => $type->id, 'is_conductor' => false, 'voice' => 1, 'amount_bought' => 7],
+                ['instrument_type_id' => $type->id, 'is_conductor' => false, 'voice' => 2, 'amount_bought' => 4],
+            ],
+        ])
+        ->assertRedirect();
+
+    $parts = $piece->parts()->whereNull('file_path')->orderBy('voice')->get();
+    expect($parts)->toHaveCount(2);
+    expect($parts[0]->amount_bought)->toBe(7);
+    expect($parts[1]->amount_bought)->toBe(4);
+});
+
+it('conductor matrix part has null voice', function () {
+    $user = User::factory()->create();
+    $piece = Piece::factory()->create(['title' => 'Test', 'status' => 'analoog']);
+    $type = InstrumentType::factory()->create();
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->put("/muziekstukken/{$piece->id}", [
+            'title' => 'Test',
+            'status' => 'analoog',
+            'matrix_parts' => [
+                ['instrument_type_id' => $type->id, 'is_conductor' => true, 'voice' => null, 'amount_bought' => 2],
+            ],
+        ])
+        ->assertRedirect();
+
+    $part = $piece->parts()->whereNull('file_path')->where('is_conductor', true)->first();
+    expect($part)->not->toBeNull();
+    expect($part->voice)->toBeNull();
+    expect($part->amount_bought)->toBe(2);
+});
+
+it('mixed voices and conductor in single matrix_parts request', function () {
+    $user = User::factory()->create();
+    $piece = Piece::factory()->create(['title' => 'Test', 'status' => 'analoog']);
+    $clarinet = InstrumentType::factory()->create();
+    $flute = InstrumentType::factory()->create();
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->put("/muziekstukken/{$piece->id}", [
+            'title' => 'Test',
+            'status' => 'analoog',
+            'matrix_parts' => [
+                ['instrument_type_id' => $clarinet->id, 'is_conductor' => true, 'voice' => null, 'amount_bought' => 1],
+                ['instrument_type_id' => $clarinet->id, 'is_conductor' => false, 'voice' => 1, 'amount_bought' => 5],
+                ['instrument_type_id' => $clarinet->id, 'is_conductor' => false, 'voice' => 2, 'amount_bought' => 3],
+                ['instrument_type_id' => $flute->id, 'is_conductor' => false, 'voice' => 1, 'amount_bought' => 4],
+            ],
+        ])
+        ->assertRedirect();
+
+    $parts = $piece->parts()->whereNull('file_path')->get();
+    expect($parts)->toHaveCount(4);
+
+    $conductor = $parts->where('is_conductor', true)->first();
+    expect($conductor->amount_bought)->toBe(1);
+    expect($conductor->voice)->toBeNull();
+
+    $clarinetParts = $parts->where('instrument_type_id', $clarinet->id)->where('is_conductor', false)->sortBy('voice')->values();
+    expect($clarinetParts)->toHaveCount(2);
+    expect($clarinetParts[0]->voice)->toBe(1);
+    expect($clarinetParts[0]->amount_bought)->toBe(5);
+    expect($clarinetParts[1]->voice)->toBe(2);
+    expect($clarinetParts[1]->amount_bought)->toBe(3);
+
+    $fluteParts = $parts->where('instrument_type_id', $flute->id)->where('is_conductor', false);
+    expect($fluteParts)->toHaveCount(1);
+    expect($fluteParts->first()->voice)->toBe(1);
+    expect($fluteParts->first()->amount_bought)->toBe(4);
+});
+
+it('matrix_parts with voices does not affect file-based parts', function () {
+    $user = User::factory()->create();
+    $type = InstrumentType::factory()->create();
+    $piece = Piece::factory()->create(['title' => 'Test', 'status' => 'analoog']);
+    $filePart = Part::factory()->create([
+        'piece_id' => $piece->id,
+        'instrument_type_id' => $type->id,
+        'is_conductor' => false,
+        'voice' => 1,
+    ]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->put("/muziekstukken/{$piece->id}", [
+            'title' => 'Test',
+            'status' => 'analoog',
+            'matrix_parts' => [
+                ['instrument_type_id' => $type->id, 'is_conductor' => false, 'voice' => 1, 'amount_bought' => 3],
+            ],
+        ])
+        ->assertRedirect();
+
+    // File-based part should still exist
+    expect(Part::find($filePart->id))->not->toBeNull();
+    expect(Part::find($filePart->id)->file_path)->not->toBeNull();
+    // Fileless part should also exist
+    expect($piece->parts()->whereNull('file_path')->count())->toBe(1);
+});
+
+it('adding a voice to an existing matrix type preserves other voices', function () {
+    $user = User::factory()->create();
+    $type = InstrumentType::factory()->create();
+    $piece = Piece::factory()->create(['title' => 'Test', 'status' => 'analoog']);
+    Part::factory()->fileless()->create(['piece_id' => $piece->id, 'instrument_type_id' => $type->id, 'voice' => 1, 'amount_bought' => 5]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->put("/muziekstukken/{$piece->id}", [
+            'title' => 'Test',
+            'status' => 'analoog',
+            'matrix_parts' => [
+                ['instrument_type_id' => $type->id, 'is_conductor' => false, 'voice' => 1, 'amount_bought' => 5],
+                ['instrument_type_id' => $type->id, 'is_conductor' => false, 'voice' => 2, 'amount_bought' => 3],
+            ],
+        ])
+        ->assertRedirect();
+
+    $parts = $piece->parts()->whereNull('file_path')->orderBy('voice')->get();
+    expect($parts)->toHaveCount(2);
+    expect($parts[0]->voice)->toBe(1);
+    expect($parts[0]->amount_bought)->toBe(5);
+    expect($parts[1]->voice)->toBe(2);
+    expect($parts[1]->amount_bought)->toBe(3);
+});
+
+it('setting all voices to zero removes all fileless parts for that type', function () {
+    $user = User::factory()->create();
+    $type = InstrumentType::factory()->create();
+    $piece = Piece::factory()->create(['title' => 'Test', 'status' => 'analoog']);
+    Part::factory()->fileless()->create(['piece_id' => $piece->id, 'instrument_type_id' => $type->id, 'voice' => 1, 'amount_bought' => 5]);
+    Part::factory()->fileless()->create(['piece_id' => $piece->id, 'instrument_type_id' => $type->id, 'voice' => 2, 'amount_bought' => 3]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->put("/muziekstukken/{$piece->id}", [
+            'title' => 'Test',
+            'status' => 'analoog',
+            'matrix_parts' => [
+                ['instrument_type_id' => $type->id, 'is_conductor' => false, 'voice' => 1, 'amount_bought' => 0],
+            ],
+        ])
+        ->assertRedirect();
+
+    expect($piece->parts()->whereNull('file_path')->count())->toBe(0);
+});
+
+it('matrix_parts rejects negative voice', function () {
+    $user = User::factory()->create();
+    $piece = Piece::factory()->create(['title' => 'Test', 'status' => 'analoog']);
+    $type = InstrumentType::factory()->create();
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->put("/muziekstukken/{$piece->id}", [
+            'title' => 'Test',
+            'status' => 'analoog',
+            'matrix_parts' => [
+                ['instrument_type_id' => $type->id, 'is_conductor' => false, 'voice' => -1, 'amount_bought' => 3],
+            ],
+        ])
+        ->assertSessionHasErrors('matrix_parts.0.voice');
+});
+
+it('matrix_parts rejects voice of zero', function () {
+    $user = User::factory()->create();
+    $piece = Piece::factory()->create(['title' => 'Test', 'status' => 'analoog']);
+    $type = InstrumentType::factory()->create();
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->put("/muziekstukken/{$piece->id}", [
+            'title' => 'Test',
+            'status' => 'analoog',
+            'matrix_parts' => [
+                ['instrument_type_id' => $type->id, 'is_conductor' => false, 'voice' => 0, 'amount_bought' => 3],
+            ],
+        ])
+        ->assertSessionHasErrors('matrix_parts.0.voice');
 });

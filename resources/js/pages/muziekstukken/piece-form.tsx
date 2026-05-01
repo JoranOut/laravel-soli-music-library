@@ -1,12 +1,13 @@
 import { useForm, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
-import { forwardRef, useImperativeHandle, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useTranslation } from '@/hooks/use-translation';
 import type { Orchestra, Piece } from '@/types/muziekstukken';
@@ -19,19 +20,19 @@ export type PieceFormData = {
     difficulty: string;
     notes: string;
     bought_for: string;
+    bought_for_occasion: string;
     buy_date: string;
     genre: string[];
     music_type: string;
     archive_number: string;
+    status: string;
     audio_youtube_url: string;
     orchestras: number[];
 };
 
-export type AudioType = 'none' | 'youtube' | 'mp3';
-
 export type PieceFormHandle = {
     getData: () => PieceFormData;
-    audioType: AudioType;
+    isDirty: boolean;
 };
 
 type Props = {
@@ -47,7 +48,9 @@ type Props = {
     arrangerSuggestions?: string[];
     publisherSuggestions?: string[];
     difficultySuggestions?: string[];
-    onAudioTypeChange?: (type: AudioType) => void;
+    boughtForOccasionSuggestions?: string[];
+    onDirtyChange?: (dirty: boolean) => void;
+    onStatusChange?: (status: string) => void;
     renderAudioMp3?: ReactNode;
 };
 
@@ -65,7 +68,9 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
         arrangerSuggestions = [],
         publisherSuggestions = [],
         difficultySuggestions = [],
-        onAudioTypeChange,
+        boughtForOccasionSuggestions = [],
+        onDirtyChange,
+        onStatusChange,
         renderAudioMp3,
     },
     ref,
@@ -73,14 +78,7 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
     const { t } = useTranslation();
     const pageErrors = usePage().props.errors ?? {};
 
-    const initialAudioType: AudioType = piece?.audio_youtube_url
-        ? 'youtube'
-        : piece?.audio_file_path
-          ? 'mp3'
-          : 'none';
-    const [audioType, setAudioType] = useState<AudioType>(initialAudioType);
-
-    const { data, setData, post, put, processing } = useForm({
+    const { data, setData, post, put, processing, isDirty } = useForm({
         title: piece?.title ?? '',
         composer: piece?.composer ?? '',
         arranger: piece?.arranger ?? '',
@@ -88,18 +86,24 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
         difficulty: piece?.difficulty ?? '',
         notes: piece?.notes ?? '',
         bought_for: piece?.bought_for ?? '',
+        bought_for_occasion: piece?.bought_for_occasion ?? '',
         buy_date: piece?.buy_date ?? '',
         genre: piece?.genre ?? ([] as string[]),
         music_type: piece?.music_type ?? '',
         archive_number: piece?.archive_number ?? '',
+        status: piece?.status ?? 'besteld',
         audio_youtube_url: piece?.audio_youtube_url ?? '',
         orchestras: piece?.orchestras.map((o) => o.id) ?? ([] as number[]),
     });
 
     useImperativeHandle(ref, () => ({
         getData: () => data,
-        audioType,
+        isDirty,
     }));
+
+    useEffect(() => {
+        onDirtyChange?.(isDirty);
+    }, [isDirty, onDirtyChange]);
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -140,7 +144,30 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
         <form onSubmit={handleSubmit} className="space-y-6">
             {canEditAllFields ? (
                 <>
-                    <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+                        <div className="space-y-2">
+                            <Label htmlFor="status">{t('Status')}</Label>
+                            <Select
+                                id="status"
+                                value={data.status}
+                                onChange={(e) => {
+                                    setData('status', e.target.value);
+                                    onStatusChange?.(e.target.value);
+                                }}
+                            >
+                                <option value="besteld">{t('Besteld')}</option>
+                                <option value="analoog">{t('Analoog')}</option>
+                                <option value="digitaal">
+                                    {t('Digitaal')}
+                                </option>
+                            </Select>
+                            {pageErrors.status && (
+                                <p className="text-sm text-destructive">
+                                    {pageErrors.status}
+                                </p>
+                            )}
+                        </div>
+
                         <div className="space-y-2">
                             <Label htmlFor="title">{t('Title')} *</Label>
                             <Input
@@ -235,76 +262,6 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                                 </p>
                             )}
                         </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="notes">{t('Notes')}</Label>
-                        <Textarea
-                            id="notes"
-                            value={data.notes}
-                            onChange={(e) => setData('notes', e.target.value)}
-                            rows={3}
-                        />
-                        {pageErrors.notes && (
-                            <p className="text-sm text-destructive">
-                                {pageErrors.notes}
-                            </p>
-                        )}
-                    </div>
-
-                    <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="space-y-2">
-                            <Label htmlFor="bought_for">
-                                {t('Bought for')}
-                            </Label>
-                            <Input
-                                id="bought_for"
-                                value={data.bought_for}
-                                onChange={(e) =>
-                                    setData('bought_for', e.target.value)
-                                }
-                            />
-                            {pageErrors.bought_for && (
-                                <p className="text-sm text-destructive">
-                                    {pageErrors.bought_for}
-                                </p>
-                            )}
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="buy_date">{t('Buy date')}</Label>
-                            <Input
-                                id="buy_date"
-                                type="date"
-                                value={data.buy_date}
-                                onChange={(e) =>
-                                    setData('buy_date', e.target.value)
-                                }
-                            />
-                            {pageErrors.buy_date && (
-                                <p className="text-sm text-destructive">
-                                    {pageErrors.buy_date}
-                                </p>
-                            )}
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="archive_number">
-                                {t('Archive number')}
-                            </Label>
-                            <Input
-                                id="archive_number"
-                                value={data.archive_number}
-                                onChange={(e) =>
-                                    setData('archive_number', e.target.value)
-                                }
-                            />
-                            {pageErrors.archive_number && (
-                                <p className="text-sm text-destructive">
-                                    {pageErrors.archive_number}
-                                </p>
-                            )}
-                        </div>
 
                         <div className="space-y-2">
                             <Label htmlFor="music_type">
@@ -326,6 +283,81 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                                 </p>
                             )}
                         </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="bought_for">
+                                {t('Bought for')}
+                            </Label>
+                            <Input
+                                id="bought_for"
+                                value={data.bought_for}
+                                onChange={(e) =>
+                                    setData('bought_for', e.target.value)
+                                }
+                            />
+                            {pageErrors.bought_for && (
+                                <p className="text-sm text-destructive">
+                                    {pageErrors.bought_for}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="bought_for_occasion">
+                                {t('Bought for occasion')}
+                            </Label>
+                            <Combobox
+                                options={boughtForOccasionSuggestions.map(
+                                    (s) => ({
+                                        value: s,
+                                        label: s,
+                                    }),
+                                )}
+                                value={data.bought_for_occasion}
+                                onChange={(v) =>
+                                    setData('bought_for_occasion', v)
+                                }
+                                placeholder={t('Bought for occasion')}
+                                allowCustom
+                            />
+                            {pageErrors.bought_for_occasion && (
+                                <p className="text-sm text-destructive">
+                                    {pageErrors.bought_for_occasion}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="buy_date">{t('Buy date')}</Label>
+                            <Input
+                                id="buy_date"
+                                type="date"
+                                value={data.buy_date}
+                                onChange={(e) =>
+                                    setData('buy_date', e.target.value)
+                                }
+                            />
+                            {pageErrors.buy_date && (
+                                <p className="text-sm text-destructive">
+                                    {pageErrors.buy_date}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="notes">{t('Notes')}</Label>
+                        <Textarea
+                            id="notes"
+                            value={data.notes}
+                            onChange={(e) => setData('notes', e.target.value)}
+                            rows={3}
+                        />
+                        {pageErrors.notes && (
+                            <p className="text-sm text-destructive">
+                                {pageErrors.notes}
+                            </p>
+                        )}
                     </div>
 
                     <div className="space-y-2">
@@ -370,65 +402,34 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                     </div>
 
                     <div className="space-y-2">
-                        <Label>{t('Audio')}</Label>
-                        <div className="flex gap-4">
-                            {(piece
-                                ? (['none', 'youtube', 'mp3'] as const)
-                                : (['none', 'youtube'] as const)
-                            ).map((type) => (
-                                <label
-                                    key={type}
-                                    className="flex items-center gap-2 text-sm"
-                                >
-                                    <input
-                                        type="radio"
-                                        name="audio_type"
-                                        checked={audioType === type}
-                                        onChange={() => {
-                                            setAudioType(type);
-                                            onAudioTypeChange?.(type);
-                                            if (type !== 'youtube') {
-                                                setData(
-                                                    'audio_youtube_url',
-                                                    '',
-                                                );
-                                            }
-                                        }}
-                                    />
-                                    {type === 'none' && t('None')}
-                                    {type === 'youtube' && 'YouTube'}
-                                    {type === 'mp3' && 'MP3'}
-                                </label>
-                            ))}
-                        </div>
-                        {audioType === 'youtube' && (
-                            <div className="space-y-2">
-                                <Input
-                                    value={data.audio_youtube_url}
-                                    onChange={(e) =>
-                                        setData(
-                                            'audio_youtube_url',
-                                            e.target.value,
-                                        )
-                                    }
-                                    placeholder="https://www.youtube.com/watch?v=..."
-                                />
-                                {pageErrors.audio_youtube_url && (
-                                    <p className="text-sm text-destructive">
-                                        {pageErrors.audio_youtube_url}
-                                    </p>
-                                )}
-                            </div>
-                        )}
-                        {audioType === 'mp3' && renderAudioMp3}
-                        {!piece && (
-                            <p className="text-sm text-muted-foreground">
-                                {t(
-                                    'MP3 audio and parts can be added after saving.',
-                                )}
+                        <Label>YouTube</Label>
+                        <Input
+                            value={data.audio_youtube_url}
+                            onChange={(e) =>
+                                setData('audio_youtube_url', e.target.value)
+                            }
+                            placeholder="https://www.youtube.com/watch?v=..."
+                        />
+                        {pageErrors.audio_youtube_url && (
+                            <p className="text-sm text-destructive">
+                                {pageErrors.audio_youtube_url}
                             </p>
                         )}
                     </div>
+
+                    {piece && renderAudioMp3 && (
+                        <div className="space-y-2">
+                            <Label>MP3</Label>
+                            {renderAudioMp3}
+                        </div>
+                    )}
+                    {!piece && (
+                        <p className="text-sm text-muted-foreground">
+                            {t(
+                                'MP3 audio and parts can be added after saving.',
+                            )}
+                        </p>
+                    )}
                 </>
             ) : (
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -457,6 +458,12 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                         <p className="text-sm">{piece?.bought_for || '-'}</p>
                     </div>
                     <div className="space-y-1">
+                        <Label>{t('Bought for occasion')}</Label>
+                        <p className="text-sm">
+                            {piece?.bought_for_occasion || '-'}
+                        </p>
+                    </div>
+                    <div className="space-y-1">
                         <Label>{t('Buy date')}</Label>
                         <p className="text-sm">{piece?.buy_date || '-'}</p>
                     </div>
@@ -469,6 +476,10 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                     <div className="space-y-1">
                         <Label>{t('Music type')}</Label>
                         <p className="text-sm">{piece?.music_type || '-'}</p>
+                    </div>
+                    <div className="space-y-1">
+                        <Label>{t('Status')}</Label>
+                        <p className="text-sm">{piece?.status || '-'}</p>
                     </div>
                     <div className="space-y-1">
                         <Label>{t('Genre')}</Label>

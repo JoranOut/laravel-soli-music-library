@@ -71,7 +71,9 @@ class PartController extends Controller
             abort(404);
         }
 
-        Storage::disk('sheets')->delete($part->file_path);
+        if ($part->file_path) {
+            Storage::disk('sheets')->delete($part->file_path);
+        }
         $part->delete();
 
         return back();
@@ -79,6 +81,8 @@ class PartController extends Controller
 
     public function downloadUrl(Part $part): JsonResponse
     {
+        abort_unless($part->file_path, 404);
+
         $access = app(MusicAccessService::class);
         $visibleIds = $access->visibleParts($part->piece)->pluck('id')->toArray();
 
@@ -93,6 +97,8 @@ class PartController extends Controller
 
     public function viewUrl(Part $part): JsonResponse
     {
+        abort_unless($part->file_path, 404);
+
         $access = app(MusicAccessService::class);
         $visibleIds = $access->visibleParts($part->piece)->pluck('id')->toArray();
 
@@ -107,6 +113,8 @@ class PartController extends Controller
 
     public function view(Request $request, Part $part): StreamedResponse
     {
+        abort_unless($part->file_path, 404);
+
         $access = app(MusicAccessService::class);
         $piece = $part->piece;
 
@@ -134,6 +142,8 @@ class PartController extends Controller
 
     public function download(Request $request, Part $part): StreamedResponse
     {
+        abort_unless($part->file_path, 404);
+
         $access = app(MusicAccessService::class);
         $piece = $part->piece;
 

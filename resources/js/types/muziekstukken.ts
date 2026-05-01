@@ -29,7 +29,7 @@ export type Part = {
     voice: number | null;
     amount_bought: number | null;
     note: string | null;
-    original_filename: string;
+    original_filename: string | null;
     instrument_type: InstrumentType;
     download_url?: string | null;
 };
@@ -53,10 +53,12 @@ export type Piece = {
     difficulty: string | null;
     notes: string | null;
     bought_for: string | null;
+    bought_for_occasion: string | null;
     buy_date: string | null;
     genre: string[] | null;
     music_type: string | null;
     archive_number: string | null;
+    status: string;
     audio_youtube_url: string | null;
     audio_file_path: string | null;
     audio_url?: string | null;

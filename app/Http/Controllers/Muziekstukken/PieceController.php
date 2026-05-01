@@ -39,12 +39,27 @@ class PieceController extends Controller
         }
 
         if ($orchestraId = $request->input('orchestra')) {
-            $query->whereHas('orchestras', fn ($q) => $q->where('orchestras.id', $orchestraId));
+            if ($request->boolean('include_past_usages')) {
+                $query->whereHas('orchestraUsages', fn ($q) => $q->where('orchestra_id', $orchestraId));
+            } else {
+                $query->whereHas('orchestras', fn ($q) => $q->where('orchestras.id', $orchestraId));
+            }
         }
 
         if ($instruments = $request->input('instruments')) {
-            $ids = explode(',', $instruments);
-            $query->whereHas('parts', fn ($q) => $q->whereIn('instrument_type_id', $ids));
+            // Format: "ID:VOICE,ID:VOICE" or legacy "ID,ID,ID"
+            foreach (explode(',', $instruments) as $entry) {
+                $parts = explode(':', $entry);
+                $typeId = (int) $parts[0];
+                $minVoice = isset($parts[1]) ? (int) $parts[1] : 1;
+
+                $query->whereHas('parts', function ($q) use ($typeId, $minVoice) {
+                    $q->where('instrument_type_id', $typeId);
+                    if ($minVoice > 1) {
+                        $q->where('voice', '>=', $minVoice);
+                    }
+                });
+            }
         }
 
         if ($composer = $request->input('composer')) {
@@ -69,6 +84,18 @@ class PieceController extends Controller
 
         if ($difficulty = $request->input('difficulty')) {
             $query->where('difficulty', $difficulty);
+        }
+
+        if ($boughtFor = $request->input('bought_for')) {
+            $query->where('bought_for', $boughtFor);
+        }
+
+        if ($boughtForOccasion = $request->input('bought_for_occasion')) {
+            $query->where('bought_for_occasion', $boughtForOccasion);
+        }
+
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
         }
 
         if ($buyDateFrom = $request->input('buy_date_from')) {
@@ -99,8 +126,11 @@ class PieceController extends Controller
                 'musicTypes' => Piece::whereNotNull('music_type')->where('music_type', '!=', '')->distinct()->pluck('music_type')->sort()->values(),
                 'genres' => Piece::whereNotNull('genre')->pluck('genre')->flatten()->unique()->sort()->values(),
                 'difficulties' => Piece::whereNotNull('difficulty')->where('difficulty', '!=', '')->distinct()->pluck('difficulty')->sort()->values(),
+                'boughtFors' => Piece::whereNotNull('bought_for')->where('bought_for', '!=', '')->distinct()->pluck('bought_for')->sort()->values(),
+                'boughtForOccasions' => Piece::whereNotNull('bought_for_occasion')->where('bought_for_occasion', '!=', '')->distinct()->pluck('bought_for_occasion')->sort()->values(),
+                'statuses' => Piece::whereNotNull('status')->where('status', '!=', '')->distinct()->pluck('status')->sort()->values(),
             ],
-            'filters' => $request->only(['search', 'orchestra', 'instruments', 'composer', 'arranger', 'publisher', 'music_type', 'genre', 'difficulty', 'buy_date_from', 'buy_date_to']),
+            'filters' => $request->only(['search', 'orchestra', 'include_past_usages', 'instruments', 'composer', 'arranger', 'publisher', 'music_type', 'genre', 'difficulty', 'bought_for', 'bought_for_occasion', 'status', 'buy_date_from', 'buy_date_to']),
             'canEdit' => $canEdit,
             'canEditUsages' => $canEdit || $access->isDirigent(),
         ]);
@@ -113,19 +143,25 @@ class PieceController extends Controller
 
         $parts = $access->visibleParts($piece)->map(fn ($part) => [
             ...$part->toArray(),
-            'download_url' => URL::temporarySignedRoute('parts.download', now()->addDay(), ['part' => $part->id]),
+            'download_url' => $part->file_path
+                ? URL::temporarySignedRoute('parts.download', now()->addDay(), ['part' => $part->id])
+                : null,
         ]);
 
         $audioUrl = $piece->audio_file_path
             ? URL::temporarySignedRoute('muziekstukken.audio.stream', now()->addDay(), ['piece' => $piece->id])
             : null;
 
+        $canEdit = $access->isEditor() || $access->isDirigent();
+
         return Inertia::render('muziekstukken/show', [
             'piece' => $piece,
             'parts' => $parts,
             'audioUrl' => $audioUrl,
             'instrumentTypes' => InstrumentType::with('instrumentFamily')->orderBy('sort_order')->get(),
-            'canEdit' => $access->isEditor() || $access->isDirigent(),
+            'canEdit' => $canEdit,
+            'canEditUsages' => $canEdit || $access->isDirigent(),
+            'orchestras' => Orchestra::where('is_active', true)->orderBy('sort_order')->get(),
         ]);
     }
 
@@ -162,6 +198,7 @@ class PieceController extends Controller
             'arrangerSuggestions' => $suggestions['arrangers'],
             'publisherSuggestions' => $suggestions['publishers'],
             'difficultySuggestions' => $suggestions['difficulties'],
+            'boughtForOccasionSuggestions' => $suggestions['boughtForOccasions'],
         ]);
     }
 
@@ -175,11 +212,13 @@ class PieceController extends Controller
             'difficulty' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
             'bought_for' => ['nullable', 'string', 'max:255'],
+            'bought_for_occasion' => ['nullable', 'string', 'max:255'],
             'buy_date' => ['nullable', 'date'],
             'genre' => ['nullable', 'array'],
             'genre.*' => ['string', 'max:255'],
             'music_type' => ['nullable', 'string', 'max:255'],
             'archive_number' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', 'string', 'max:255'],
             'audio_youtube_url' => ['nullable', 'url', 'max:500'],
             'orchestras' => ['nullable', 'array'],
             'orchestras.*' => ['integer', 'exists:orchestras,id'],
@@ -219,6 +258,7 @@ class PieceController extends Controller
             'arrangerSuggestions' => $suggestions['arrangers'],
             'publisherSuggestions' => $suggestions['publishers'],
             'difficultySuggestions' => $suggestions['difficulties'],
+            'boughtForOccasionSuggestions' => $suggestions['boughtForOccasions'],
         ];
 
         if ($canEditAllFields) {
@@ -243,11 +283,13 @@ class PieceController extends Controller
                 'difficulty' => ['nullable', 'string', 'max:255'],
                 'notes' => ['nullable', 'string'],
                 'bought_for' => ['nullable', 'string', 'max:255'],
+                'bought_for_occasion' => ['nullable', 'string', 'max:255'],
                 'buy_date' => ['nullable', 'date'],
                 'genre' => ['nullable', 'array'],
                 'genre.*' => ['string', 'max:255'],
                 'music_type' => ['nullable', 'string', 'max:255'],
                 'archive_number' => ['nullable', 'string', 'max:255'],
+                'status' => ['nullable', 'string', 'max:255'],
                 'audio_youtube_url' => ['nullable', 'url', 'max:500'],
                 'usages' => ['nullable', 'array'],
                 'usages.*.id' => ['nullable', 'integer'],
@@ -262,15 +304,14 @@ class PieceController extends Controller
                 'parts.*.voice' => ['nullable', 'integer', 'min:1'],
                 'parts.*.amount_bought' => ['nullable', 'integer', 'min:0'],
                 'parts.*.note' => ['nullable', 'string', 'max:20'],
+                'matrix_parts' => ['nullable', 'array'],
+                'matrix_parts.*.instrument_type_id' => ['required', 'integer', 'exists:instrument_types,id'],
+                'matrix_parts.*.is_conductor' => ['required', 'boolean'],
+                'matrix_parts.*.voice' => ['nullable', 'integer', 'min:1'],
+                'matrix_parts.*.amount_bought' => ['required', 'integer', 'min:0'],
             ]);
 
-            // When setting a YouTube URL, clear any existing MP3 file
-            if (! empty($validated['audio_youtube_url']) && $piece->audio_file_path) {
-                Storage::disk('sheets')->delete($piece->audio_file_path);
-                $validated['audio_file_path'] = null;
-            }
-
-            $piece->update(collect($validated)->except('usages', 'parts')->toArray());
+            $piece->update(collect($validated)->except('usages', 'parts', 'matrix_parts')->toArray());
             $this->syncUsages($piece, $validated['usages'] ?? []);
 
             foreach ($validated['parts'] ?? [] as $partData) {
@@ -281,6 +322,12 @@ class PieceController extends Controller
                     'amount_bought' => $partData['amount_bought'] ?? null,
                     'note' => $partData['note'] ?? null,
                 ]);
+            }
+
+            // Sync matrix parts (fileless) — only when status is not digitaal
+            $status = $validated['status'] ?? $piece->status;
+            if ($status !== 'digitaal' && ! empty($validated['matrix_parts'])) {
+                $this->syncMatrixParts($piece, $validated['matrix_parts']);
             }
         } else {
             // Dirigent: can only update usages
@@ -335,7 +382,9 @@ class PieceController extends Controller
         }
 
         foreach ($piece->parts as $part) {
-            Storage::disk('sheets')->delete($part->file_path);
+            if ($part->file_path) {
+                Storage::disk('sheets')->delete($part->file_path);
+            }
         }
 
         $piece->forceDelete();
@@ -355,7 +404,6 @@ class PieceController extends Controller
 
         $piece->update([
             'audio_file_path' => $path,
-            'audio_youtube_url' => null,
         ]);
 
         return back();
@@ -369,7 +417,6 @@ class PieceController extends Controller
 
         $piece->update([
             'audio_file_path' => null,
-            'audio_youtube_url' => null,
         ]);
 
         return back();
@@ -447,6 +494,38 @@ class PieceController extends Controller
         }
     }
 
+    /** @param array<int, array{instrument_type_id: int, is_conductor: bool, voice: int|null, amount_bought: int}> $matrixParts */
+    private function syncMatrixParts(Piece $piece, array $matrixParts): void
+    {
+        // Group payload by (instrument_type_id, is_conductor) to do a full sync per combo
+        $grouped = collect($matrixParts)->groupBy(fn ($entry) => $entry['instrument_type_id'].'_'.($entry['is_conductor'] ? '1' : '0'));
+
+        foreach ($grouped as $key => $entries) {
+            [$typeId, $isConductor] = explode('_', $key);
+
+            // Delete all existing fileless parts for this combo
+            $piece->parts()
+                ->whereNull('file_path')
+                ->where('instrument_type_id', $typeId)
+                ->where('is_conductor', $isConductor === '1')
+                ->delete();
+
+            // Recreate parts with amount > 0
+            foreach ($entries as $entry) {
+                if ($entry['amount_bought'] > 0) {
+                    $piece->parts()->create([
+                        'instrument_type_id' => $entry['instrument_type_id'],
+                        'is_conductor' => $entry['is_conductor'],
+                        'voice' => $entry['voice'] ?? null,
+                        'amount_bought' => $entry['amount_bought'],
+                        'file_path' => null,
+                        'original_filename' => null,
+                    ]);
+                }
+            }
+        }
+    }
+
     private function getSuggestions(): array
     {
         $genres = Piece::whereNotNull('genre')
@@ -474,6 +553,9 @@ class PieceController extends Controller
         $difficulties = Piece::whereNotNull('difficulty')->where('difficulty', '!=', '')
             ->distinct()->pluck('difficulty')->sort()->values();
 
+        $boughtForOccasions = Piece::whereNotNull('bought_for_occasion')->where('bought_for_occasion', '!=', '')
+            ->distinct()->pluck('bought_for_occasion')->sort()->values();
+
         return [
             'genres' => $genres,
             'musicTypes' => $musicTypes,
@@ -481,6 +563,7 @@ class PieceController extends Controller
             'arrangers' => $arrangers,
             'publishers' => $publishers,
             'difficulties' => $difficulties,
+            'boughtForOccasions' => $boughtForOccasions,
         ];
     }
 }
