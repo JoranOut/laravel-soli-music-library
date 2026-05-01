@@ -68,6 +68,7 @@ type Props = {
     arrangerSuggestions?: string[];
     publisherSuggestions?: string[];
     difficultySuggestions?: string[];
+    boughtForOccasionSuggestions?: string[];
 };
 
 function instrumentOptions(types: InstrumentType[]): ComboboxOption[] {
@@ -107,6 +108,7 @@ export default function Edit({
     arrangerSuggestions = [],
     publisherSuggestions = [],
     difficultySuggestions = [],
+    boughtForOccasionSuggestions = [],
 }: Props) {
     const { t } = useTranslation();
     const pieceFormRef = useRef<PieceFormHandle>(null);
@@ -419,6 +421,7 @@ export default function Edit({
                         arrangerSuggestions={arrangerSuggestions}
                         publisherSuggestions={publisherSuggestions}
                         difficultySuggestions={difficultySuggestions}
+                        boughtForOccasionSuggestions={boughtForOccasionSuggestions}
                         onAudioTypeChange={setAudioType}
                         onDirtyChange={setPieceFormDirty}
                         renderAudioMp3={

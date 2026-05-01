@@ -19,6 +19,7 @@ export type PieceFormData = {
     difficulty: string;
     notes: string;
     bought_for: string;
+    bought_for_occasion: string;
     buy_date: string;
     genre: string[];
     music_type: string;
@@ -48,6 +49,7 @@ type Props = {
     arrangerSuggestions?: string[];
     publisherSuggestions?: string[];
     difficultySuggestions?: string[];
+    boughtForOccasionSuggestions?: string[];
     onAudioTypeChange?: (type: AudioType) => void;
     onDirtyChange?: (dirty: boolean) => void;
     renderAudioMp3?: ReactNode;
@@ -67,6 +69,7 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
         arrangerSuggestions = [],
         publisherSuggestions = [],
         difficultySuggestions = [],
+        boughtForOccasionSuggestions = [],
         onAudioTypeChange,
         onDirtyChange,
         renderAudioMp3,
@@ -91,6 +94,7 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
         difficulty: piece?.difficulty ?? '',
         notes: piece?.notes ?? '',
         bought_for: piece?.bought_for ?? '',
+        bought_for_occasion: piece?.bought_for_occasion ?? '',
         buy_date: piece?.buy_date ?? '',
         genre: piece?.genre ?? ([] as string[]),
         music_type: piece?.music_type ?? '',
@@ -280,6 +284,27 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                         </div>
 
                         <div className="space-y-2">
+                            <Label htmlFor="bought_for_occasion">
+                                {t('Bought for occasion')}
+                            </Label>
+                            <Combobox
+                                options={boughtForOccasionSuggestions.map((s) => ({
+                                    value: s,
+                                    label: s,
+                                }))}
+                                value={data.bought_for_occasion}
+                                onChange={(v) => setData('bought_for_occasion', v)}
+                                placeholder={t('Bought for occasion')}
+                                allowCustom
+                            />
+                            {pageErrors.bought_for_occasion && (
+                                <p className="text-sm text-destructive">
+                                    {pageErrors.bought_for_occasion}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="space-y-2">
                             <Label htmlFor="buy_date">{t('Buy date')}</Label>
                             <Input
                                 id="buy_date"
@@ -463,6 +488,10 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                     <div className="space-y-1">
                         <Label>{t('Bought for')}</Label>
                         <p className="text-sm">{piece?.bought_for || '-'}</p>
+                    </div>
+                    <div className="space-y-1">
+                        <Label>{t('Bought for occasion')}</Label>
+                        <p className="text-sm">{piece?.bought_for_occasion || '-'}</p>
                     </div>
                     <div className="space-y-1">
                         <Label>{t('Buy date')}</Label>

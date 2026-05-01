@@ -75,6 +75,10 @@ class PieceController extends Controller
             $query->where('bought_for', $boughtFor);
         }
 
+        if ($boughtForOccasion = $request->input('bought_for_occasion')) {
+            $query->where('bought_for_occasion', $boughtForOccasion);
+        }
+
         if ($buyDateFrom = $request->input('buy_date_from')) {
             $query->where('buy_date', '>=', $buyDateFrom);
         }
@@ -104,8 +108,9 @@ class PieceController extends Controller
                 'genres' => Piece::whereNotNull('genre')->pluck('genre')->flatten()->unique()->sort()->values(),
                 'difficulties' => Piece::whereNotNull('difficulty')->where('difficulty', '!=', '')->distinct()->pluck('difficulty')->sort()->values(),
                 'boughtFors' => Piece::whereNotNull('bought_for')->where('bought_for', '!=', '')->distinct()->pluck('bought_for')->sort()->values(),
+                'boughtForOccasions' => Piece::whereNotNull('bought_for_occasion')->where('bought_for_occasion', '!=', '')->distinct()->pluck('bought_for_occasion')->sort()->values(),
             ],
-            'filters' => $request->only(['search', 'orchestra', 'instruments', 'composer', 'arranger', 'publisher', 'music_type', 'genre', 'difficulty', 'bought_for', 'buy_date_from', 'buy_date_to']),
+            'filters' => $request->only(['search', 'orchestra', 'instruments', 'composer', 'arranger', 'publisher', 'music_type', 'genre', 'difficulty', 'bought_for', 'bought_for_occasion', 'buy_date_from', 'buy_date_to']),
             'canEdit' => $canEdit,
             'canEditUsages' => $canEdit || $access->isDirigent(),
         ]);
@@ -171,6 +176,7 @@ class PieceController extends Controller
             'arrangerSuggestions' => $suggestions['arrangers'],
             'publisherSuggestions' => $suggestions['publishers'],
             'difficultySuggestions' => $suggestions['difficulties'],
+            'boughtForOccasionSuggestions' => $suggestions['boughtForOccasions'],
         ]);
     }
 
@@ -184,6 +190,7 @@ class PieceController extends Controller
             'difficulty' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
             'bought_for' => ['nullable', 'string', 'max:255'],
+            'bought_for_occasion' => ['nullable', 'string', 'max:255'],
             'buy_date' => ['nullable', 'date'],
             'genre' => ['nullable', 'array'],
             'genre.*' => ['string', 'max:255'],
@@ -228,6 +235,7 @@ class PieceController extends Controller
             'arrangerSuggestions' => $suggestions['arrangers'],
             'publisherSuggestions' => $suggestions['publishers'],
             'difficultySuggestions' => $suggestions['difficulties'],
+            'boughtForOccasionSuggestions' => $suggestions['boughtForOccasions'],
         ];
 
         if ($canEditAllFields) {
@@ -252,6 +260,7 @@ class PieceController extends Controller
                 'difficulty' => ['nullable', 'string', 'max:255'],
                 'notes' => ['nullable', 'string'],
                 'bought_for' => ['nullable', 'string', 'max:255'],
+                'bought_for_occasion' => ['nullable', 'string', 'max:255'],
                 'buy_date' => ['nullable', 'date'],
                 'genre' => ['nullable', 'array'],
                 'genre.*' => ['string', 'max:255'],
@@ -483,6 +492,9 @@ class PieceController extends Controller
         $difficulties = Piece::whereNotNull('difficulty')->where('difficulty', '!=', '')
             ->distinct()->pluck('difficulty')->sort()->values();
 
+        $boughtForOccasions = Piece::whereNotNull('bought_for_occasion')->where('bought_for_occasion', '!=', '')
+            ->distinct()->pluck('bought_for_occasion')->sort()->values();
+
         return [
             'genres' => $genres,
             'musicTypes' => $musicTypes,
@@ -490,6 +502,7 @@ class PieceController extends Controller
             'arrangers' => $arrangers,
             'publishers' => $publishers,
             'difficulties' => $difficulties,
+            'boughtForOccasions' => $boughtForOccasions,
         ];
     }
 }

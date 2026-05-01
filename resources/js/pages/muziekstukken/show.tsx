@@ -305,6 +305,10 @@ export default function Show({
                             label={t('Bought for')}
                             value={piece.bought_for}
                         />
+                        <Field
+                            label={t('Bought for occasion')}
+                            value={piece.bought_for_occasion}
+                        />
                         <Field label={t('Buy date')} value={piece.buy_date} />
                         <Field
                             label={t('Archive number')}

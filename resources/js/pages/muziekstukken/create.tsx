@@ -15,6 +15,7 @@ type Props = {
     arrangerSuggestions: string[];
     publisherSuggestions: string[];
     difficultySuggestions: string[];
+    boughtForOccasionSuggestions: string[];
 };
 
 export default function Create({
@@ -25,6 +26,7 @@ export default function Create({
     arrangerSuggestions,
     publisherSuggestions,
     difficultySuggestions,
+    boughtForOccasionSuggestions,
 }: Props) {
     const { t } = useTranslation();
     const [formDirty, setFormDirty] = useState(false);
@@ -52,6 +54,7 @@ export default function Create({
                     arrangerSuggestions={arrangerSuggestions}
                     publisherSuggestions={publisherSuggestions}
                     difficultySuggestions={difficultySuggestions}
+                    boughtForOccasionSuggestions={boughtForOccasionSuggestions}
                 />
             </div>
         </AppLayout>

@@ -53,6 +53,7 @@ export type Piece = {
     difficulty: string | null;
     notes: string | null;
     bought_for: string | null;
+    bought_for_occasion: string | null;
     buy_date: string | null;
     genre: string[] | null;
     music_type: string | null;

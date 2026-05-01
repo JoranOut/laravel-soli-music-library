@@ -74,6 +74,7 @@ type Props = {
         genres: string[];
         difficulties: string[];
         boughtFors: string[];
+        boughtForOccasions: string[];
     };
     filters: {
         search?: string;
@@ -86,6 +87,7 @@ type Props = {
         genre?: string;
         difficulty?: string;
         bought_for?: string;
+        bought_for_occasion?: string;
         buy_date_from?: string;
         buy_date_to?: string;
     };
@@ -140,6 +142,7 @@ export default function Index({
                 filters.genre ||
                 filters.difficulty ||
                 filters.bought_for ||
+                filters.bought_for_occasion ||
                 filters.buy_date_from ||
                 filters.buy_date_to
             ),
@@ -185,6 +188,7 @@ export default function Index({
         filters.genre,
         filters.difficulty,
         filters.bought_for,
+        filters.bought_for_occasion,
         filters.buy_date_from || filters.buy_date_to,
     ].filter(Boolean).length;
 
@@ -459,6 +463,27 @@ export default function Index({
                                     onChange={(v) =>
                                         navigate({
                                             bought_for: v || undefined,
+                                        })
+                                    }
+                                    placeholder={t('All')}
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <Label>{t('Bought for occasion')}</Label>
+                                <Combobox
+                                    options={[
+                                        { value: '', label: t('All') },
+                                        ...filterOptions.boughtForOccasions.map(
+                                            (v) => ({
+                                                value: v,
+                                                label: v,
+                                            }),
+                                        ),
+                                    ]}
+                                    value={filters.bought_for_occasion ?? ''}
+                                    onChange={(v) =>
+                                        navigate({
+                                            bought_for_occasion: v || undefined,
                                         })
                                     }
                                     placeholder={t('All')}
