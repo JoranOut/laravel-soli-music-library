@@ -9,7 +9,10 @@ export type FamilyGroup = {
     }[];
 };
 
-export function useGroupedTypes(instrumentTypes: InstrumentType[], parts: Part[]) {
+export function useGroupedTypes(
+    instrumentTypes: InstrumentType[],
+    parts: Part[],
+) {
     return useMemo(() => {
         const conductorParts = parts.filter((p) => p.is_conductor);
         const nonConductorParts = parts.filter((p) => !p.is_conductor);

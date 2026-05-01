@@ -146,9 +146,7 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                 <>
                     <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
                         <div className="space-y-2">
-                            <Label htmlFor="status">
-                                {t('Status')}
-                            </Label>
+                            <Label htmlFor="status">{t('Status')}</Label>
                             <Select
                                 id="status"
                                 value={data.status}
@@ -159,7 +157,9 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                             >
                                 <option value="besteld">{t('Besteld')}</option>
                                 <option value="analoog">{t('Analoog')}</option>
-                                <option value="digitaal">{t('Digitaal')}</option>
+                                <option value="digitaal">
+                                    {t('Digitaal')}
+                                </option>
                             </Select>
                             {pageErrors.status && (
                                 <p className="text-sm text-destructive">
@@ -307,12 +307,16 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                                 {t('Bought for occasion')}
                             </Label>
                             <Combobox
-                                options={boughtForOccasionSuggestions.map((s) => ({
-                                    value: s,
-                                    label: s,
-                                }))}
+                                options={boughtForOccasionSuggestions.map(
+                                    (s) => ({
+                                        value: s,
+                                        label: s,
+                                    }),
+                                )}
                                 value={data.bought_for_occasion}
-                                onChange={(v) => setData('bought_for_occasion', v)}
+                                onChange={(v) =>
+                                    setData('bought_for_occasion', v)
+                                }
                                 placeholder={t('Bought for occasion')}
                                 allowCustom
                             />
@@ -339,7 +343,6 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                                 </p>
                             )}
                         </div>
-
                     </div>
 
                     <div className="space-y-2">
@@ -403,10 +406,7 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                         <Input
                             value={data.audio_youtube_url}
                             onChange={(e) =>
-                                setData(
-                                    'audio_youtube_url',
-                                    e.target.value,
-                                )
+                                setData('audio_youtube_url', e.target.value)
                             }
                             placeholder="https://www.youtube.com/watch?v=..."
                         />
@@ -459,7 +459,9 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                     </div>
                     <div className="space-y-1">
                         <Label>{t('Bought for occasion')}</Label>
-                        <p className="text-sm">{piece?.bought_for_occasion || '-'}</p>
+                        <p className="text-sm">
+                            {piece?.bought_for_occasion || '-'}
+                        </p>
                     </div>
                     <div className="space-y-1">
                         <Label>{t('Buy date')}</Label>

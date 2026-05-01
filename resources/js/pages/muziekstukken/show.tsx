@@ -30,7 +30,12 @@ import { useAudioPlayer } from '@/hooks/use-audio-player';
 import { useGroupedTypes } from '@/hooks/use-grouped-types';
 import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
-import type { InstrumentType, Orchestra, Part, Piece } from '@/types/muziekstukken';
+import type {
+    InstrumentType,
+    Orchestra,
+    Part,
+    Piece,
+} from '@/types/muziekstukken';
 
 type Props = {
     piece: Piece;
@@ -82,7 +87,9 @@ function PartsOverview({
                                 key={part.id}
                                 className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm"
                             >
-                                <span>{part.original_filename ?? t('Partituur')}</span>
+                                <span>
+                                    {part.original_filename ?? t('Partituur')}
+                                </span>
                                 {part.download_url && (
                                     <a href={part.download_url} download>
                                         <Download className="size-4 text-muted-foreground hover:text-foreground" />
@@ -112,44 +119,61 @@ function PartsOverview({
                                     .filter(({ parts: tp }) => tp.length > 0)
                                     .flatMap(({ type, parts: typeParts }) => {
                                         // Group by voice number
-                                        const voiceMap = new Map<number | null, Part[]>();
+                                        const voiceMap = new Map<
+                                            number | null,
+                                            Part[]
+                                        >();
                                         for (const p of typeParts) {
                                             const key = p.voice;
-                                            if (!voiceMap.has(key)) voiceMap.set(key, []);
+                                            if (!voiceMap.has(key))
+                                                voiceMap.set(key, []);
                                             voiceMap.get(key)!.push(p);
                                         }
-                                        const voices = Array.from(voiceMap.entries()).sort(
+                                        const voices = Array.from(
+                                            voiceMap.entries(),
+                                        ).sort(
                                             (a, b) => (a[0] ?? 0) - (b[0] ?? 0),
                                         );
-                                        const hasMultipleVoices = voices.length > 1 || voices[0]?.[0] !== null;
+                                        const hasMultipleVoices =
+                                            voices.length > 1 ||
+                                            voices[0]?.[0] !== null;
 
-                                        return voices.map(([voice, voiceParts]) => (
+                                        return voices.map(
+                                            ([voice, voiceParts]) => (
                                                 <li
                                                     key={`${type.id}-${voice}`}
                                                     className="flex items-center justify-between text-sm"
                                                 >
                                                     <span>
                                                         {type.name}
-                                                        {hasMultipleVoices && voice !== null && (
-                                                            <span className="ml-1 text-muted-foreground">
-                                                                {voice}
-                                                            </span>
-                                                        )}
+                                                        {hasMultipleVoices &&
+                                                            voice !== null && (
+                                                                <span className="ml-1 text-muted-foreground">
+                                                                    {voice}
+                                                                </span>
+                                                            )}
                                                     </span>
                                                     {voiceParts.length === 1 &&
-                                                        voiceParts[0].download_url && (
+                                                        voiceParts[0]
+                                                            .download_url && (
                                                             <a
-                                                                href={voiceParts[0].download_url}
+                                                                href={
+                                                                    voiceParts[0]
+                                                                        .download_url
+                                                                }
                                                                 download
                                                             >
                                                                 <Download className="size-4 text-muted-foreground hover:text-foreground" />
                                                                 <span className="sr-only">
-                                                                    {t('Download')}
+                                                                    {t(
+                                                                        'Download',
+                                                                    )}
                                                                 </span>
                                                             </a>
                                                         )}
                                                 </li>
-                                            ));
+                                            ),
+                                        );
                                     })}
                             </ul>
                         </div>
@@ -186,7 +210,9 @@ function BumaOverview({
                                 key={part.id}
                                 className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm"
                             >
-                                <span>{part.original_filename ?? t('Partituur')}</span>
+                                <span>
+                                    {part.original_filename ?? t('Partituur')}
+                                </span>
                                 <span className="text-muted-foreground">
                                     {part.amount_bought ?? 1}&times;
                                 </span>
@@ -199,9 +225,7 @@ function BumaOverview({
             <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {families.map(({ familyName, types }) => (
                     <div key={familyName} className="space-y-2">
-                        <h3 className="text-sm font-semibold">
-                            {familyName}
-                        </h3>
+                        <h3 className="text-sm font-semibold">{familyName}</h3>
                         <ul className="space-y-1">
                             {types.flatMap(({ type, parts: typeParts }) => {
                                 if (typeParts.length === 0) {
@@ -216,20 +240,27 @@ function BumaOverview({
                                     );
                                 }
 
-                                const voiceMap = new Map<number | null, Part[]>();
+                                const voiceMap = new Map<
+                                    number | null,
+                                    Part[]
+                                >();
                                 for (const p of typeParts) {
                                     const key = p.voice;
-                                    if (!voiceMap.has(key)) voiceMap.set(key, []);
+                                    if (!voiceMap.has(key))
+                                        voiceMap.set(key, []);
                                     voiceMap.get(key)!.push(p);
                                 }
-                                const voices = Array.from(voiceMap.entries()).sort(
-                                    (a, b) => (a[0] ?? 0) - (b[0] ?? 0),
-                                );
-                                const hasMultipleVoices = voices.length > 1 || voices[0]?.[0] !== null;
+                                const voices = Array.from(
+                                    voiceMap.entries(),
+                                ).sort((a, b) => (a[0] ?? 0) - (b[0] ?? 0));
+                                const hasMultipleVoices =
+                                    voices.length > 1 ||
+                                    voices[0]?.[0] !== null;
 
                                 return voices.map(([voice, voiceParts]) => {
                                     const totalBought = voiceParts.reduce(
-                                        (sum, p) => sum + (p.amount_bought ?? 1),
+                                        (sum, p) =>
+                                            sum + (p.amount_bought ?? 1),
                                         0,
                                     );
                                     return (
@@ -239,11 +270,12 @@ function BumaOverview({
                                         >
                                             <span>
                                                 {type.name}
-                                                {hasMultipleVoices && voice !== null && (
-                                                    <span className="ml-1 text-muted-foreground">
-                                                        {voice}
-                                                    </span>
-                                                )}
+                                                {hasMultipleVoices &&
+                                                    voice !== null && (
+                                                        <span className="ml-1 text-muted-foreground">
+                                                            {voice}
+                                                        </span>
+                                                    )}
                                             </span>
                                             <span className="text-muted-foreground">
                                                 {totalBought}&times;
@@ -317,7 +349,10 @@ export default function Show({
         <AppLayout
             breadcrumbs={[
                 { title: t('All Pieces'), href: '/muziekstukken' },
-                { title: `${piece.archive_number ? piece.archive_number + ' — ' : ''}${piece.title}`, href: `/muziekstukken/${piece.id}` },
+                {
+                    title: `${piece.archive_number ? piece.archive_number + ' — ' : ''}${piece.title}`,
+                    href: `/muziekstukken/${piece.id}`,
+                },
             ]}
         >
             <Head title={piece.title} />
@@ -325,13 +360,20 @@ export default function Show({
                 {/* Piece metadata */}
                 <section className="space-y-6">
                     <div className="flex items-center justify-between">
-                        <Heading title={`${piece.archive_number ? piece.archive_number + ' — ' : ''}${piece.title}`} />
+                        <Heading
+                            title={`${piece.archive_number ? piece.archive_number + ' — ' : ''}${piece.title}`}
+                        />
                         <div className="flex items-center gap-2">
                             {canEditUsages && (
                                 <Button
                                     variant="outline"
                                     onClick={() => {
-                                        setUsageForm({ orchestra_id: '', van: '', tot: '', details: '' });
+                                        setUsageForm({
+                                            orchestra_id: '',
+                                            van: '',
+                                            tot: '',
+                                            details: '',
+                                        });
                                         setUsageDialogOpen(true);
                                     }}
                                 >
@@ -341,7 +383,9 @@ export default function Show({
                             )}
                             {canEdit && (
                                 <Button variant="outline" size="icon" asChild>
-                                    <Link href={`/muziekstukken/${piece.id}/edit`}>
+                                    <Link
+                                        href={`/muziekstukken/${piece.id}/edit`}
+                                    >
                                         <Pencil />
                                     </Link>
                                 </Button>
@@ -350,10 +394,7 @@ export default function Show({
                     </div>
 
                     <dl className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-                        <Field
-                            label={t('Status')}
-                            value={piece.status}
-                        />
+                        <Field label={t('Status')} value={piece.status} />
                         <Field label={t('Composer')} value={piece.composer} />
                         <Field label={t('Arranger')} value={piece.arranger} />
                         <Field label={t('Publisher')} value={piece.publisher} />
@@ -449,7 +490,11 @@ export default function Show({
                                         </Badge>
                                         <span className="text-xs text-muted-foreground">
                                             <DateView value={u.van} /> &ndash;{' '}
-                                            {u.tot ? <DateView value={u.tot} /> : t('present')}
+                                            {u.tot ? (
+                                                <DateView value={u.tot} />
+                                            ) : (
+                                                t('present')
+                                            )}
                                         </span>
                                         {u.details && (
                                             <span className="text-xs text-muted-foreground italic">
@@ -493,7 +538,8 @@ export default function Show({
                                             })
                                         }
                                     >
-                                        {isCurrentTrack(audioUrl) && isPlaying ? (
+                                        {isCurrentTrack(audioUrl) &&
+                                        isPlaying ? (
                                             <Pause />
                                         ) : (
                                             <Play />
@@ -519,9 +565,7 @@ export default function Show({
                             <TabsTrigger value="downloads">
                                 {t('Downloads')}
                             </TabsTrigger>
-                            <TabsTrigger value="list">
-                                {t('List')}
-                            </TabsTrigger>
+                            <TabsTrigger value="list">{t('List')}</TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="overview">
@@ -643,7 +687,6 @@ export default function Show({
                                 </div>
                             )}
                         </TabsContent>
-
                     </Tabs>
                 </section>
             </div>

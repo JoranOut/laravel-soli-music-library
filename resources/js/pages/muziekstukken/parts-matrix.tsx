@@ -54,7 +54,10 @@ export default function PartsMatrix({
                                 // show voice N+1 when voice N has amount > 0
                                 const voices: number[] = [1];
                                 let v = 1;
-                                while ((matrixEdits[`type_${type.id}_v${v}`] ?? 0) > 0) {
+                                while (
+                                    (matrixEdits[`type_${type.id}_v${v}`] ??
+                                        0) > 0
+                                ) {
                                     v++;
                                     voices.push(v);
                                 }
@@ -81,7 +84,9 @@ export default function PartsMatrix({
                                                         key,
                                                         Math.max(
                                                             0,
-                                                            parseInt(e.target.value) || 0,
+                                                            parseInt(
+                                                                e.target.value,
+                                                            ) || 0,
                                                         ),
                                                     )
                                                 }

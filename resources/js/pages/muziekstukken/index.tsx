@@ -121,26 +121,28 @@ export default function Index({
     const [submitting, setSubmitting] = useState(false);
 
     // Instruments filter state: { instrumentTypeId: minVoiceCount }
-    const [instrumentVoices, setInstrumentVoices] = useState<Record<string, number>>(
-        () => {
-            try {
-                const stored = localStorage.getItem(INSTRUMENTS_STORAGE_KEY);
-                if (!stored) return {};
-                const parsed = JSON.parse(stored);
-                // Handle legacy format (array of IDs)
-                if (Array.isArray(parsed)) {
-                    const voices: Record<string, number> = {};
-                    for (const id of parsed) voices[id.toString()] = 1;
-                    return voices;
-                }
-                return parsed;
-            } catch {
-                return {};
+    const [instrumentVoices, setInstrumentVoices] = useState<
+        Record<string, number>
+    >(() => {
+        try {
+            const stored = localStorage.getItem(INSTRUMENTS_STORAGE_KEY);
+            if (!stored) return {};
+            const parsed = JSON.parse(stored);
+            // Handle legacy format (array of IDs)
+            if (Array.isArray(parsed)) {
+                const voices: Record<string, number> = {};
+                for (const id of parsed) voices[id.toString()] = 1;
+                return voices;
             }
-        },
-    );
+            return parsed;
+        } catch {
+            return {};
+        }
+    });
     const [instrumentDialogOpen, setInstrumentDialogOpen] = useState(false);
-    const [dialogVoices, setDialogVoices] = useState<Record<string, number>>({});
+    const [dialogVoices, setDialogVoices] = useState<Record<string, number>>(
+        {},
+    );
 
     // More filters toggle — auto-expand when any are active
     const [showMoreFilters, setShowMoreFilters] = useState(
@@ -175,7 +177,9 @@ export default function Index({
         });
     }
 
-    function serializeVoices(voices: Record<string, number>): string | undefined {
+    function serializeVoices(
+        voices: Record<string, number>,
+    ): string | undefined {
         const entries = Object.entries(voices).filter(([, v]) => v > 0);
         if (entries.length === 0) return undefined;
         return entries.map(([id, v]) => `${id}:${v}`).join(',');
@@ -258,7 +262,9 @@ export default function Index({
     function handleOrchestraFilter(orchestra: string) {
         navigate({
             orchestra: orchestra || undefined,
-            include_past_usages: orchestra ? filters.include_past_usages : undefined,
+            include_past_usages: orchestra
+                ? filters.include_past_usages
+                : undefined,
         });
     }
 
@@ -320,10 +326,14 @@ export default function Index({
                         {filters.orchestra && (
                             <label className="flex items-center gap-2 text-sm">
                                 <Checkbox
-                                    checked={filters.include_past_usages === '1'}
+                                    checked={
+                                        filters.include_past_usages === '1'
+                                    }
                                     onCheckedChange={(checked) =>
                                         navigate({
-                                            include_past_usages: checked ? '1' : undefined,
+                                            include_past_usages: checked
+                                                ? '1'
+                                                : undefined,
                                         })
                                     }
                                 />
@@ -525,8 +535,7 @@ export default function Index({
                                     value={filters.status ?? ''}
                                     onChange={(e) =>
                                         navigate({
-                                            status:
-                                                e.target.value || undefined,
+                                            status: e.target.value || undefined,
                                         })
                                     }
                                 >
@@ -681,30 +690,30 @@ export default function Index({
                                             </Button>
                                         )}
                                         {piece.audio_url && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() =>
-                                                        toggle({
-                                                            title: piece.title,
-                                                            composer:
-                                                                piece.composer,
-                                                            url: piece.audio_url!,
-                                                        })
-                                                    }
-                                                >
-                                                    {isCurrentTrack(
-                                                        piece.audio_url,
-                                                    ) && isPlaying ? (
-                                                        <Pause />
-                                                    ) : (
-                                                        <Play />
-                                                    )}
-                                                    <span className="sr-only">
-                                                        {t('Play')}
-                                                    </span>
-                                                </Button>
-                                            )}
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() =>
+                                                    toggle({
+                                                        title: piece.title,
+                                                        composer:
+                                                            piece.composer,
+                                                        url: piece.audio_url!,
+                                                    })
+                                                }
+                                            >
+                                                {isCurrentTrack(
+                                                    piece.audio_url,
+                                                ) && isPlaying ? (
+                                                    <Pause />
+                                                ) : (
+                                                    <Play />
+                                                )}
+                                                <span className="sr-only">
+                                                    {t('Play')}
+                                                </span>
+                                            </Button>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -777,14 +786,22 @@ export default function Index({
                                                 type="number"
                                                 min="0"
                                                 className="w-[60px]"
-                                                value={dialogVoices[type.id.toString()] ?? 0}
+                                                value={
+                                                    dialogVoices[
+                                                        type.id.toString()
+                                                    ] ?? 0
+                                                }
                                                 onChange={(e) =>
                                                     setDialogVoices((prev) => ({
                                                         ...prev,
-                                                        [type.id.toString()]: Math.max(
-                                                            0,
-                                                            parseInt(e.target.value) || 0,
-                                                        ),
+                                                        [type.id.toString()]:
+                                                            Math.max(
+                                                                0,
+                                                                parseInt(
+                                                                    e.target
+                                                                        .value,
+                                                                ) || 0,
+                                                            ),
                                                     }))
                                                 }
                                             />
@@ -808,9 +825,7 @@ export default function Index({
                             {t('Cancel')}
                         </Button>
                         <Button
-                            onClick={() =>
-                                applyInstrumentFilter(dialogVoices)
-                            }
+                            onClick={() => applyInstrumentFilter(dialogVoices)}
                         >
                             {t('Apply')}
                         </Button>
