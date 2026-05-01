@@ -72,6 +72,7 @@ type Props = {
         musicTypes: string[];
         genres: string[];
         difficulties: string[];
+        boughtFors: string[];
     };
     filters: {
         search?: string;
@@ -83,6 +84,7 @@ type Props = {
         music_type?: string;
         genre?: string;
         difficulty?: string;
+        bought_for?: string;
         buy_date_from?: string;
         buy_date_to?: string;
     };
@@ -136,6 +138,7 @@ export default function Index({
                 filters.music_type ||
                 filters.genre ||
                 filters.difficulty ||
+                filters.bought_for ||
                 filters.buy_date_from ||
                 filters.buy_date_to
             ),
@@ -180,6 +183,7 @@ export default function Index({
         filters.music_type,
         filters.genre,
         filters.difficulty,
+        filters.bought_for,
         filters.buy_date_from || filters.buy_date_to,
     ].filter(Boolean).length;
 
@@ -437,6 +441,27 @@ export default function Index({
                                         </option>
                                     ))}
                                 </Select>
+                            </div>
+                            <div className="space-y-1">
+                                <Label>{t('Bought for')}</Label>
+                                <Combobox
+                                    options={[
+                                        { value: '', label: t('All') },
+                                        ...filterOptions.boughtFors.map(
+                                            (v) => ({
+                                                value: v,
+                                                label: v,
+                                            }),
+                                        ),
+                                    ]}
+                                    value={filters.bought_for ?? ''}
+                                    onChange={(v) =>
+                                        navigate({
+                                            bought_for: v || undefined,
+                                        })
+                                    }
+                                    placeholder={t('All')}
+                                />
                             </div>
                             <div className="space-y-1">
                                 <Label>{t('Buy date from')}</Label>

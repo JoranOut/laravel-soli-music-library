@@ -383,8 +383,8 @@ export default function Show({
                                             {u.orchestra.name}
                                         </Badge>
                                         <span className="text-xs text-muted-foreground">
-                                            {u.van ?? '?'} &ndash;{' '}
-                                            {u.tot ?? t('present')}
+                                            {u.van?.split('T')[0] ?? '?'} &ndash;{' '}
+                                            {u.tot?.split('T')[0] ?? t('present')}
                                         </span>
                                         {u.details && (
                                             <span className="text-xs text-muted-foreground italic">

@@ -71,6 +71,10 @@ class PieceController extends Controller
             $query->where('difficulty', $difficulty);
         }
 
+        if ($boughtFor = $request->input('bought_for')) {
+            $query->where('bought_for', $boughtFor);
+        }
+
         if ($buyDateFrom = $request->input('buy_date_from')) {
             $query->where('buy_date', '>=', $buyDateFrom);
         }
@@ -99,8 +103,9 @@ class PieceController extends Controller
                 'musicTypes' => Piece::whereNotNull('music_type')->where('music_type', '!=', '')->distinct()->pluck('music_type')->sort()->values(),
                 'genres' => Piece::whereNotNull('genre')->pluck('genre')->flatten()->unique()->sort()->values(),
                 'difficulties' => Piece::whereNotNull('difficulty')->where('difficulty', '!=', '')->distinct()->pluck('difficulty')->sort()->values(),
+                'boughtFors' => Piece::whereNotNull('bought_for')->where('bought_for', '!=', '')->distinct()->pluck('bought_for')->sort()->values(),
             ],
-            'filters' => $request->only(['search', 'orchestra', 'instruments', 'composer', 'arranger', 'publisher', 'music_type', 'genre', 'difficulty', 'buy_date_from', 'buy_date_to']),
+            'filters' => $request->only(['search', 'orchestra', 'instruments', 'composer', 'arranger', 'publisher', 'music_type', 'genre', 'difficulty', 'bought_for', 'buy_date_from', 'buy_date_to']),
             'canEdit' => $canEdit,
             'canEditUsages' => $canEdit || $access->isDirigent(),
         ]);
