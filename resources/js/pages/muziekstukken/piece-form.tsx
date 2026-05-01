@@ -1,6 +1,6 @@
 import { useForm, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
-import { forwardRef, useImperativeHandle, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -32,6 +32,7 @@ export type AudioType = 'none' | 'youtube' | 'mp3';
 export type PieceFormHandle = {
     getData: () => PieceFormData;
     audioType: AudioType;
+    isDirty: boolean;
 };
 
 type Props = {
@@ -48,6 +49,7 @@ type Props = {
     publisherSuggestions?: string[];
     difficultySuggestions?: string[];
     onAudioTypeChange?: (type: AudioType) => void;
+    onDirtyChange?: (dirty: boolean) => void;
     renderAudioMp3?: ReactNode;
 };
 
@@ -66,6 +68,7 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
         publisherSuggestions = [],
         difficultySuggestions = [],
         onAudioTypeChange,
+        onDirtyChange,
         renderAudioMp3,
     },
     ref,
@@ -80,7 +83,7 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
           : 'none';
     const [audioType, setAudioType] = useState<AudioType>(initialAudioType);
 
-    const { data, setData, post, put, processing } = useForm({
+    const { data, setData, post, put, processing, isDirty } = useForm({
         title: piece?.title ?? '',
         composer: piece?.composer ?? '',
         arranger: piece?.arranger ?? '',
@@ -99,7 +102,12 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
     useImperativeHandle(ref, () => ({
         getData: () => data,
         audioType,
+        isDirty,
     }));
+
+    useEffect(() => {
+        onDirtyChange?.(isDirty);
+    }, [isDirty, onDirtyChange]);
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();

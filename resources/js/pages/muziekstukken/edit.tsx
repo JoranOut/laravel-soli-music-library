@@ -8,7 +8,7 @@ import {
     Trash2,
     Upload,
 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import { Heading } from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -34,6 +34,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { useTranslation } from '@/hooks/use-translation';
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
 import AppLayout from '@/layouts/app-layout';
 import { guessFromFilename } from '@/lib/instrument-guess';
 import type {
@@ -136,6 +137,36 @@ export default function Edit({
             details: u.details ?? '',
         })),
     );
+
+    const [pieceFormDirty, setPieceFormDirty] = useState(false);
+
+    const initialUsages = useMemo(
+        () =>
+            (piece.orchestra_usages ?? []).map((u) => ({
+                id: u.id,
+                orchestra_id: u.orchestra_id.toString(),
+                van: u.van?.split('T')[0] ?? '',
+                tot: u.tot?.split('T')[0] ?? '',
+                details: u.details ?? '',
+            })),
+        [piece.orchestra_usages],
+    );
+
+    const hasPartChanges = Object.keys(partEdits).length > 0 &&
+        piece.parts.some((p) => hasPartChanged(p));
+
+    const hasUsageChanges =
+        usages.length !== initialUsages.length ||
+        usages.some(
+            (u, i) =>
+                !initialUsages[i] ||
+                u.orchestra_id !== initialUsages[i].orchestra_id ||
+                u.van !== initialUsages[i].van ||
+                u.tot !== initialUsages[i].tot ||
+                u.details !== initialUsages[i].details,
+        );
+
+    useUnsavedChanges(pieceFormDirty || hasPartChanges || hasUsageChanges);
 
     const instOptions = instrumentOptions(instrumentTypes);
     const orchestraOptions: ComboboxOption[] = orchestras.map((o) => ({
@@ -389,6 +420,7 @@ export default function Edit({
                         publisherSuggestions={publisherSuggestions}
                         difficultySuggestions={difficultySuggestions}
                         onAudioTypeChange={setAudioType}
+                        onDirtyChange={setPieceFormDirty}
                         renderAudioMp3={
                             <>
                                 {audioUrl && (
