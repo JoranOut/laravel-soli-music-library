@@ -1,5 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { Download, History, Pause, Pencil, Play, Plus } from 'lucide-react';
+import { DateView } from '@/components/date-view';
 import { useMemo, useState } from 'react';
 import { Heading } from '@/components/heading';
 import { YouTubeIcon } from '@/components/icons/youtube';
@@ -383,8 +384,8 @@ export default function Show({
                                             {u.orchestra.name}
                                         </Badge>
                                         <span className="text-xs text-muted-foreground">
-                                            {u.van?.split('T')[0] ?? '?'} &ndash;{' '}
-                                            {u.tot?.split('T')[0] ?? t('present')}
+                                            <DateView value={u.van} /> &ndash;{' '}
+                                            {u.tot ? <DateView value={u.tot} /> : t('present')}
                                         </span>
                                         {u.details && (
                                             <span className="text-xs text-muted-foreground italic">

@@ -9,6 +9,7 @@ import {
     X,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { DateView } from '@/components/date-view';
 import { Heading } from '@/components/heading';
 import { YouTubeIcon } from '@/components/icons/youtube';
 import { Badge } from '@/components/ui/badge';
@@ -570,7 +571,7 @@ export default function Index({
                                         {piece.difficulty ?? '-'}
                                     </TableCell>
                                     <TableCell>
-                                        {piece.buy_date ?? '-'}
+                                        <DateView value={piece.buy_date} />
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex flex-wrap items-center gap-1">
