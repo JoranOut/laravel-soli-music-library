@@ -33,4 +33,13 @@ class PartFactory extends Factory
             'original_filename' => 'partituur.pdf',
         ]);
     }
+
+    public function fileless(): static
+    {
+        return $this->state(fn () => [
+            'file_path' => null,
+            'original_filename' => null,
+            'amount_bought' => fake()->numberBetween(1, 10),
+        ]);
+    }
 }

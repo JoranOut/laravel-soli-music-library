@@ -1028,3 +1028,76 @@ it('download filename omits voice when null', function () {
     $response->assertOk();
     $response->assertDownload('bohemian-rhapsody-tuba.pdf');
 });
+
+// ---------------------------------------------------------------------------
+// Fileless parts — download/view guards
+// ---------------------------------------------------------------------------
+
+it('returns 404 when downloading a fileless part', function () {
+    $user = User::factory()->create();
+    Permission::findOrCreate('download-all partijen');
+    $user->givePermissionTo('download-all partijen');
+    $piece = Piece::factory()->create();
+    $part = Part::factory()->fileless()->create(['piece_id' => $piece->id]);
+
+    $url = URL::temporarySignedRoute('parts.download', now()->addDay(), ['part' => $part->id]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get($url)
+        ->assertNotFound();
+});
+
+it('returns 404 when viewing a fileless part', function () {
+    $user = User::factory()->create();
+    Permission::findOrCreate('download-all partijen');
+    $user->givePermissionTo('download-all partijen');
+    $piece = Piece::factory()->create();
+    $part = Part::factory()->fileless()->create(['piece_id' => $piece->id]);
+
+    $url = URL::temporarySignedRoute('parts.view', now()->addDay(), ['part' => $part->id]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get($url)
+        ->assertNotFound();
+});
+
+it('returns 404 when requesting download URL for a fileless part', function () {
+    $user = User::factory()->create();
+    Permission::findOrCreate('download-all partijen');
+    $user->givePermissionTo('download-all partijen');
+    $piece = Piece::factory()->create();
+    $part = Part::factory()->fileless()->create(['piece_id' => $piece->id]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get("/parts/{$part->id}/download-url")
+        ->assertNotFound();
+});
+
+it('returns 404 when requesting view URL for a fileless part', function () {
+    $user = User::factory()->create();
+    Permission::findOrCreate('download-all partijen');
+    $user->givePermissionTo('download-all partijen');
+    $piece = Piece::factory()->create();
+    $part = Part::factory()->fileless()->create(['piece_id' => $piece->id]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->get("/parts/{$part->id}/view-url")
+        ->assertNotFound();
+});
+
+it('deletes a fileless part without storage errors', function () {
+    $user = User::factory()->create();
+    $piece = Piece::factory()->create();
+    $part = Part::factory()->fileless()->create(['piece_id' => $piece->id]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->delete("/muziekstukken/{$piece->id}/parts/{$part->id}")
+        ->assertRedirect();
+
+    expect(Part::find($part->id))->toBeNull();
+});
