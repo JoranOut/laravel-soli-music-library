@@ -75,10 +75,12 @@ type Props = {
         difficulties: string[];
         boughtFors: string[];
         boughtForOccasions: string[];
+        statuses: string[];
     };
     filters: {
         search?: string;
         orchestra?: string;
+        include_past_usages?: string;
         instruments?: string;
         composer?: string;
         arranger?: string;
@@ -88,6 +90,7 @@ type Props = {
         difficulty?: string;
         bought_for?: string;
         bought_for_occasion?: string;
+        status?: string;
         buy_date_from?: string;
         buy_date_to?: string;
     };
@@ -117,19 +120,27 @@ export default function Index({
     });
     const [submitting, setSubmitting] = useState(false);
 
-    // Instruments filter state
-    const [selectedInstruments, setSelectedInstruments] = useState<number[]>(
+    // Instruments filter state: { instrumentTypeId: minVoiceCount }
+    const [instrumentVoices, setInstrumentVoices] = useState<Record<string, number>>(
         () => {
             try {
                 const stored = localStorage.getItem(INSTRUMENTS_STORAGE_KEY);
-                return stored ? JSON.parse(stored) : [];
+                if (!stored) return {};
+                const parsed = JSON.parse(stored);
+                // Handle legacy format (array of IDs)
+                if (Array.isArray(parsed)) {
+                    const voices: Record<string, number> = {};
+                    for (const id of parsed) voices[id.toString()] = 1;
+                    return voices;
+                }
+                return parsed;
             } catch {
-                return [];
+                return {};
             }
         },
     );
     const [instrumentDialogOpen, setInstrumentDialogOpen] = useState(false);
-    const [dialogSelection, setDialogSelection] = useState<number[]>([]);
+    const [dialogVoices, setDialogVoices] = useState<Record<string, number>>({});
 
     // More filters toggle — auto-expand when any are active
     const [showMoreFilters, setShowMoreFilters] = useState(
@@ -143,6 +154,7 @@ export default function Index({
                 filters.difficulty ||
                 filters.bought_for ||
                 filters.bought_for_occasion ||
+                filters.status ||
                 filters.buy_date_from ||
                 filters.buy_date_to
             ),
@@ -163,13 +175,20 @@ export default function Index({
         });
     }
 
+    function serializeVoices(voices: Record<string, number>): string | undefined {
+        const entries = Object.entries(voices).filter(([, v]) => v > 0);
+        if (entries.length === 0) return undefined;
+        return entries.map(([id, v]) => `${id}:${v}`).join(',');
+    }
+
     // On first load: sync localStorage → URL if URL has no instruments param
     const initialSyncDone = useRef(false);
     useEffect(() => {
         if (initialSyncDone.current) return;
         initialSyncDone.current = true;
-        if (!filters.instruments && selectedInstruments.length > 0) {
-            navigate({ instruments: selectedInstruments.join(',') });
+        const hasVoices = Object.values(instrumentVoices).some((v) => v > 0);
+        if (!filters.instruments && hasVoices) {
+            navigate({ instruments: serializeVoices(instrumentVoices) });
         }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -189,13 +208,14 @@ export default function Index({
         filters.difficulty,
         filters.bought_for,
         filters.bought_for_occasion,
+        filters.status,
         filters.buy_date_from || filters.buy_date_to,
     ].filter(Boolean).length;
 
     const hasAnyFilter = Object.values(filters).some(Boolean);
 
     function clearAllFilters() {
-        setSelectedInstruments([]);
+        setInstrumentVoices({});
         localStorage.removeItem(INSTRUMENTS_STORAGE_KEY);
         setShowMoreFilters(false);
         router.get(
@@ -236,25 +256,22 @@ export default function Index({
     }
 
     function handleOrchestraFilter(orchestra: string) {
-        navigate({ orchestra: orchestra || undefined });
+        navigate({
+            orchestra: orchestra || undefined,
+            include_past_usages: orchestra ? filters.include_past_usages : undefined,
+        });
     }
 
     function openInstrumentDialog() {
-        setDialogSelection([...selectedInstruments]);
+        setDialogVoices({ ...instrumentVoices });
         setInstrumentDialogOpen(true);
     }
 
-    function toggleDialogInstrument(id: number) {
-        setDialogSelection((prev) =>
-            prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
-        );
-    }
-
-    function applyInstrumentFilter(ids: number[]) {
-        setSelectedInstruments(ids);
-        localStorage.setItem(INSTRUMENTS_STORAGE_KEY, JSON.stringify(ids));
+    function applyInstrumentFilter(voices: Record<string, number>) {
+        setInstrumentVoices(voices);
+        localStorage.setItem(INSTRUMENTS_STORAGE_KEY, JSON.stringify(voices));
         setInstrumentDialogOpen(false);
-        navigate({ instruments: ids.length ? ids.join(',') : undefined });
+        navigate({ instruments: serializeVoices(voices) });
     }
 
     return (
@@ -300,13 +317,26 @@ export default function Index({
                                 ))}
                             </Select>
                         </div>
+                        {filters.orchestra && (
+                            <label className="flex items-center gap-2 text-sm">
+                                <Checkbox
+                                    checked={filters.include_past_usages === '1'}
+                                    onCheckedChange={(checked) =>
+                                        navigate({
+                                            include_past_usages: checked ? '1' : undefined,
+                                        })
+                                    }
+                                />
+                                {t('Include past usages')}
+                            </label>
+                        )}
                         <Button
                             variant="outline"
                             onClick={openInstrumentDialog}
                         >
                             <Filter className="h-4 w-4" />
-                            {selectedInstruments.length > 0
-                                ? `${t('Parts')} (${selectedInstruments.length})`
+                            {Object.values(instrumentVoices).some((v) => v > 0)
+                                ? `${t('Parts')} (${Object.values(instrumentVoices).filter((v) => v > 0).length})`
                                 : t('Filter by parts')}
                         </Button>
                         <Button
@@ -490,6 +520,25 @@ export default function Index({
                                 />
                             </div>
                             <div className="space-y-1">
+                                <Label>{t('Status')}</Label>
+                                <Select
+                                    value={filters.status ?? ''}
+                                    onChange={(e) =>
+                                        navigate({
+                                            status:
+                                                e.target.value || undefined,
+                                        })
+                                    }
+                                >
+                                    <option value="">{t('All')}</option>
+                                    {filterOptions.statuses.map((v) => (
+                                        <option key={v} value={v}>
+                                            {v}
+                                        </option>
+                                    ))}
+                                </Select>
+                            </div>
+                            <div className="space-y-1">
                                 <Label>{t('Buy date from')}</Label>
                                 <Input
                                     type="date"
@@ -608,20 +657,6 @@ export default function Index({
                                                     {o.abbreviation || o.name}
                                                 </Badge>
                                             ))}
-                                            {canEditUsages && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-6 w-6"
-                                                    onClick={() =>
-                                                        openUsageDialog(
-                                                            piece.id,
-                                                        )
-                                                    }
-                                                >
-                                                    <Plus className="h-4 w-4" />
-                                                </Button>
-                                            )}
                                         </div>
                                     </TableCell>
                                     <TableCell>
@@ -645,8 +680,7 @@ export default function Index({
                                                 </a>
                                             </Button>
                                         )}
-                                        {piece.audio_url &&
-                                            !piece.audio_youtube_url && (
+                                        {piece.audio_url && (
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
@@ -714,12 +748,12 @@ export default function Index({
                     if (!open) setInstrumentDialogOpen(false);
                 }}
             >
-                <DialogContent className="max-w-5xl">
+                <DialogContent className="max-w-6xl">
                     <DialogHeader>
                         <DialogTitle>{t('Filter by parts')}</DialogTitle>
                         <p className="text-sm text-muted-foreground">
                             {t(
-                                'Select the instruments that should be included at minimum.',
+                                'Enter the minimum number of voices per instrument. For example, 3 for Klarinet means pieces must have Klarinet 1, 2, and 3. Use 0 for no filter.',
                             )}
                         </p>
                     </DialogHeader>
@@ -734,22 +768,27 @@ export default function Index({
                                 </h4>
                                 <div className="space-y-1">
                                     {group.types.map((type) => (
-                                        <label
+                                        <div
                                             key={type.id}
-                                            className="flex items-center gap-2 text-sm"
+                                            className="flex items-center justify-between gap-2 text-sm"
                                         >
-                                            <Checkbox
-                                                checked={dialogSelection.includes(
-                                                    type.id,
-                                                )}
-                                                onCheckedChange={() =>
-                                                    toggleDialogInstrument(
-                                                        type.id,
-                                                    )
+                                            <span>{type.name}</span>
+                                            <Input
+                                                type="number"
+                                                min="0"
+                                                className="w-[60px]"
+                                                value={dialogVoices[type.id.toString()] ?? 0}
+                                                onChange={(e) =>
+                                                    setDialogVoices((prev) => ({
+                                                        ...prev,
+                                                        [type.id.toString()]: Math.max(
+                                                            0,
+                                                            parseInt(e.target.value) || 0,
+                                                        ),
+                                                    }))
                                                 }
                                             />
-                                            {type.name}
-                                        </label>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
@@ -758,7 +797,7 @@ export default function Index({
                     <DialogFooter className="gap-2 sm:gap-0">
                         <Button
                             variant="outline"
-                            onClick={() => setDialogSelection([])}
+                            onClick={() => setDialogVoices({})}
                         >
                             {t('Clear')}
                         </Button>
@@ -770,7 +809,7 @@ export default function Index({
                         </Button>
                         <Button
                             onClick={() =>
-                                applyInstrumentFilter(dialogSelection)
+                                applyInstrumentFilter(dialogVoices)
                             }
                         >
                             {t('Apply')}

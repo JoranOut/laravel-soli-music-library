@@ -43,7 +43,8 @@ import type {
     Part,
     Piece,
 } from '@/types/muziekstukken';
-import type { AudioType, PieceFormHandle } from './piece-form';
+import PartsMatrix from './parts-matrix';
+import type { PieceFormHandle } from './piece-form';
 import PieceForm from './piece-form';
 
 type PartUpload = {
@@ -114,13 +115,6 @@ export default function Edit({
     const pieceFormRef = useRef<PieceFormHandle>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const audioInputRef = useRef<HTMLInputElement>(null);
-    const [, setAudioType] = useState<AudioType>(
-        piece.audio_youtube_url
-            ? 'youtube'
-            : piece.audio_file_path
-              ? 'mp3'
-              : 'none',
-    );
     const [audioUploading, setAudioUploading] = useState(false);
     const [uploads, setUploads] = useState<PartUpload[]>([]);
     const [uploading, setUploading] = useState(false);
@@ -128,6 +122,7 @@ export default function Edit({
     const [endUsageIndex, setEndUsageIndex] = useState<number | null>(null);
     const [partEdits, setPartEdits] = useState<Record<number, PartEdit>>({});
     const [saving, setSaving] = useState(false);
+    const [showPastUsages, setShowPastUsages] = useState(false);
     const [showArchiveDialog, setShowArchiveDialog] = useState(false);
     const [archiveConfirmTitle, setArchiveConfirmTitle] = useState('');
     const [usages, setUsages] = useState<UsageEdit[]>(() =>
@@ -141,6 +136,24 @@ export default function Edit({
     );
 
     const [pieceFormDirty, setPieceFormDirty] = useState(false);
+    const [currentStatus, setCurrentStatus] = useState(piece.status);
+
+    // Matrix edits for fileless parts (non-digital pieces)
+    const [matrixEdits, setMatrixEdits] = useState<Record<string, number>>(() => {
+        const edits: Record<string, number> = {};
+        // Initialize from existing fileless parts
+        for (const part of piece.parts.filter((p) => p.original_filename === null)) {
+            if (part.is_conductor) {
+                edits['conductor'] = (edits['conductor'] ?? 0) + (part.amount_bought ?? 1);
+            } else {
+                const voice = part.voice ?? 1;
+                const key = `type_${part.instrument_type_id}_v${voice}`;
+                edits[key] = (edits[key] ?? 0) + (part.amount_bought ?? 1);
+            }
+        }
+        return edits;
+    });
+    const [initialMatrixEdits] = useState(() => ({ ...matrixEdits }));
 
     const initialUsages = useMemo(
         () =>
@@ -168,7 +181,13 @@ export default function Edit({
                 u.details !== initialUsages[i].details,
         );
 
-    useUnsavedChanges(pieceFormDirty || hasPartChanges || hasUsageChanges);
+    const hasMatrixChanges = Object.keys(matrixEdits).some(
+        (key) => (matrixEdits[key] ?? 0) !== (initialMatrixEdits[key] ?? 0),
+    ) || Object.keys(initialMatrixEdits).some(
+        (key) => (matrixEdits[key] ?? 0) !== (initialMatrixEdits[key] ?? 0),
+    );
+
+    useUnsavedChanges(pieceFormDirty || hasPartChanges || hasUsageChanges || hasMatrixChanges);
 
     const instOptions = instrumentOptions(instrumentTypes);
     const orchestraOptions: ComboboxOption[] = orchestras.map((o) => ({
@@ -232,6 +251,59 @@ export default function Edit({
         );
     }
 
+    function handleMatrixChange(key: string, value: number) {
+        setMatrixEdits((prev) => {
+            const next = { ...prev, [key]: value };
+
+            // When setting a voice to 0, remove higher voices
+            const match = key.match(/^type_(\d+)_v(\d+)$/);
+            if (match && value === 0) {
+                const typeId = match[1];
+                let v = parseInt(match[2]) + 1;
+                while (`type_${typeId}_v${v}` in next) {
+                    delete next[`type_${typeId}_v${v}`];
+                    v++;
+                }
+            }
+
+            return next;
+        });
+    }
+
+    function buildMatrixPayload() {
+        const payload: { instrument_type_id: number; is_conductor: boolean; voice: number | null; amount_bought: number }[] = [];
+
+        // Conductor entry
+        if (matrixEdits['conductor'] !== undefined) {
+            // Use the first instrument type as a placeholder for conductor parts
+            const conductorTypeId = instrumentTypes[0]?.id;
+            if (conductorTypeId) {
+                payload.push({
+                    instrument_type_id: conductorTypeId,
+                    is_conductor: true,
+                    voice: null,
+                    amount_bought: matrixEdits['conductor'],
+                });
+            }
+        }
+
+        // Regular instrument types — include all voices present in matrixEdits
+        for (const type of instrumentTypes) {
+            let v = 1;
+            while (`type_${type.id}_v${v}` in matrixEdits) {
+                payload.push({
+                    instrument_type_id: type.id,
+                    is_conductor: false,
+                    voice: v,
+                    amount_bought: matrixEdits[`type_${type.id}_v${v}`],
+                });
+                v++;
+            }
+        }
+
+        return payload;
+    }
+
     function saveAll() {
         const pieceData = pieceFormRef.current?.getData();
         if (!pieceData) return;
@@ -263,6 +335,11 @@ export default function Edit({
                 details: u.details || null,
             }));
 
+        // Build matrix_parts payload for non-digital pieces
+        const matrixPartsPayload = currentStatus !== 'digitaal'
+            ? buildMatrixPayload()
+            : undefined;
+
         setSaving(true);
         router.put(
             `/muziekstukken/${piece.id}`,
@@ -270,6 +347,7 @@ export default function Edit({
                 ...pieceData,
                 usages: usagePayload,
                 parts: changedParts,
+                ...(matrixPartsPayload ? { matrix_parts: matrixPartsPayload } : {}),
             },
             {
                 preserveScroll: true,
@@ -422,8 +500,8 @@ export default function Edit({
                         publisherSuggestions={publisherSuggestions}
                         difficultySuggestions={difficultySuggestions}
                         boughtForOccasionSuggestions={boughtForOccasionSuggestions}
-                        onAudioTypeChange={setAudioType}
                         onDirtyChange={setPieceFormDirty}
+                        onStatusChange={setCurrentStatus}
                         renderAudioMp3={
                             <>
                                 {audioUrl && (
@@ -478,174 +556,199 @@ export default function Edit({
                             )}
                         />
 
-                        {/* Existing parts */}
-                        {piece.parts.length > 0 && (
-                            <div className="rounded-lg border">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>
-                                                {t('Original filename')}
-                                            </TableHead>
-                                            <TableHead>
-                                                {t('Instrument')}
-                                            </TableHead>
-                                            <TableHead className="w-[150px]">
-                                                {t('Note')}
-                                            </TableHead>
-                                            <TableHead className="w-[100px]">
-                                                {t('Voice')}
-                                            </TableHead>
-                                            <TableHead className="w-[120px]">
-                                                {t('Amount bought')}
-                                            </TableHead>
-                                            <TableHead>
-                                                {t('Partituur')}
-                                            </TableHead>
-                                            <TableHead className="w-[80px]" />
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {piece.parts.map((part) => {
-                                            const edit = getPartEdit(part);
-                                            return (
-                                                <TableRow key={part.id}>
-                                                    <TableCell className="text-xs text-muted-foreground">
-                                                        {part.original_filename}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Combobox
-                                                            options={
-                                                                instOptions
-                                                            }
-                                                            value={
-                                                                edit.instrument_type_id
-                                                            }
-                                                            onChange={(v) =>
-                                                                updatePartEdit(
-                                                                    part.id,
-                                                                    'instrument_type_id',
-                                                                    v,
-                                                                )
-                                                            }
-                                                            className="max-w-[250px]"
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Input
-                                                            maxLength={20}
-                                                            value={edit.note}
-                                                            onChange={(e) =>
-                                                                updatePartEdit(
-                                                                    part.id,
-                                                                    'note',
-                                                                    e.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                            className="w-[130px]"
-                                                            placeholder="-"
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Input
-                                                            type="number"
-                                                            min="1"
-                                                            value={edit.voice}
-                                                            onChange={(e) =>
-                                                                updatePartEdit(
-                                                                    part.id,
-                                                                    'voice',
-                                                                    e.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                            className="w-[80px]"
-                                                            placeholder="-"
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Input
-                                                            type="number"
-                                                            min="0"
-                                                            value={
-                                                                edit.amount_bought
-                                                            }
-                                                            onChange={(e) =>
-                                                                updatePartEdit(
-                                                                    part.id,
-                                                                    'amount_bought',
-                                                                    e.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                            className="w-[100px]"
-                                                            placeholder="-"
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Checkbox
-                                                            checked={
-                                                                edit.is_conductor
-                                                            }
-                                                            onCheckedChange={(
-                                                                checked,
-                                                            ) =>
-                                                                updatePartEdit(
-                                                                    part.id,
-                                                                    'is_conductor',
-                                                                    !!checked,
-                                                                )
-                                                            }
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            onClick={() =>
-                                                                setDeletePart(
-                                                                    part,
-                                                                )
-                                                            }
-                                                        >
-                                                            <Trash2 className="text-destructive" />
-                                                        </Button>
-                                                    </TableCell>
+                        {currentStatus === 'digitaal' ? (
+                            <>
+                                {/* Existing file-based parts */}
+                                {piece.parts.filter((p) => p.original_filename !== null).length > 0 && (
+                                    <div className="rounded-lg border">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead>
+                                                        {t('Original filename')}
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        {t('Instrument')}
+                                                    </TableHead>
+                                                    <TableHead className="w-[150px]">
+                                                        {t('Note')}
+                                                    </TableHead>
+                                                    <TableHead className="w-[100px]">
+                                                        {t('Voice')}
+                                                    </TableHead>
+                                                    <TableHead className="w-[120px]">
+                                                        {t('Amount bought')}
+                                                    </TableHead>
+                                                    <TableHead>
+                                                        {t('Partituur')}
+                                                    </TableHead>
+                                                    <TableHead className="w-[80px]" />
                                                 </TableRow>
-                                            );
-                                        })}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                        )}
+                                            </TableHeader>
+                                            <TableBody>
+                                                {piece.parts
+                                                    .filter((p) => p.original_filename !== null)
+                                                    .map((part) => {
+                                                    const edit = getPartEdit(part);
+                                                    return (
+                                                        <TableRow key={part.id}>
+                                                            <TableCell className="text-xs text-muted-foreground">
+                                                                {part.original_filename}
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <Combobox
+                                                                    options={
+                                                                        instOptions
+                                                                    }
+                                                                    value={
+                                                                        edit.instrument_type_id
+                                                                    }
+                                                                    onChange={(v) =>
+                                                                        updatePartEdit(
+                                                                            part.id,
+                                                                            'instrument_type_id',
+                                                                            v,
+                                                                        )
+                                                                    }
+                                                                    className="max-w-[250px]"
+                                                                />
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <Input
+                                                                    maxLength={20}
+                                                                    value={edit.note}
+                                                                    onChange={(e) =>
+                                                                        updatePartEdit(
+                                                                            part.id,
+                                                                            'note',
+                                                                            e.target
+                                                                                .value,
+                                                                        )
+                                                                    }
+                                                                    className="w-[130px]"
+                                                                    placeholder="-"
+                                                                />
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <Input
+                                                                    type="number"
+                                                                    min="1"
+                                                                    value={edit.voice}
+                                                                    onChange={(e) =>
+                                                                        updatePartEdit(
+                                                                            part.id,
+                                                                            'voice',
+                                                                            e.target
+                                                                                .value,
+                                                                        )
+                                                                    }
+                                                                    className="w-[80px]"
+                                                                    placeholder="-"
+                                                                />
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <Input
+                                                                    type="number"
+                                                                    min="0"
+                                                                    value={
+                                                                        edit.amount_bought
+                                                                    }
+                                                                    onChange={(e) =>
+                                                                        updatePartEdit(
+                                                                            part.id,
+                                                                            'amount_bought',
+                                                                            e.target
+                                                                                .value,
+                                                                        )
+                                                                    }
+                                                                    className="w-[100px]"
+                                                                    placeholder="-"
+                                                                />
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <Checkbox
+                                                                    checked={
+                                                                        edit.is_conductor
+                                                                    }
+                                                                    onCheckedChange={(
+                                                                        checked,
+                                                                    ) =>
+                                                                        updatePartEdit(
+                                                                            part.id,
+                                                                            'is_conductor',
+                                                                            !!checked,
+                                                                        )
+                                                                    }
+                                                                />
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    onClick={() =>
+                                                                        setDeletePart(
+                                                                            part,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <Trash2 className="text-destructive" />
+                                                                </Button>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    );
+                                                })}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                )}
 
-                        {/* Upload new parts */}
-                        <div>
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept=".pdf"
-                                multiple
-                                onChange={handleFilesSelected}
-                                className="hidden"
+                                {/* Upload new parts */}
+                                <div>
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept=".pdf"
+                                        multiple
+                                        onChange={handleFilesSelected}
+                                        className="hidden"
+                                    />
+                                    <Button
+                                        variant="outline"
+                                        onClick={() =>
+                                            fileInputRef.current?.click()
+                                        }
+                                    >
+                                        <Upload />
+                                        {t('Select PDF files')}
+                                    </Button>
+                                </div>
+                            </>
+                        ) : (
+                            <PartsMatrix
+                                instrumentTypes={instrumentTypes}
+                                parts={piece.parts}
+                                matrixEdits={matrixEdits}
+                                onMatrixChange={handleMatrixChange}
                             />
-                            <Button
-                                variant="outline"
-                                onClick={() =>
-                                    fileInputRef.current?.click()
-                                }
-                            >
-                                <Upload />
-                                {t('Select PDF files')}
-                            </Button>
-                        </div>
+                        )}
                     </section>
                 )}
 
                 {/* In use by — usage records */}
                 <section className="space-y-6">
                     <Heading title={t('In use by')} />
+
+                    {usages.some((u) => u.tot) && (
+                        <label className="flex items-center gap-2 text-sm">
+                            <Checkbox
+                                checked={showPastUsages}
+                                onCheckedChange={(checked) =>
+                                    setShowPastUsages(!!checked)
+                                }
+                            />
+                            {t('Show past usages')}
+                        </label>
+                    )}
 
                     {usages.length > 0 && (
                         <div className="rounded-lg border">
@@ -664,7 +767,9 @@ export default function Edit({
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {usages.map((usage, i) => (
+                                    {usages.map((usage, i) => {
+                                        if (!showPastUsages && usage.tot) return null;
+                                        return (
                                         <TableRow key={usage.id ?? `new-${i}`}>
                                             <TableCell>
                                                 <Combobox
@@ -733,7 +838,8 @@ export default function Edit({
                                                 )}
                                             </TableCell>
                                         </TableRow>
-                                    ))}
+                                        );
+                                    })}
                                 </TableBody>
                             </Table>
                         </div>
@@ -795,6 +901,9 @@ export default function Edit({
                 <DialogContent className="max-w-5xl">
                     <DialogHeader>
                         <DialogTitle>{t('Upload parts')}</DialogTitle>
+                        <DialogDescription>
+                            {t('Max :size per file, up to :count files, :total total.', { size: '8MB', count: '50', total: '100MB' })}
+                        </DialogDescription>
                     </DialogHeader>
                     <div className="rounded-lg border">
                         <Table>
@@ -924,7 +1033,7 @@ export default function Edit({
                                 'Are you sure you want to delete ":filename"? This action cannot be undone.',
                                 {
                                     filename:
-                                        deletePart?.original_filename ?? '',
+                                        deletePart?.original_filename ?? deletePart?.instrument_type?.name ?? '',
                                 },
                             )}
                         </DialogDescription>

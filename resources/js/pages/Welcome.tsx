@@ -92,17 +92,21 @@ export default function Welcome({ orchestraGroups }: Props) {
                                                 piece.parts.map((part) => (
                                                     <TableRow key={part.id}>
                                                         <TableCell>
-                                                            <button
-                                                                type="button"
-                                                                className="cursor-pointer text-left hover:underline"
-                                                                onClick={() =>
-                                                                    handleView(
-                                                                        part.id,
-                                                                    )
-                                                                }
-                                                            >
-                                                                {piece.title}
-                                                            </button>
+                                                            {part.original_filename !== null ? (
+                                                                <button
+                                                                    type="button"
+                                                                    className="cursor-pointer text-left hover:underline"
+                                                                    onClick={() =>
+                                                                        handleView(
+                                                                            part.id,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    {piece.title}
+                                                                </button>
+                                                            ) : (
+                                                                <span>{piece.title}</span>
+                                                            )}
                                                         </TableCell>
                                                         <TableCell>
                                                             {piece.composer ?? (
@@ -128,77 +132,82 @@ export default function Welcome({ orchestraGroups }: Props) {
                                                             )}
                                                         </TableCell>
                                                         <TableCell>
-                                                            <div className="flex items-center gap-1">
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    onClick={() =>
-                                                                        handleDownload(
-                                                                            part.id,
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <Download />
-                                                                    <span className="sr-only">
-                                                                        {t(
-                                                                            'Download',
-                                                                        )}
-                                                                    </span>
-                                                                </Button>
-                                                                {piece.audio_youtube_url && (
+                                                            {part.original_filename !== null ? (
+                                                                <div className="flex items-center gap-1">
                                                                     <Button
                                                                         variant="ghost"
                                                                         size="icon"
-                                                                        asChild
+                                                                        onClick={() =>
+                                                                            handleDownload(
+                                                                                part.id,
+                                                                            )
+                                                                        }
                                                                     >
-                                                                        <a
-                                                                            href={
-                                                                                piece.audio_youtube_url
-                                                                            }
-                                                                            target="_blank"
-                                                                            rel="noopener noreferrer"
-                                                                        >
-                                                                            <YouTubeIcon />
-                                                                            <span className="sr-only">
-                                                                                {t(
-                                                                                    'Open on YouTube',
-                                                                                )}
-                                                                            </span>
-                                                                        </a>
+                                                                        <Download />
+                                                                        <span className="sr-only">
+                                                                            {t(
+                                                                                'Download',
+                                                                            )}
+                                                                        </span>
                                                                     </Button>
-                                                                )}
-                                                                {piece.audio_url &&
-                                                                    !piece.audio_youtube_url && (
+                                                                    {piece.audio_youtube_url && (
                                                                         <Button
                                                                             variant="ghost"
                                                                             size="icon"
-                                                                            onClick={() =>
-                                                                                toggle(
-                                                                                    {
-                                                                                        title: piece.title,
-                                                                                        composer:
-                                                                                            piece.composer,
-                                                                                        url: piece.audio_url!,
-                                                                                    },
-                                                                                )
-                                                                            }
+                                                                            asChild
                                                                         >
-                                                                            {isCurrentTrack(
-                                                                                piece.audio_url,
-                                                                            ) &&
-                                                                            isPlaying ? (
-                                                                                <Pause />
-                                                                            ) : (
-                                                                                <Play />
-                                                                            )}
-                                                                            <span className="sr-only">
-                                                                                {t(
-                                                                                    'Play',
-                                                                                )}
-                                                                            </span>
+                                                                            <a
+                                                                                href={
+                                                                                    piece.audio_youtube_url
+                                                                                }
+                                                                                target="_blank"
+                                                                                rel="noopener noreferrer"
+                                                                            >
+                                                                                <YouTubeIcon />
+                                                                                <span className="sr-only">
+                                                                                    {t(
+                                                                                        'Open on YouTube',
+                                                                                    )}
+                                                                                </span>
+                                                                            </a>
                                                                         </Button>
                                                                     )}
-                                                            </div>
+                                                                    {piece.audio_url && (
+                                                                            <Button
+                                                                                variant="ghost"
+                                                                                size="icon"
+                                                                                onClick={() =>
+                                                                                    toggle(
+                                                                                        {
+                                                                                            title: piece.title,
+                                                                                            composer:
+                                                                                                piece.composer,
+                                                                                            url: piece.audio_url!,
+                                                                                        },
+                                                                                    )
+                                                                                }
+                                                                            >
+                                                                                {isCurrentTrack(
+                                                                                    piece.audio_url,
+                                                                                ) &&
+                                                                                isPlaying ? (
+                                                                                    <Pause />
+                                                                                ) : (
+                                                                                    <Play />
+                                                                                )}
+                                                                                <span className="sr-only">
+                                                                                    {t(
+                                                                                        'Play',
+                                                                                    )}
+                                                                                </span>
+                                                                            </Button>
+                                                                        )}
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-xs text-muted-foreground italic">
+                                                                    {t('Sheet is not digitally available')}
+                                                                </span>
+                                                            )}
                                                         </TableCell>
                                                     </TableRow>
                                                 )),

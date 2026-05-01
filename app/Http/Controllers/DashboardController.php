@@ -17,11 +17,17 @@ class DashboardController extends Controller
         $orchestras = Orchestra::whereIn('id', $orchestraIds)->orderBy('sort_order')->get();
 
         $groups = $orchestras->map(function ($orchestra) use ($assignments) {
-            $instrumentTypeIds = $assignments
+            $assignedTypeIds = $assignments
                 ->where('orchestra_id', $orchestra->id)
                 ->pluck('instrument_type_id')
-                ->unique()
-                ->values()
+                ->unique();
+
+            $familyIds = InstrumentType::whereIn('id', $assignedTypeIds)
+                ->pluck('instrument_family_id')
+                ->unique();
+
+            $instrumentTypeIds = InstrumentType::whereIn('instrument_family_id', $familyIds)
+                ->pluck('id')
                 ->toArray();
 
             $instruments = InstrumentType::whereIn('id', $instrumentTypeIds)

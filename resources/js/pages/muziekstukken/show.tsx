@@ -1,7 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { Download, History, Pause, Pencil, Play, Plus } from 'lucide-react';
 import { DateView } from '@/components/date-view';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Heading } from '@/components/heading';
 import { YouTubeIcon } from '@/components/icons/youtube';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
+import { useGroupedTypes } from '@/hooks/use-grouped-types';
 import { useTranslation } from '@/hooks/use-translation';
 import AppLayout from '@/layouts/app-layout';
 import type { InstrumentType, Orchestra, Part, Piece } from '@/types/muziekstukken';
@@ -52,52 +53,6 @@ function Field({ label, value }: { label: string; value: string | null }) {
             </dd>
         </div>
     );
-}
-
-type FamilyGroup = {
-    familyName: string;
-    types: {
-        type: InstrumentType;
-        parts: Part[];
-    }[];
-};
-
-function useGroupedTypes(instrumentTypes: InstrumentType[], parts: Part[]) {
-    return useMemo(() => {
-        const conductorParts = parts.filter((p) => p.is_conductor);
-        const nonConductorParts = parts.filter((p) => !p.is_conductor);
-
-        // Group parts by instrument type id
-        const partsByType = new Map<number, Part[]>();
-        for (const part of nonConductorParts) {
-            if (!partsByType.has(part.instrument_type_id)) {
-                partsByType.set(part.instrument_type_id, []);
-            }
-            partsByType.get(part.instrument_type_id)!.push(part);
-        }
-
-        // Group all instrument types by family
-        const familyMap = new Map<
-            string,
-            { type: InstrumentType; parts: Part[] }[]
-        >();
-        for (const type of instrumentTypes) {
-            const familyName = type.instrument_family?.name ?? '';
-            if (!familyMap.has(familyName)) {
-                familyMap.set(familyName, []);
-            }
-            familyMap.get(familyName)!.push({
-                type,
-                parts: partsByType.get(type.id) ?? [],
-            });
-        }
-
-        const families: FamilyGroup[] = Array.from(familyMap.entries()).map(
-            ([familyName, types]) => ({ familyName, types }),
-        );
-
-        return { conductorParts, families };
-    }, [instrumentTypes, parts]);
 }
 
 function PartsOverview({
@@ -127,12 +82,7 @@ function PartsOverview({
                                 key={part.id}
                                 className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm"
                             >
-                                <span>
-                                    <span className="mr-[10px] text-muted-foreground">
-                                        {part.amount_bought ?? 1}&times;
-                                    </span>
-                                    {part.original_filename}
-                                </span>
+                                <span>{part.original_filename ?? t('Partituur')}</span>
                                 {part.download_url && (
                                     <a href={part.download_url} download>
                                         <Download className="size-4 text-muted-foreground hover:text-foreground" />
@@ -160,45 +110,151 @@ function PartsOverview({
                             <ul className="space-y-1">
                                 {types
                                     .filter(({ parts: tp }) => tp.length > 0)
-                                    .map(({ type, parts: typeParts }) => {
-                                        const totalBought = typeParts.reduce(
-                                            (sum, p) =>
-                                                sum + (p.amount_bought ?? 1),
-                                            0,
+                                    .flatMap(({ type, parts: typeParts }) => {
+                                        // Group by voice number
+                                        const voiceMap = new Map<number | null, Part[]>();
+                                        for (const p of typeParts) {
+                                            const key = p.voice;
+                                            if (!voiceMap.has(key)) voiceMap.set(key, []);
+                                            voiceMap.get(key)!.push(p);
+                                        }
+                                        const voices = Array.from(voiceMap.entries()).sort(
+                                            (a, b) => (a[0] ?? 0) - (b[0] ?? 0),
                                         );
-                                        return (
-                                            <li
-                                                key={type.id}
-                                                className="flex items-center justify-between text-sm"
-                                            >
-                                                <span>
-                                                    <span className="mr-[10px] text-muted-foreground">
-                                                        {totalBought}&times;
-                                                    </span>
-                                                    {type.name}
-                                                </span>
-                                                {typeParts.length === 1 &&
-                                                    typeParts[0]
-                                                        .download_url && (
-                                                        <a
-                                                            href={
-                                                                typeParts[0]
-                                                                    .download_url
-                                                            }
-                                                            download
-                                                        >
-                                                            <Download className="size-4 text-muted-foreground hover:text-foreground" />
-                                                            <span className="sr-only">
-                                                                {t('Download')}
+                                        const hasMultipleVoices = voices.length > 1 || voices[0]?.[0] !== null;
+
+                                        return voices.map(([voice, voiceParts]) => (
+                                                <li
+                                                    key={`${type.id}-${voice}`}
+                                                    className="flex items-center justify-between text-sm"
+                                                >
+                                                    <span>
+                                                        {type.name}
+                                                        {hasMultipleVoices && voice !== null && (
+                                                            <span className="ml-1 text-muted-foreground">
+                                                                {voice}
                                                             </span>
-                                                        </a>
-                                                    )}
-                                            </li>
-                                        );
+                                                        )}
+                                                    </span>
+                                                    {voiceParts.length === 1 &&
+                                                        voiceParts[0].download_url && (
+                                                            <a
+                                                                href={voiceParts[0].download_url}
+                                                                download
+                                                            >
+                                                                <Download className="size-4 text-muted-foreground hover:text-foreground" />
+                                                                <span className="sr-only">
+                                                                    {t('Download')}
+                                                                </span>
+                                                            </a>
+                                                        )}
+                                                </li>
+                                            ));
                                     })}
                             </ul>
                         </div>
                     ))}
+            </div>
+        </div>
+    );
+}
+
+function BumaOverview({
+    parts,
+    instrumentTypes,
+    t,
+}: {
+    parts: Part[];
+    instrumentTypes: InstrumentType[];
+    t: (key: string) => string;
+}) {
+    const { conductorParts, families } = useGroupedTypes(
+        instrumentTypes,
+        parts,
+    );
+
+    return (
+        <div className="space-y-6">
+            {conductorParts.length > 0 && (
+                <div className="space-y-2">
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                        {t('Conductor part')}
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                        {conductorParts.map((part) => (
+                            <div
+                                key={part.id}
+                                className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm"
+                            >
+                                <span>{part.original_filename ?? t('Partituur')}</span>
+                                <span className="text-muted-foreground">
+                                    {part.amount_bought ?? 1}&times;
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                {families.map(({ familyName, types }) => (
+                    <div key={familyName} className="space-y-2">
+                        <h3 className="text-sm font-semibold">
+                            {familyName}
+                        </h3>
+                        <ul className="space-y-1">
+                            {types.flatMap(({ type, parts: typeParts }) => {
+                                if (typeParts.length === 0) {
+                                    return (
+                                        <li
+                                            key={type.id}
+                                            className="flex items-center justify-between text-sm text-muted-foreground/80"
+                                        >
+                                            <span>{type.name}</span>
+                                            <span>0&times;</span>
+                                        </li>
+                                    );
+                                }
+
+                                const voiceMap = new Map<number | null, Part[]>();
+                                for (const p of typeParts) {
+                                    const key = p.voice;
+                                    if (!voiceMap.has(key)) voiceMap.set(key, []);
+                                    voiceMap.get(key)!.push(p);
+                                }
+                                const voices = Array.from(voiceMap.entries()).sort(
+                                    (a, b) => (a[0] ?? 0) - (b[0] ?? 0),
+                                );
+                                const hasMultipleVoices = voices.length > 1 || voices[0]?.[0] !== null;
+
+                                return voices.map(([voice, voiceParts]) => {
+                                    const totalBought = voiceParts.reduce(
+                                        (sum, p) => sum + (p.amount_bought ?? 1),
+                                        0,
+                                    );
+                                    return (
+                                        <li
+                                            key={`${type.id}-${voice}`}
+                                            className="flex items-center justify-between text-sm"
+                                        >
+                                            <span>
+                                                {type.name}
+                                                {hasMultipleVoices && voice !== null && (
+                                                    <span className="ml-1 text-muted-foreground">
+                                                        {voice}
+                                                    </span>
+                                                )}
+                                            </span>
+                                            <span className="text-muted-foreground">
+                                                {totalBought}&times;
+                                            </span>
+                                        </li>
+                                    );
+                                });
+                            })}
+                        </ul>
+                    </div>
+                ))}
             </div>
         </div>
     );
@@ -293,13 +349,21 @@ export default function Show({
                         </div>
                     </div>
 
-                    <dl className="grid gap-4 sm:grid-cols-2">
+                    <dl className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+                        <Field
+                            label={t('Status')}
+                            value={piece.status}
+                        />
                         <Field label={t('Composer')} value={piece.composer} />
                         <Field label={t('Arranger')} value={piece.arranger} />
                         <Field label={t('Publisher')} value={piece.publisher} />
                         <Field
                             label={t('Difficulty')}
                             value={piece.difficulty}
+                        />
+                        <Field
+                            label={t('Music type')}
+                            value={piece.music_type}
                         />
                         <Field
                             label={t('Bought for')}
@@ -313,10 +377,6 @@ export default function Show({
                         <Field
                             label={t('Archive number')}
                             value={piece.archive_number}
-                        />
-                        <Field
-                            label={t('Music type')}
-                            value={piece.music_type}
                         />
                     </dl>
 
@@ -403,52 +463,46 @@ export default function Show({
                     )}
 
                     {/* Audio player */}
-                    {piece.audio_youtube_url && (
+                    {(piece.audio_youtube_url || audioUrl) && (
                         <div className="space-y-1">
                             <dt className="text-sm text-muted-foreground">
                                 {t('Audio')}
                             </dt>
-                            <dd>
-                                <Button variant="outline" size="sm" asChild>
-                                    <a
-                                        href={piece.audio_youtube_url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
+                            <dd className="flex flex-wrap gap-2">
+                                {piece.audio_youtube_url && (
+                                    <Button variant="outline" size="sm" asChild>
+                                        <a
+                                            href={piece.audio_youtube_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            <YouTubeIcon />
+                                            {t('Open on YouTube')}
+                                        </a>
+                                    </Button>
+                                )}
+                                {audioUrl && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() =>
+                                            toggle({
+                                                title: piece.title,
+                                                composer: piece.composer,
+                                                url: audioUrl,
+                                            })
+                                        }
                                     >
-                                        <YouTubeIcon />
-                                        {t('Open on YouTube')}
-                                    </a>
-                                </Button>
-                            </dd>
-                        </div>
-                    )}
-
-                    {audioUrl && !piece.audio_youtube_url && (
-                        <div className="space-y-1">
-                            <dt className="text-sm text-muted-foreground">
-                                {t('Audio')}
-                            </dt>
-                            <dd>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                        toggle({
-                                            title: piece.title,
-                                            composer: piece.composer,
-                                            url: audioUrl,
-                                        })
-                                    }
-                                >
-                                    {isCurrentTrack(audioUrl) && isPlaying ? (
-                                        <Pause />
-                                    ) : (
-                                        <Play />
-                                    )}
-                                    {isCurrentTrack(audioUrl) && isPlaying
-                                        ? t('Pause')
-                                        : t('Play')}
-                                </Button>
+                                        {isCurrentTrack(audioUrl) && isPlaying ? (
+                                            <Pause />
+                                        ) : (
+                                            <Play />
+                                        )}
+                                        {isCurrentTrack(audioUrl) && isPlaying
+                                            ? t('Pause')
+                                            : t('Play')}
+                                    </Button>
+                                )}
                             </dd>
                         </div>
                     )}
@@ -457,17 +511,36 @@ export default function Show({
                 {/* Parts */}
                 <section className="space-y-6">
                     <Heading title={t('Parts')} />
-                    <Tabs defaultValue="parts">
+                    <Tabs defaultValue="overview">
                         <TabsList>
-                            <TabsTrigger value="parts">
-                                {t('Parts')}
+                            <TabsTrigger value="overview">
+                                {t('Overview')}
                             </TabsTrigger>
-                            <TabsTrigger value="parts-overview">
-                                {t('Parts overview')}
+                            <TabsTrigger value="downloads">
+                                {t('Downloads')}
+                            </TabsTrigger>
+                            <TabsTrigger value="list">
+                                {t('List')}
                             </TabsTrigger>
                         </TabsList>
 
-                        <TabsContent value="parts">
+                        <TabsContent value="overview">
+                            <BumaOverview
+                                parts={parts}
+                                instrumentTypes={instrumentTypes}
+                                t={t}
+                            />
+                        </TabsContent>
+
+                        <TabsContent value="downloads">
+                            <PartsOverview
+                                parts={parts}
+                                instrumentTypes={instrumentTypes}
+                                t={t}
+                            />
+                        </TabsContent>
+
+                        <TabsContent value="list">
                             {parts.length === 0 ? (
                                 <p className="text-sm text-muted-foreground">
                                     {t('No parts uploaded yet.')}
@@ -511,7 +584,9 @@ export default function Show({
                                                         )}
                                                     </TableCell>
                                                     <TableCell className="text-muted-foreground">
-                                                        {part.original_filename}
+                                                        {part.original_filename ?? (
+                                                            <span>&mdash;</span>
+                                                        )}
                                                     </TableCell>
                                                     <TableCell>
                                                         {part.voice ?? (
@@ -569,13 +644,6 @@ export default function Show({
                             )}
                         </TabsContent>
 
-                        <TabsContent value="parts-overview">
-                            <PartsOverview
-                                parts={parts}
-                                instrumentTypes={instrumentTypes}
-                                t={t}
-                            />
-                        </TabsContent>
                     </Tabs>
                 </section>
             </div>
