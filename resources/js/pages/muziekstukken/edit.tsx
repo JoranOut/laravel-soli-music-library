@@ -59,6 +59,7 @@ type Props = {
     orchestras: Orchestra[];
     instrumentTypes?: InstrumentType[];
     canEditAllFields?: boolean;
+    canEditUsages?: boolean;
     genreSuggestions?: string[];
     musicTypeSuggestions?: string[];
     composerSuggestions?: string[];
@@ -98,6 +99,7 @@ export default function Edit({
     orchestras,
     instrumentTypes = [],
     canEditAllFields = true,
+    canEditUsages = true,
     genreSuggestions = [],
     musicTypeSuggestions = [],
     composerSuggestions = [],
@@ -189,7 +191,7 @@ export default function Edit({
         );
 
     useUnsavedChanges(
-        pieceFormDirty || hasPartChanges || hasUsageChanges || hasMatrixChanges,
+        pieceFormDirty || hasPartChanges || (canEditUsages && hasUsageChanges) || hasMatrixChanges,
     );
 
     const instOptions = instrumentOptions(instrumentTypes);
@@ -947,7 +949,7 @@ export default function Edit({
                 )}
 
                 {/* In use by — usage records */}
-                <section className="space-y-6">
+                {canEditUsages && <section className="space-y-6">
                     <Heading title={t('In use by')} />
 
                     {usages.some((u) => u.tot) && (
@@ -1072,8 +1074,15 @@ export default function Edit({
                         <Plus />
                         {t('Add usage')}
                     </Button>
-                </section>
+                </section>}
 
+                {/* Bottom save button */}
+                <div className="flex justify-end">
+                    <Button onClick={saveAll} disabled={saving}>
+                        <Save />
+                        {t('Save')}
+                    </Button>
+                </div>
             </div>
 
             <Dialog
