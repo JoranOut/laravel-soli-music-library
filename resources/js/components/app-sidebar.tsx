@@ -3,11 +3,13 @@ import {
     Globe,
     Guitar,
     Library,
+    ListMusic,
     Music,
     Rocket,
     Shield,
     ShoppingCart,
     SlidersHorizontal,
+    Tags,
     User,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
@@ -78,6 +80,22 @@ export function AppSidebar() {
             href: `${adminUrl}/admin/instrumentsoorten`,
             icon: Guitar,
             external: true,
+        });
+    }
+
+    if (permissions.includes('manage-genres')) {
+        adminItems.push({
+            title: t('Genres'),
+            href: '/admin/genres',
+            icon: Tags,
+        });
+    }
+
+    if (permissions.includes('manage-music-types')) {
+        adminItems.push({
+            title: t('Music types'),
+            href: '/admin/music-types',
+            icon: ListMusic,
         });
     }
 

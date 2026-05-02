@@ -42,16 +42,20 @@ it('belongs to many orchestras via usages', function () {
         ->each->toBeInstanceOf(Orchestra::class);
 });
 
-it('orchestras only returns current usages (tot is null)', function () {
+it('orchestras only returns active usages (tot is null or in the future)', function () {
     $piece = Piece::factory()->create();
     $current = Orchestra::factory()->create();
+    $future = Orchestra::factory()->create();
     $historical = Orchestra::factory()->create();
 
     $piece->orchestraUsages()->create(['orchestra_id' => $current->id]);
+    $piece->orchestraUsages()->create(['orchestra_id' => $future->id, 'tot' => now()->addMonth()->toDateString()]);
     $piece->orchestraUsages()->create(['orchestra_id' => $historical->id, 'tot' => '2025-01-01']);
 
-    expect($piece->orchestras)->toHaveCount(1);
-    expect($piece->orchestras->first()->id)->toBe($current->id);
+    $orchestraIds = $piece->orchestras->pluck('id')->toArray();
+    expect($orchestraIds)->toContain($current->id)
+        ->toContain($future->id)
+        ->not->toContain($historical->id);
 });
 
 it('has many orchestraUsages', function () {

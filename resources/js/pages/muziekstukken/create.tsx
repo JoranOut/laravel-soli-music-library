@@ -9,6 +9,7 @@ import PieceForm from './piece-form';
 
 type Props = {
     orchestras: Orchestra[];
+    nextArchiveNumber?: string;
     genreSuggestions: string[];
     musicTypeSuggestions: string[];
     composerSuggestions: string[];
@@ -20,6 +21,7 @@ type Props = {
 
 export default function Create({
     orchestras,
+    nextArchiveNumber,
     genreSuggestions,
     musicTypeSuggestions,
     composerSuggestions,
@@ -47,6 +49,7 @@ export default function Create({
                     orchestras={orchestras}
                     action="/muziekstukken"
                     method="post"
+                    defaultArchiveNumber={nextArchiveNumber}
                     onDirtyChange={setFormDirty}
                     genreSuggestions={genreSuggestions}
                     musicTypeSuggestions={musicTypeSuggestions}

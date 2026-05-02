@@ -52,6 +52,7 @@ class HandleInertiaRequests extends Middleware
                 'resolved_assignments' => $user ? session('resolved_assignments', []) : [],
                 'permissions' => $user ? $user->getAllPermissions()->pluck('name')->toArray() : [],
                 'orchestras' => $user ? $this->getUserOrchestras() : [],
+                'legal_agreement_accepted' => $user?->hasAcceptedLegalAgreement() ?? false,
             ],
             'adminUrl' => config('services.soli_admin.base_url', 'https://admin.soli.nl'),
             'sidebarOpen' => $request->cookie('sidebar_state', 'true') === 'true',

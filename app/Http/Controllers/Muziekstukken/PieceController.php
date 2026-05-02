@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Muziekstukken;
 
 use App\Http\Controllers\Controller;
+use App\Models\Genre;
 use App\Models\InstrumentType;
+use App\Models\MusicType;
 use App\Models\Orchestra;
 use App\Models\Piece;
 use App\Services\MusicAccessService;
@@ -123,8 +125,8 @@ class PieceController extends Controller
                 'composers' => Piece::whereNotNull('composer')->where('composer', '!=', '')->distinct()->pluck('composer')->sort()->values(),
                 'arrangers' => Piece::whereNotNull('arranger')->where('arranger', '!=', '')->distinct()->pluck('arranger')->sort()->values(),
                 'publishers' => Piece::whereNotNull('publisher')->where('publisher', '!=', '')->distinct()->pluck('publisher')->sort()->values(),
-                'musicTypes' => Piece::whereNotNull('music_type')->where('music_type', '!=', '')->distinct()->pluck('music_type')->sort()->values(),
-                'genres' => Piece::whereNotNull('genre')->pluck('genre')->flatten()->unique()->sort()->values(),
+                'musicTypes' => MusicType::orderBy('sort_order')->pluck('name'),
+                'genres' => Genre::orderBy('sort_order')->pluck('name'),
                 'difficulties' => Piece::whereNotNull('difficulty')->where('difficulty', '!=', '')->distinct()->pluck('difficulty')->sort()->values(),
                 'boughtFors' => Piece::whereNotNull('bought_for')->where('bought_for', '!=', '')->distinct()->pluck('bought_for')->sort()->values(),
                 'boughtForOccasions' => Piece::whereNotNull('bought_for_occasion')->where('bought_for_occasion', '!=', '')->distinct()->pluck('bought_for_occasion')->sort()->values(),
@@ -132,7 +134,7 @@ class PieceController extends Controller
             ],
             'filters' => $request->only(['search', 'orchestra', 'include_past_usages', 'instruments', 'composer', 'arranger', 'publisher', 'music_type', 'genre', 'difficulty', 'bought_for', 'bought_for_occasion', 'status', 'buy_date_from', 'buy_date_to']),
             'canEdit' => $canEdit,
-            'canEditUsages' => $canEdit || $access->isDirigent(),
+            'canEditUsages' => auth()->user()?->can('edit gebruik') ?? false,
         ]);
     }
 
@@ -160,29 +162,16 @@ class PieceController extends Controller
             'audioUrl' => $audioUrl,
             'instrumentTypes' => InstrumentType::with('instrumentFamily')->orderBy('sort_order')->get(),
             'canEdit' => $canEdit,
-            'canEditUsages' => $canEdit || $access->isDirigent(),
+            'canEditUsages' => auth()->user()?->can('edit gebruik') ?? false,
             'orchestras' => Orchestra::where('is_active', true)->orderBy('sort_order')->get(),
         ]);
     }
 
     public function suggestions(): JsonResponse
     {
-        $genres = Piece::whereNotNull('genre')
-            ->pluck('genre')
-            ->flatten()
-            ->unique()
-            ->sort()
-            ->values();
-
-        $musicTypes = Piece::whereNotNull('music_type')
-            ->distinct()
-            ->pluck('music_type')
-            ->sort()
-            ->values();
-
         return response()->json([
-            'genres' => $genres,
-            'musicTypes' => $musicTypes,
+            'genres' => Genre::orderBy('sort_order')->pluck('name'),
+            'musicTypes' => MusicType::orderBy('sort_order')->pluck('name'),
         ]);
     }
 
@@ -190,8 +179,16 @@ class PieceController extends Controller
     {
         $suggestions = $this->getSuggestions();
 
+        $lastNumber = (int) Piece::withTrashed()
+            ->whereNotNull('archive_number')
+            ->whereRaw('archive_number REGEXP "^[0-9]+$"')
+            ->max('archive_number');
+
+        $nextArchiveNumber = (string) ($lastNumber + 1);
+
         return Inertia::render('muziekstukken/create', [
             'orchestras' => Orchestra::where('is_active', true)->orderBy('sort_order')->get(),
+            'nextArchiveNumber' => $nextArchiveNumber,
             'genreSuggestions' => $suggestions['genres'],
             'musicTypeSuggestions' => $suggestions['musicTypes'],
             'composerSuggestions' => $suggestions['composers'],
@@ -251,6 +248,7 @@ class PieceController extends Controller
             'audioUrl' => $audioUrl,
             'orchestras' => Orchestra::where('is_active', true)->orderBy('sort_order')->get(),
             'canEditAllFields' => $canEditAllFields,
+            'canEditUsages' => auth()->user()?->can('edit gebruik') ?? false,
             'canArchive' => $canEditAllFields,
             'genreSuggestions' => $suggestions['genres'],
             'musicTypeSuggestions' => $suggestions['musicTypes'],
@@ -312,7 +310,10 @@ class PieceController extends Controller
             ]);
 
             $piece->update(collect($validated)->except('usages', 'parts', 'matrix_parts')->toArray());
-            $this->syncUsages($piece, $validated['usages'] ?? []);
+
+            if (auth()->user()?->can('edit gebruik')) {
+                $this->syncUsages($piece, $validated['usages'] ?? []);
+            }
 
             foreach ($validated['parts'] ?? [] as $partData) {
                 $piece->parts()->where('id', $partData['id'])->firstOrFail()->update([
@@ -329,8 +330,8 @@ class PieceController extends Controller
             if ($status !== 'digitaal' && ! empty($validated['matrix_parts'])) {
                 $this->syncMatrixParts($piece, $validated['matrix_parts']);
             }
-        } else {
-            // Dirigent: can only update usages
+        } elseif (auth()->user()?->can('edit gebruik')) {
+            // Non-editor with usage permission: can only update usages
             $validated = $request->validate([
                 'usages' => ['nullable', 'array'],
                 'usages.*.id' => ['nullable', 'integer'],
@@ -528,18 +529,9 @@ class PieceController extends Controller
 
     private function getSuggestions(): array
     {
-        $genres = Piece::whereNotNull('genre')
-            ->pluck('genre')
-            ->flatten()
-            ->unique()
-            ->sort()
-            ->values();
+        $genres = Genre::orderBy('sort_order')->pluck('name');
 
-        $musicTypes = Piece::whereNotNull('music_type')
-            ->distinct()
-            ->pluck('music_type')
-            ->sort()
-            ->values();
+        $musicTypes = MusicType::orderBy('sort_order')->pluck('name');
 
         $composers = Piece::whereNotNull('composer')->where('composer', '!=', '')
             ->distinct()->pluck('composer')->sort()->values();

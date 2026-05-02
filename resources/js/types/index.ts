@@ -29,6 +29,7 @@ export type Auth = {
     assignments: { onderdeel_id: number; instrument_soort: string }[];
     permissions: string[];
     orchestras: { id: number; name: string; abbreviation: string }[];
+    legal_agreement_accepted: boolean;
 };
 
 export type AppLayoutProps = {

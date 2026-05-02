@@ -25,7 +25,13 @@ class User extends Authenticatable
             'oidc_roles' => 'array',
             'oidc_assignments' => 'array',
             'last_synced_at' => 'datetime',
+            'legal_agreement_accepted_at' => 'datetime',
         ];
+    }
+
+    public function hasAcceptedLegalAgreement(): bool
+    {
+        return $this->legal_agreement_accepted_at !== null;
     }
 
     /** @return HasMany<DownloadLog, $this> */

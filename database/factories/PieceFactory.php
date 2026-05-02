@@ -22,11 +22,11 @@ class PieceFactory extends Factory
             'bought_for' => fake()->optional(0.4)->randomElement(['Harmonie orkest', 'Klein Orkest', 'Bigband', 'Slagwerkgroep']),
             'buy_date' => fake()->optional(0.4)->dateTimeBetween('-10 years', 'now'),
             'genre' => fake()->optional(0.5)->randomElements(
-                ['Mars', 'Ouverture', 'Pop', 'Filmmuziek', 'Klassiek', 'Jazz', 'Musical', 'Kerstmuziek'],
+                ['Pop', 'Filmmuziek', 'Klassiek', 'Jazz', 'Musical', 'Kerst', 'Overture', 'Wals'],
                 fake()->numberBetween(1, 3),
             ),
-            'music_type' => fake()->optional(0.5)->randomElement(['Origineel', 'Arrangement', 'Bewerking', 'Compositie']),
-            'archive_number' => fake()->optional(0.4)->numerify('A-###'),
+            'music_type' => fake()->optional(0.5)->randomElement(['Concert', 'Loopmars', 'Slagwerk', 'Divers']),
+            'archive_number' => fake()->optional(0.4)->numberBetween(1, 999),
             'status' => fake()->randomElement(['besteld', 'analoog', 'digitaal']),
             'audio_youtube_url' => fake()->optional(0.2)->randomElement([
                 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',

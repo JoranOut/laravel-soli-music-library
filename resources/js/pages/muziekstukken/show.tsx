@@ -339,8 +339,15 @@ export default function Show({
         );
     }
 
-    const currentUsages = (piece.orchestra_usages ?? []).filter((u) => !u.tot);
-    const previousUsages = (piece.orchestra_usages ?? []).filter((u) => u.tot);
+    const today = new Date().toISOString().split('T')[0];
+    const isPastUsage = (u: { tot?: string | null }) =>
+        !!u.tot && u.tot < today;
+    const currentUsages = (piece.orchestra_usages ?? []).filter(
+        (u) => !isPastUsage(u),
+    );
+    const previousUsages = (piece.orchestra_usages ?? []).filter((u) =>
+        isPastUsage(u),
+    );
     const visibleUsages = showPreviousUsages
         ? [...currentUsages, ...previousUsages]
         : currentUsages;
@@ -483,7 +490,9 @@ export default function Show({
                                     >
                                         <Badge
                                             variant={
-                                                u.tot ? 'outline' : 'secondary'
+                                                isPastUsage(u)
+                                                    ? 'outline'
+                                                    : 'secondary'
                                             }
                                         >
                                             {u.orchestra.name}
@@ -506,53 +515,50 @@ export default function Show({
                             </dd>
                         </div>
                     )}
-
-                    {/* Audio player */}
-                    {(piece.audio_youtube_url || audioUrl) && (
-                        <div className="space-y-1">
-                            <dt className="text-sm text-muted-foreground">
-                                {t('Audio')}
-                            </dt>
-                            <dd className="flex flex-wrap gap-2">
-                                {piece.audio_youtube_url && (
-                                    <Button variant="outline" size="sm" asChild>
-                                        <a
-                                            href={piece.audio_youtube_url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                        >
-                                            <YouTubeIcon />
-                                            {t('Open on YouTube')}
-                                        </a>
-                                    </Button>
-                                )}
-                                {audioUrl && (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() =>
-                                            toggle({
-                                                title: piece.title,
-                                                composer: piece.composer,
-                                                url: audioUrl,
-                                            })
-                                        }
-                                    >
-                                        {isCurrentTrack(audioUrl) &&
-                                        isPlaying ? (
-                                            <Pause />
-                                        ) : (
-                                            <Play />
-                                        )}
-                                        {isCurrentTrack(audioUrl) && isPlaying
-                                            ? t('Pause')
-                                            : t('Play')}
-                                    </Button>
-                                )}
-                            </dd>
-                        </div>
-                    )}
                 </section>
+
+                {/* Audio */}
+                {(piece.audio_youtube_url || audioUrl) && (
+                    <section className="space-y-6">
+                        <Heading title={t('Audio')} />
+                        <div className="flex flex-wrap gap-2">
+                            {piece.audio_youtube_url && (
+                                <Button variant="outline" size="sm" asChild>
+                                    <a
+                                        href={piece.audio_youtube_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        <YouTubeIcon />
+                                        {t('Open on YouTube')}
+                                    </a>
+                                </Button>
+                            )}
+                            {audioUrl && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                        toggle({
+                                            title: piece.title,
+                                            composer: piece.composer,
+                                            url: audioUrl,
+                                        })
+                                    }
+                                >
+                                    {isCurrentTrack(audioUrl) && isPlaying ? (
+                                        <Pause />
+                                    ) : (
+                                        <Play />
+                                    )}
+                                    {isCurrentTrack(audioUrl) && isPlaying
+                                        ? t('Pause')
+                                        : t('Play')}
+                                </Button>
+                            )}
+                        </div>
+                    </section>
+                )}
 
                 {/* Parts */}
                 <section className="space-y-6">

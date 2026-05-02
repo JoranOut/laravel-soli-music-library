@@ -52,14 +52,14 @@ class DatabaseSeeder extends Seeder
 
         // Pieces with orchestra assignments and parts (real PDFs on disk)
         $piecesData = [
-            ['title' => 'Bohemian Rhapsody', 'composer' => 'Freddie Mercury', 'arranger' => 'John Higgins', 'difficulty' => 'hard', 'genre' => ['Pop'], 'music_type' => 'Arrangement', 'bought_for' => 'Harmonie orkest', 'archive_number' => 'A-001'],
-            ['title' => 'Mars van de Medici', 'composer' => 'Johan Wichers', 'difficulty' => 'medium', 'genre' => ['Mars'], 'music_type' => 'Origineel', 'archive_number' => 'A-002'],
-            ['title' => 'Highlights from Frozen', 'composer' => 'Robert Lopez', 'arranger' => 'Sean O\'Loughlin', 'difficulty' => 'medium', 'genre' => ['Filmmuziek', 'Musical'], 'music_type' => 'Arrangement', 'buy_date' => '2024-03-15'],
-            ['title' => 'The Final Countdown', 'composer' => 'Joey Tempest', 'arranger' => 'Michael Brown', 'difficulty' => 'easy', 'genre' => ['Pop'], 'music_type' => 'Arrangement'],
-            ['title' => 'Slippery When Wet', 'composer' => 'Kees Vlak', 'difficulty' => 'medium', 'genre' => ['Ouverture'], 'music_type' => 'Origineel'],
-            ['title' => 'African Symphony', 'composer' => 'Van McCoy', 'arranger' => 'Naohiro Iwai', 'difficulty' => 'hard', 'genre' => ['Klassiek'], 'music_type' => 'Arrangement', 'bought_for' => 'Klein Orkest'],
-            ['title' => 'A Moorside Suite', 'composer' => 'Gustav Holst', 'difficulty' => 'very hard', 'genre' => ['Klassiek'], 'music_type' => 'Origineel', 'archive_number' => 'A-007'],
-            ['title' => 'Riverdance', 'composer' => 'Bill Whelan', 'arranger' => 'Jeff Cranfill', 'difficulty' => 'medium', 'genre' => ['Filmmuziek'], 'music_type' => 'Bewerking'],
+            ['title' => 'Bohemian Rhapsody', 'composer' => 'Freddie Mercury', 'arranger' => 'John Higgins', 'difficulty' => 'hard', 'genre' => ['Pop'], 'music_type' => 'Concert', 'bought_for' => 'Harmonie orkest', 'archive_number' => '1'],
+            ['title' => 'Mars van de Medici', 'composer' => 'Johan Wichers', 'difficulty' => 'medium', 'genre' => ['Wals'], 'music_type' => 'Loopmars', 'archive_number' => '2'],
+            ['title' => 'Highlights from Frozen', 'composer' => 'Robert Lopez', 'arranger' => 'Sean O\'Loughlin', 'difficulty' => 'medium', 'genre' => ['Filmmuziek', 'Musical'], 'music_type' => 'Concert', 'buy_date' => '2024-03-15'],
+            ['title' => 'The Final Countdown', 'composer' => 'Joey Tempest', 'arranger' => 'Michael Brown', 'difficulty' => 'easy', 'genre' => ['Pop'], 'music_type' => 'Concert'],
+            ['title' => 'Slippery When Wet', 'composer' => 'Kees Vlak', 'difficulty' => 'medium', 'genre' => ['Overture'], 'music_type' => 'Concourswerk'],
+            ['title' => 'African Symphony', 'composer' => 'Van McCoy', 'arranger' => 'Naohiro Iwai', 'difficulty' => 'hard', 'genre' => ['Klassiek'], 'music_type' => 'Concert', 'bought_for' => 'Klein Orkest'],
+            ['title' => 'A Moorside Suite', 'composer' => 'Gustav Holst', 'difficulty' => 'very hard', 'genre' => ['Klassiek'], 'music_type' => 'Concourswerk', 'archive_number' => '7'],
+            ['title' => 'Riverdance', 'composer' => 'Bill Whelan', 'arranger' => 'Jeff Cranfill', 'difficulty' => 'medium', 'genre' => ['Filmmuziek'], 'music_type' => 'Divers'],
         ];
 
         foreach ($piecesData as $pieceData) {

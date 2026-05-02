@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\GenreController;
 use App\Http\Controllers\Admin\InstrumentAliasController;
+use App\Http\Controllers\Admin\MusicTypeController;
 use App\Http\Controllers\Admin\RolePermissionController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DashboardController;
@@ -18,6 +20,14 @@ Route::get('/auth/redirect', [AuthController::class, 'redirect'])->name('login')
 Route::get('/auth/callback', [AuthController::class, 'callback']);
 Route::post('/auth/logout', [AuthController::class, 'logout'])->name('logout');
 
+Route::post('/legal-agreement/accept', function () {
+    $user = request()->user();
+    $user->legal_agreement_accepted_at = now();
+    $user->save();
+
+    return back();
+})->middleware('auth')->name('legal-agreement.accept');
+
 Route::post('locale/{locale}', function (string $locale) {
     if (in_array($locale, ['nl', 'en'])) {
         session()->put('locale', $locale);
@@ -25,6 +35,20 @@ Route::post('locale/{locale}', function (string $locale) {
 
     return back();
 })->name('locale.switch');
+
+Route::middleware(['auth', 'can:manage-genres'])->group(function () {
+    Route::get('/admin/genres', [GenreController::class, 'index'])->name('admin.genres');
+    Route::post('/admin/genres', [GenreController::class, 'store'])->name('admin.genres.store');
+    Route::put('/admin/genres/{genre}', [GenreController::class, 'update'])->name('admin.genres.update');
+    Route::delete('/admin/genres/{genre}', [GenreController::class, 'destroy'])->name('admin.genres.destroy');
+});
+
+Route::middleware(['auth', 'can:manage-music-types'])->group(function () {
+    Route::get('/admin/music-types', [MusicTypeController::class, 'index'])->name('admin.music-types');
+    Route::post('/admin/music-types', [MusicTypeController::class, 'store'])->name('admin.music-types.store');
+    Route::put('/admin/music-types/{musicType}', [MusicTypeController::class, 'update'])->name('admin.music-types.update');
+    Route::delete('/admin/music-types/{musicType}', [MusicTypeController::class, 'destroy'])->name('admin.music-types.destroy');
+});
 
 // Editor-only routes (CRUD) — registered first so /create matches before {piece}
 Route::middleware(['auth', EnsureUserIsEditor::class])->group(function () {
@@ -44,6 +68,9 @@ Route::middleware(['auth', EnsureUserIsEditor::class])->group(function () {
 Route::middleware(['auth', EnsureUserIsEditorOrDirigent::class])->group(function () {
     Route::get('/muziekstukken/{piece}/edit', [PieceController::class, 'edit'])->name('muziekstukken.edit')->withTrashed();
     Route::put('/muziekstukken/{piece}', [PieceController::class, 'update'])->name('muziekstukken.update')->withTrashed();
+});
+
+Route::middleware(['auth', 'can:create gebruik'])->group(function () {
     Route::post('/muziekstukken/{piece}/usages', [PieceController::class, 'storeUsage'])->name('muziekstukken.usages.store');
 });
 

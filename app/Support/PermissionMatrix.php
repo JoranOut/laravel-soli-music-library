@@ -21,8 +21,14 @@ class PermissionMatrix
         'download-assigned partijen',
         'download-score partijen',
         'download-all partijen',
+        'view gebruik',
+        'create gebruik',
+        'edit gebruik',
+        'delete gebruik',
         'manage-roles',
         'manage-instrument-aliases',
+        'manage-genres',
+        'manage-music-types',
     ];
 
     /** Roles and their default permission sets. */
@@ -31,19 +37,24 @@ class PermissionMatrix
             'view muziekstukken', 'create muziekstukken', 'edit muziekstukken', 'delete muziekstukken',
             'view partijen', 'create partijen', 'edit partijen', 'delete partijen',
             'download-assigned partijen', 'download-score partijen', 'download-all partijen',
+            'view gebruik', 'create gebruik', 'edit gebruik', 'delete gebruik',
             'manage-roles',
             'manage-instrument-aliases',
+            'manage-genres',
+            'manage-music-types',
         ],
         'muziekbeheer' => [
             'view muziekstukken', 'create muziekstukken', 'edit muziekstukken', 'delete muziekstukken',
             'view partijen', 'create partijen', 'edit partijen', 'delete partijen',
             'download-assigned partijen', 'download-score partijen', 'download-all partijen',
+            'view gebruik', 'create gebruik', 'edit gebruik', 'delete gebruik',
             'manage-instrument-aliases',
         ],
         'dirigent' => [
             'view muziekstukken',
             'view partijen',
             'download-score partijen',
+            'view gebruik',
         ],
         'member' => [
             'view muziekstukken',
