@@ -339,8 +339,10 @@ export default function Show({
         );
     }
 
-    const currentUsages = (piece.orchestra_usages ?? []).filter((u) => !u.tot);
-    const previousUsages = (piece.orchestra_usages ?? []).filter((u) => u.tot);
+    const today = new Date().toISOString().split('T')[0];
+    const isPastUsage = (u: { tot?: string | null }) => !!u.tot && u.tot < today;
+    const currentUsages = (piece.orchestra_usages ?? []).filter((u) => !isPastUsage(u));
+    const previousUsages = (piece.orchestra_usages ?? []).filter((u) => isPastUsage(u));
     const visibleUsages = showPreviousUsages
         ? [...currentUsages, ...previousUsages]
         : currentUsages;
@@ -483,7 +485,7 @@ export default function Show({
                                     >
                                         <Badge
                                             variant={
-                                                u.tot ? 'outline' : 'secondary'
+                                                isPastUsage(u) ? 'outline' : 'secondary'
                                             }
                                         >
                                             {u.orchestra.name}

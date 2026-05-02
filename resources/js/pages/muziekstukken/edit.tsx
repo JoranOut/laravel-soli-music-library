@@ -195,6 +195,9 @@ export default function Edit({
         pieceFormDirty || hasPartChanges || (canEditUsages && hasUsageChanges) || hasMatrixChanges,
     );
 
+    const today = new Date().toISOString().split('T')[0];
+    const isPastUsage = (u: { tot: string }) => !!u.tot && u.tot < today;
+
     const instOptions = instrumentOptions(instrumentTypes);
     const orchestraOptions: ComboboxOption[] = orchestras.map((o) => ({
         value: o.id.toString(),
@@ -960,7 +963,7 @@ export default function Edit({
                 {canEditUsages && <section className="space-y-6">
                     <Heading title={t('In use by')} />
 
-                    {usages.some((u) => u.tot) && (
+                    {usages.some((u) => isPastUsage(u)) && (
                         <label className="flex items-center gap-2 text-sm">
                             <Checkbox
                                 checked={showPastUsages}
@@ -990,7 +993,7 @@ export default function Edit({
                                 </TableHeader>
                                 <TableBody>
                                     {usages.map((usage, i) => {
-                                        if (!showPastUsages && usage.tot)
+                                        if (!showPastUsages && isPastUsage(usage))
                                             return null;
                                         return (
                                             <TableRow
