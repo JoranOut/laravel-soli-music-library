@@ -141,5 +141,6 @@
     ":count pieces use this genre. Choose a replacement or remove it from all pieces.": ":count muziekstukken gebruiken dit genre. Kies een vervanging of verwijder het uit alle muziekstukken.",
     ":count pieces use this music type. Choose a replacement or remove it from all pieces.": ":count muziekstukken gebruiken deze muzieksoort. Kies een vervanging of verwijder het uit alle muziekstukken.",
     "Manage the available genres for music pieces.": "Beheer de beschikbare genres voor muziekstukken.",
-    "Manage the available music types for music pieces.": "Beheer de beschikbare muzieksoorten voor muziekstukken."
+    "Manage the available music types for music pieces.": "Beheer de beschikbare muzieksoorten voor muziekstukken.",
+    "This piece has uploaded files but the status is not set to \"digitaal\". Uploaded parts will not be visible.": "Dit muziekstuk heeft geüploade bestanden maar de status is niet ingesteld op \"digitaal\". Geüploade partijen zijn niet zichtbaar."
 }

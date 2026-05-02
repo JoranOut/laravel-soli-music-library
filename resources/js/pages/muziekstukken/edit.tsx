@@ -4,6 +4,7 @@ import {
     Plus,
     Save,
     Trash2,
+    TriangleAlert,
     Upload,
 } from 'lucide-react';
 import { useRef, useState, useMemo } from 'react';
@@ -568,6 +569,13 @@ export default function Edit({
                                 'Manage sheet music parts for this piece',
                             )}
                         />
+
+                        {currentStatus !== 'digitaal' && piece.parts.some((p) => p.original_filename !== null) && (
+                            <div className="flex items-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 p-3 text-sm text-yellow-800 dark:border-yellow-700 dark:bg-yellow-950 dark:text-yellow-200">
+                                <TriangleAlert className="size-4 shrink-0" />
+                                {t('This piece has uploaded files but the status is not set to "digitaal". Uploaded parts will not be visible.')}
+                            </div>
+                        )}
 
                         {currentStatus === 'digitaal' ? (
                             <>
