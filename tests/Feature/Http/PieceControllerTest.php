@@ -833,6 +833,7 @@ it('dirigent can access edit page and receives canEditAllFields false', function
 
 it('dirigent update only changes usages and ignores title', function () {
     $user = User::factory()->create();
+    $user->givePermissionTo('edit gebruik');
     $piece = Piece::factory()->create(['title' => 'Original Title']);
     $orchestra = Orchestra::factory()->create();
 

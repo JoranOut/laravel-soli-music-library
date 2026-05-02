@@ -340,9 +340,14 @@ export default function Show({
     }
 
     const today = new Date().toISOString().split('T')[0];
-    const isPastUsage = (u: { tot?: string | null }) => !!u.tot && u.tot < today;
-    const currentUsages = (piece.orchestra_usages ?? []).filter((u) => !isPastUsage(u));
-    const previousUsages = (piece.orchestra_usages ?? []).filter((u) => isPastUsage(u));
+    const isPastUsage = (u: { tot?: string | null }) =>
+        !!u.tot && u.tot < today;
+    const currentUsages = (piece.orchestra_usages ?? []).filter(
+        (u) => !isPastUsage(u),
+    );
+    const previousUsages = (piece.orchestra_usages ?? []).filter((u) =>
+        isPastUsage(u),
+    );
     const visibleUsages = showPreviousUsages
         ? [...currentUsages, ...previousUsages]
         : currentUsages;
@@ -485,7 +490,9 @@ export default function Show({
                                     >
                                         <Badge
                                             variant={
-                                                isPastUsage(u) ? 'outline' : 'secondary'
+                                                isPastUsage(u)
+                                                    ? 'outline'
+                                                    : 'secondary'
                                             }
                                         >
                                             {u.orchestra.name}
@@ -508,7 +515,6 @@ export default function Show({
                             </dd>
                         </div>
                     )}
-
                 </section>
 
                 {/* Audio */}
@@ -540,8 +546,7 @@ export default function Show({
                                         })
                                     }
                                 >
-                                    {isCurrentTrack(audioUrl) &&
-                                    isPlaying ? (
+                                    {isCurrentTrack(audioUrl) && isPlaying ? (
                                         <Pause />
                                     ) : (
                                         <Play />

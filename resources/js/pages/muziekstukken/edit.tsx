@@ -1,12 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import {
-    Music,
-    Plus,
-    Save,
-    Trash2,
-    TriangleAlert,
-    Upload,
-} from 'lucide-react';
+import { Music, Plus, Save, Trash2, TriangleAlert, Upload } from 'lucide-react';
 import { useRef, useState, useMemo } from 'react';
 import { Heading } from '@/components/heading';
 import { Button } from '@/components/ui/button';
@@ -192,7 +185,10 @@ export default function Edit({
         );
 
     useUnsavedChanges(
-        pieceFormDirty || hasPartChanges || (canEditUsages && hasUsageChanges) || hasMatrixChanges,
+        pieceFormDirty ||
+            hasPartChanges ||
+            (canEditUsages && hasUsageChanges) ||
+            hasMatrixChanges,
     );
 
     const today = new Date().toISOString().split('T')[0];
@@ -573,12 +569,17 @@ export default function Edit({
                             )}
                         />
 
-                        {currentStatus !== 'digitaal' && piece.parts.some((p) => p.original_filename !== null) && (
-                            <div className="flex items-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 p-3 text-sm text-yellow-800 dark:border-yellow-700 dark:bg-yellow-950 dark:text-yellow-200">
-                                <TriangleAlert className="size-4 shrink-0" />
-                                {t('This piece has uploaded files but the status is not set to "digitaal". Uploaded parts will not be visible.')}
-                            </div>
-                        )}
+                        {currentStatus !== 'digitaal' &&
+                            piece.parts.some(
+                                (p) => p.original_filename !== null,
+                            ) && (
+                                <div className="flex items-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 p-3 text-sm text-yellow-800 dark:border-yellow-700 dark:bg-yellow-950 dark:text-yellow-200">
+                                    <TriangleAlert className="size-4 shrink-0" />
+                                    {t(
+                                        'This piece has uploaded files but the status is not set to "digitaal". Uploaded parts will not be visible.',
+                                    )}
+                                </div>
+                            )}
 
                         {currentStatus === 'digitaal' ? (
                             <>
@@ -960,132 +961,146 @@ export default function Edit({
                 )}
 
                 {/* In use by — usage records */}
-                {canEditUsages && <section className="space-y-6">
-                    <Heading title={t('In use by')} />
+                {canEditUsages && (
+                    <section className="space-y-6">
+                        <Heading title={t('In use by')} />
 
-                    {usages.some((u) => isPastUsage(u)) && (
-                        <label className="flex items-center gap-2 text-sm">
-                            <Checkbox
-                                checked={showPastUsages}
-                                onCheckedChange={(checked) =>
-                                    setShowPastUsages(!!checked)
-                                }
-                            />
-                            {t('Show past usages')}
-                        </label>
-                    )}
+                        {usages.some((u) => isPastUsage(u)) && (
+                            <label className="flex items-center gap-2 text-sm">
+                                <Checkbox
+                                    checked={showPastUsages}
+                                    onCheckedChange={(checked) =>
+                                        setShowPastUsages(!!checked)
+                                    }
+                                />
+                                {t('Show past usages')}
+                            </label>
+                        )}
 
-                    {usages.length > 0 && (
-                        <div className="rounded-lg border">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>{t('Orchestras')}</TableHead>
-                                        <TableHead className="w-[150px]">
-                                            {t('From')}
-                                        </TableHead>
-                                        <TableHead className="w-[150px]">
-                                            {t('Until')}
-                                        </TableHead>
-                                        <TableHead>{t('Details')}</TableHead>
-                                        <TableHead className="w-[80px]" />
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {usages.map((usage, i) => {
-                                        if (!showPastUsages && isPastUsage(usage))
-                                            return null;
-                                        return (
-                                            <TableRow
-                                                key={usage.id ?? `new-${i}`}
-                                            >
-                                                <TableCell>
-                                                    <Combobox
-                                                        options={
-                                                            orchestraOptions
-                                                        }
-                                                        value={
-                                                            usage.orchestra_id
-                                                        }
-                                                        onChange={(v) =>
-                                                            updateUsage(
-                                                                i,
-                                                                'orchestra_id',
-                                                                v,
-                                                            )
-                                                        }
-                                                        className="max-w-[250px]"
-                                                    />
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Input
-                                                        type="date"
-                                                        value={usage.van}
-                                                        onChange={(e) =>
-                                                            updateUsage(
-                                                                i,
-                                                                'van',
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                    />
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Input
-                                                        type="date"
-                                                        value={usage.tot}
-                                                        onChange={(e) =>
-                                                            updateUsage(
-                                                                i,
-                                                                'tot',
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                    />
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Input
-                                                        value={usage.details}
-                                                        onChange={(e) =>
-                                                            updateUsage(
-                                                                i,
-                                                                'details',
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                        placeholder={t(
-                                                            'Details',
-                                                        )}
-                                                    />
-                                                </TableCell>
-                                                <TableCell>
-                                                    {!usage.tot && (
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() =>
-                                                                setEndUsageIndex(
+                        {usages.length > 0 && (
+                            <div className="rounded-lg border">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>
+                                                {t('Orchestras')}
+                                            </TableHead>
+                                            <TableHead className="w-[150px]">
+                                                {t('From')}
+                                            </TableHead>
+                                            <TableHead className="w-[150px]">
+                                                {t('Until')}
+                                            </TableHead>
+                                            <TableHead>
+                                                {t('Details')}
+                                            </TableHead>
+                                            <TableHead className="w-[80px]" />
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {usages.map((usage, i) => {
+                                            if (
+                                                !showPastUsages &&
+                                                isPastUsage(usage)
+                                            )
+                                                return null;
+                                            return (
+                                                <TableRow
+                                                    key={usage.id ?? `new-${i}`}
+                                                >
+                                                    <TableCell>
+                                                        <Combobox
+                                                            options={
+                                                                orchestraOptions
+                                                            }
+                                                            value={
+                                                                usage.orchestra_id
+                                                            }
+                                                            onChange={(v) =>
+                                                                updateUsage(
                                                                     i,
+                                                                    'orchestra_id',
+                                                                    v,
                                                                 )
                                                             }
-                                                        >
-                                                            {t('End')}
-                                                        </Button>
-                                                    )}
-                                                </TableCell>
-                                            </TableRow>
-                                        );
-                                    })}
-                                </TableBody>
-                            </Table>
-                        </div>
-                    )}
+                                                            className="max-w-[250px]"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Input
+                                                            type="date"
+                                                            value={usage.van}
+                                                            onChange={(e) =>
+                                                                updateUsage(
+                                                                    i,
+                                                                    'van',
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Input
+                                                            type="date"
+                                                            value={usage.tot}
+                                                            onChange={(e) =>
+                                                                updateUsage(
+                                                                    i,
+                                                                    'tot',
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Input
+                                                            value={
+                                                                usage.details
+                                                            }
+                                                            onChange={(e) =>
+                                                                updateUsage(
+                                                                    i,
+                                                                    'details',
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            placeholder={t(
+                                                                'Details',
+                                                            )}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {!usage.tot && (
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() =>
+                                                                    setEndUsageIndex(
+                                                                        i,
+                                                                    )
+                                                                }
+                                                            >
+                                                                {t('End')}
+                                                            </Button>
+                                                        )}
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        })}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        )}
 
-                    <Button variant="outline" onClick={addUsage}>
-                        <Plus />
-                        {t('Add usage')}
-                    </Button>
-                </section>}
+                        <Button variant="outline" onClick={addUsage}>
+                            <Plus />
+                            {t('Add usage')}
+                        </Button>
+                    </section>
+                )}
 
                 {/* Bottom save button */}
                 <div className="flex justify-end">
@@ -1181,7 +1196,6 @@ export default function Edit({
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-
         </AppLayout>
     );
 }

@@ -18,10 +18,14 @@ export function LegalAgreementDialog() {
 
     function handleAgree() {
         setProcessing(true);
-        router.post('/legal-agreement/accept', {}, {
-            preserveScroll: true,
-            onFinish: () => setProcessing(false),
-        });
+        router.post(
+            '/legal-agreement/accept',
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => setProcessing(false),
+            },
+        );
     }
 
     function handleDisagree() {
@@ -35,23 +39,39 @@ export function LegalAgreementDialog() {
                 onPointerDownOutside={(e) => e.preventDefault()}
                 onEscapeKeyDown={(e) => e.preventDefault()}
                 onInteractOutside={(e) => e.preventDefault()}
-                className="[&>button:last-child]:hidden sm:max-w-lg"
+                className="sm:max-w-lg [&>button:last-child]:hidden"
             >
                 <DialogHeader>
-                    <DialogTitle>
-                        {t('Music Library Terms of Use')}
-                    </DialogTitle>
+                    <DialogTitle>{t('Music Library Terms of Use')}</DialogTitle>
                     <DialogDescription>
-                        {t('Please read and accept the terms of use to continue.')}
+                        {t(
+                            'Please read and accept the terms of use to continue.',
+                        )}
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-3 text-sm text-muted-foreground">
                     <ul className="list-disc space-y-2 pl-5">
-                        <li>{t('The music in this library is legally purchased by and property of Muziekvereniging Soli. You may only use the documents for activities related to Muziekvereniging Soli.')}</li>
-                        <li>{t('Distribution of documents to third parties is prohibited.')}</li>
-                        <li>{t('You must delete all downloaded copies once you are no longer assigned to them.')}</li>
-                        <li>{t('Violation of these terms may result in termination of your membership and/or legal action.')}</li>
+                        <li>
+                            {t(
+                                'The music in this library is legally purchased by and property of Muziekvereniging Soli. You may only use the documents for activities related to Muziekvereniging Soli.',
+                            )}
+                        </li>
+                        <li>
+                            {t(
+                                'Distribution of documents to third parties is prohibited.',
+                            )}
+                        </li>
+                        <li>
+                            {t(
+                                'You must delete all downloaded copies once you are no longer assigned to them.',
+                            )}
+                        </li>
+                        <li>
+                            {t(
+                                'Violation of these terms may result in termination of your membership and/or legal action.',
+                            )}
+                        </li>
                     </ul>
                 </div>
 
@@ -63,10 +83,7 @@ export function LegalAgreementDialog() {
                     >
                         {t('I do not agree')}
                     </Button>
-                    <Button
-                        onClick={handleAgree}
-                        disabled={processing}
-                    >
+                    <Button onClick={handleAgree} disabled={processing}>
                         {t('I agree')}
                     </Button>
                 </DialogFooter>
