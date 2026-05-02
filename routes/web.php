@@ -20,6 +20,14 @@ Route::get('/auth/redirect', [AuthController::class, 'redirect'])->name('login')
 Route::get('/auth/callback', [AuthController::class, 'callback']);
 Route::post('/auth/logout', [AuthController::class, 'logout'])->name('logout');
 
+Route::post('/legal-agreement/accept', function () {
+    $user = request()->user();
+    $user->legal_agreement_accepted_at = now();
+    $user->save();
+
+    return back();
+})->middleware('auth')->name('legal-agreement.accept');
+
 Route::post('locale/{locale}', function (string $locale) {
     if (in_array($locale, ['nl', 'en'])) {
         session()->put('locale', $locale);
