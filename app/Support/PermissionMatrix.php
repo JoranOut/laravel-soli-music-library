@@ -23,6 +23,8 @@ class PermissionMatrix
         'download-all partijen',
         'manage-roles',
         'manage-instrument-aliases',
+        'manage-genres',
+        'manage-music-types',
     ];
 
     /** Roles and their default permission sets. */
@@ -33,6 +35,8 @@ class PermissionMatrix
             'download-assigned partijen', 'download-score partijen', 'download-all partijen',
             'manage-roles',
             'manage-instrument-aliases',
+            'manage-genres',
+            'manage-music-types',
         ],
         'muziekbeheer' => [
             'view muziekstukken', 'create muziekstukken', 'edit muziekstukken', 'delete muziekstukken',
