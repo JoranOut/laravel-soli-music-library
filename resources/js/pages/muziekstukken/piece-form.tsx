@@ -50,6 +50,7 @@ type Props = {
     publisherSuggestions?: string[];
     difficultySuggestions?: string[];
     boughtForOccasionSuggestions?: string[];
+    defaultArchiveNumber?: string;
     onDirtyChange?: (dirty: boolean) => void;
     onStatusChange?: (status: string) => void;
     renderAudioMp3?: ReactNode;
@@ -70,6 +71,7 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
         publisherSuggestions = [],
         difficultySuggestions = [],
         boughtForOccasionSuggestions = [],
+        defaultArchiveNumber,
         onDirtyChange,
         onStatusChange,
         renderAudioMp3,
@@ -91,7 +93,7 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
         buy_date: piece?.buy_date ?? '',
         genre: piece?.genre ?? ([] as string[]),
         music_type: piece?.music_type ?? '',
-        archive_number: piece?.archive_number ?? '',
+        archive_number: piece?.archive_number ?? defaultArchiveNumber ?? '',
         status: piece?.status ?? 'besteld',
         audio_youtube_url: piece?.audio_youtube_url ?? '',
         orchestras: piece?.orchestras.map((o) => o.id) ?? ([] as number[]),
@@ -340,6 +342,24 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                             {pageErrors.buy_date && (
                                 <p className="text-sm text-destructive">
                                     {pageErrors.buy_date}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="archive_number">
+                                {t('Archive number')}
+                            </Label>
+                            <Input
+                                id="archive_number"
+                                value={data.archive_number}
+                                onChange={(e) =>
+                                    setData('archive_number', e.target.value)
+                                }
+                            />
+                            {pageErrors.archive_number && (
+                                <p className="text-sm text-destructive">
+                                    {pageErrors.archive_number}
                                 </p>
                             )}
                         </div>
