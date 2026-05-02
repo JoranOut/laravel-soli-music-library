@@ -179,8 +179,16 @@ class PieceController extends Controller
     {
         $suggestions = $this->getSuggestions();
 
+        $lastNumber = (int) Piece::withTrashed()
+            ->whereNotNull('archive_number')
+            ->whereRaw('archive_number REGEXP "^[0-9]+$"')
+            ->max('archive_number');
+
+        $nextArchiveNumber = (string) ($lastNumber + 1);
+
         return Inertia::render('muziekstukken/create', [
             'orchestras' => Orchestra::where('is_active', true)->orderBy('sort_order')->get(),
+            'nextArchiveNumber' => $nextArchiveNumber,
             'genreSuggestions' => $suggestions['genres'],
             'musicTypeSuggestions' => $suggestions['musicTypes'],
             'composerSuggestions' => $suggestions['composers'],

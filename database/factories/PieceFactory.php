@@ -26,7 +26,7 @@ class PieceFactory extends Factory
                 fake()->numberBetween(1, 3),
             ),
             'music_type' => fake()->optional(0.5)->randomElement(['Concert', 'Loopmars', 'Slagwerk', 'Divers']),
-            'archive_number' => fake()->optional(0.4)->numerify('A-###'),
+            'archive_number' => fake()->optional(0.4)->numberBetween(1, 999),
             'status' => fake()->randomElement(['besteld', 'analoog', 'digitaal']),
             'audio_youtube_url' => fake()->optional(0.2)->randomElement([
                 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
