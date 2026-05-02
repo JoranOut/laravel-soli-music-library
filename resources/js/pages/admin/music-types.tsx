@@ -301,7 +301,7 @@ export default function MusicTypes({ musicTypes }: Props) {
                         <DialogDescription>
                             {deleteTarget && deleteTarget.piece_count > 0
                                 ? t(
-                                      '{{count}} pieces use this music type. Choose a replacement or remove it from all pieces.',
+                                      ':count pieces use this music type. Choose a replacement or remove it from all pieces.',
                                       {
                                           count: String(
                                               deleteTarget.piece_count,

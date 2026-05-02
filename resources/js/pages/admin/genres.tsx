@@ -297,7 +297,7 @@ export default function Genres({ genres }: Props) {
                         <DialogDescription>
                             {deleteTarget && deleteTarget.piece_count > 0
                                 ? t(
-                                      '{{count}} pieces use this genre. Choose a replacement or remove it from all pieces.',
+                                      ':count pieces use this genre. Choose a replacement or remove it from all pieces.',
                                       {
                                           count: String(
                                               deleteTarget.piece_count,
