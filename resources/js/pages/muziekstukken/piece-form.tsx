@@ -1,6 +1,7 @@
 import { useForm, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import { forwardRef, useEffect, useImperativeHandle } from 'react';
+import { Heading } from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -275,7 +276,6 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                                 value={data.music_type}
                                 onChange={(v) => setData('music_type', v)}
                                 placeholder={t('Music type')}
-                                allowCustom
                             />
                             {pageErrors.music_type && (
                                 <p className="text-sm text-destructive">
@@ -387,11 +387,6 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                                     setData('genre', [...data.genre, trimmed]);
                                 }
                             }}
-                            onEnterCustom={(v) => {
-                                if (!data.genre.includes(v)) {
-                                    setData('genre', [...data.genre, v]);
-                                }
-                            }}
                             placeholder={t('Add genre...')}
                         />
                         {pageErrors.genre && (
@@ -400,6 +395,8 @@ const PieceForm = forwardRef<PieceFormHandle, Props>(function PieceForm(
                             </p>
                         )}
                     </div>
+
+                    <Heading title={t('Audio')} />
 
                     <div className="space-y-2">
                         <Label>YouTube</Label>
