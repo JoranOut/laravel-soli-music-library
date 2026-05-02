@@ -1146,13 +1146,13 @@ it('filters pieces by publisher', function () {
 
 it('filters pieces by music type', function () {
     $user = User::factory()->create();
-    Piece::factory()->create(['music_type' => 'Origineel']);
-    Piece::factory()->create(['music_type' => 'Arrangement']);
+    Piece::factory()->create(['music_type' => 'Concert']);
+    Piece::factory()->create(['music_type' => 'Loopmars']);
     Piece::factory()->create(['music_type' => null]);
 
     $this->actingAs($user)
         ->withSession(['roles' => ['admin']])
-        ->get('/muziekstukken?music_type=Origineel')
+        ->get('/muziekstukken?music_type=Concert')
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->has('pieces.data', 1)
@@ -1161,13 +1161,13 @@ it('filters pieces by music type', function () {
 
 it('filters pieces by genre', function () {
     $user = User::factory()->create();
-    Piece::factory()->create(['genre' => ['Mars', 'Pop']]);
+    Piece::factory()->create(['genre' => ['Pop', 'Jazz']]);
     Piece::factory()->create(['genre' => ['Klassiek']]);
     Piece::factory()->create(['genre' => null]);
 
     $this->actingAs($user)
         ->withSession(['roles' => ['admin']])
-        ->get('/muziekstukken?genre=Mars')
+        ->get('/muziekstukken?genre=Pop')
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->has('pieces.data', 1)
@@ -1176,7 +1176,7 @@ it('filters pieces by genre', function () {
 
 it('genre filter matches pieces that contain the genre in their array', function () {
     $user = User::factory()->create();
-    Piece::factory()->create(['genre' => ['Mars', 'Pop', 'Jazz']]);
+    Piece::factory()->create(['genre' => ['Jazz', 'Pop', 'Modern']]);
     Piece::factory()->create(['genre' => ['Pop', 'Klassiek']]);
     Piece::factory()->create(['genre' => ['Klassiek']]);
 
@@ -1422,9 +1422,9 @@ it('returns filterOptions on index', function () {
         'composer' => 'Bach',
         'arranger' => 'Smith',
         'publisher' => 'Publisher A',
-        'music_type' => 'Origineel',
+        'music_type' => 'Concert',
         'difficulty' => 'easy',
-        'genre' => ['Mars', 'Pop'],
+        'genre' => ['Pop', 'Jazz'],
         'status' => 'analoog',
     ]);
     Piece::factory()->create([
@@ -1445,8 +1445,8 @@ it('returns filterOptions on index', function () {
             ->has('filterOptions.composers', 2)
             ->has('filterOptions.arrangers', 1)
             ->has('filterOptions.publishers', 1)
-            ->has('filterOptions.musicTypes', 1)
-            ->has('filterOptions.genres', 2)
+            ->has('filterOptions.musicTypes', 8)
+            ->has('filterOptions.genres', 28)
             ->has('filterOptions.difficulties', 1)
             ->has('filterOptions.statuses', 2)
         );
@@ -1495,12 +1495,12 @@ it('member can use more filters within their orchestras', function () {
 
 it('dirigent can use more filters on index', function () {
     $user = User::factory()->create();
-    Piece::factory()->create(['music_type' => 'Origineel']);
-    Piece::factory()->create(['music_type' => 'Arrangement']);
+    Piece::factory()->create(['music_type' => 'Concert']);
+    Piece::factory()->create(['music_type' => 'Loopmars']);
 
     $this->actingAs($user)
         ->withSession(['roles' => ['dirigent']])
-        ->get('/muziekstukken?music_type=Origineel')
+        ->get('/muziekstukken?music_type=Concert')
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->has('pieces.data', 1)
