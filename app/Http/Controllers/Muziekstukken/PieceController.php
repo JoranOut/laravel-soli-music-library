@@ -134,7 +134,7 @@ class PieceController extends Controller
             ],
             'filters' => $request->only(['search', 'orchestra', 'include_past_usages', 'instruments', 'composer', 'arranger', 'publisher', 'music_type', 'genre', 'difficulty', 'bought_for', 'bought_for_occasion', 'status', 'buy_date_from', 'buy_date_to']),
             'canEdit' => $canEdit,
-            'canEditUsages' => $canEdit || $access->isDirigent(),
+            'canEditUsages' => auth()->user()?->can('edit gebruik') ?? false,
         ]);
     }
 
@@ -162,7 +162,7 @@ class PieceController extends Controller
             'audioUrl' => $audioUrl,
             'instrumentTypes' => InstrumentType::with('instrumentFamily')->orderBy('sort_order')->get(),
             'canEdit' => $canEdit,
-            'canEditUsages' => $canEdit || $access->isDirigent(),
+            'canEditUsages' => auth()->user()?->can('edit gebruik') ?? false,
             'orchestras' => Orchestra::where('is_active', true)->orderBy('sort_order')->get(),
         ]);
     }
@@ -240,6 +240,7 @@ class PieceController extends Controller
             'audioUrl' => $audioUrl,
             'orchestras' => Orchestra::where('is_active', true)->orderBy('sort_order')->get(),
             'canEditAllFields' => $canEditAllFields,
+            'canEditUsages' => auth()->user()?->can('edit gebruik') ?? false,
             'canArchive' => $canEditAllFields,
             'genreSuggestions' => $suggestions['genres'],
             'musicTypeSuggestions' => $suggestions['musicTypes'],
@@ -301,7 +302,10 @@ class PieceController extends Controller
             ]);
 
             $piece->update(collect($validated)->except('usages', 'parts', 'matrix_parts')->toArray());
-            $this->syncUsages($piece, $validated['usages'] ?? []);
+
+            if (auth()->user()?->can('edit gebruik')) {
+                $this->syncUsages($piece, $validated['usages'] ?? []);
+            }
 
             foreach ($validated['parts'] ?? [] as $partData) {
                 $piece->parts()->where('id', $partData['id'])->firstOrFail()->update([
@@ -318,8 +322,8 @@ class PieceController extends Controller
             if ($status !== 'digitaal' && ! empty($validated['matrix_parts'])) {
                 $this->syncMatrixParts($piece, $validated['matrix_parts']);
             }
-        } else {
-            // Dirigent: can only update usages
+        } elseif (auth()->user()?->can('edit gebruik')) {
+            // Non-editor with usage permission: can only update usages
             $validated = $request->validate([
                 'usages' => ['nullable', 'array'],
                 'usages.*.id' => ['nullable', 'integer'],

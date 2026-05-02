@@ -60,6 +60,9 @@ Route::middleware(['auth', EnsureUserIsEditor::class])->group(function () {
 Route::middleware(['auth', EnsureUserIsEditorOrDirigent::class])->group(function () {
     Route::get('/muziekstukken/{piece}/edit', [PieceController::class, 'edit'])->name('muziekstukken.edit')->withTrashed();
     Route::put('/muziekstukken/{piece}', [PieceController::class, 'update'])->name('muziekstukken.update')->withTrashed();
+});
+
+Route::middleware(['auth', 'can:create gebruik'])->group(function () {
     Route::post('/muziekstukken/{piece}/usages', [PieceController::class, 'storeUsage'])->name('muziekstukken.usages.store');
 });
 
