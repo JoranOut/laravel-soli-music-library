@@ -231,7 +231,7 @@ it('visibleParts returns matching instrument parts with download-assigned', func
     ]);
 
     $piece = Piece::factory()->create();
-    $piece->orchestraUsages()->create(['orchestra_id' => $orchestra->id]);
+    $piece->speelperiodes()->create(['orchestra_id' => $orchestra->id]);
     Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $myInstrument->id]);
     Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $otherInstrument->id]);
 
@@ -257,7 +257,7 @@ it('visibleParts returns empty for member when piece is not in their orchestra',
     ]);
 
     $piece = Piece::factory()->create();
-    $piece->orchestraUsages()->create(['orchestra_id' => $otherOrchestra->id]);
+    $piece->speelperiodes()->create(['orchestra_id' => $otherOrchestra->id]);
     Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $instrumentType->id]);
 
     $parts = app(MusicAccessService::class)->visibleParts($piece);
@@ -281,7 +281,7 @@ it('visibleParts returns empty for member when instrument does not match', funct
     ]);
 
     $piece = Piece::factory()->create();
-    $piece->orchestraUsages()->create(['orchestra_id' => $orchestra->id]);
+    $piece->speelperiodes()->create(['orchestra_id' => $orchestra->id]);
     Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $otherInstrument->id]);
 
     $parts = app(MusicAccessService::class)->visibleParts($piece);
@@ -323,8 +323,8 @@ it('visibleParts handles member with multiple assignments across orchestras', fu
     ]);
 
     $piece = Piece::factory()->create();
-    $piece->orchestraUsages()->create(['orchestra_id' => $orchestra1->id]);
-    $piece->orchestraUsages()->create(['orchestra_id' => $orchestra2->id]);
+    $piece->speelperiodes()->create(['orchestra_id' => $orchestra1->id]);
+    $piece->speelperiodes()->create(['orchestra_id' => $orchestra2->id]);
 
     $part1 = Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $instrument1->id]);
     $part2 = Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $instrument2->id]);
@@ -352,7 +352,7 @@ it('visibleParts for member respects orchestra-instrument pairing', function () 
     ]);
 
     $piece = Piece::factory()->create();
-    $piece->orchestraUsages()->create(['orchestra_id' => $orchestra2->id]);
+    $piece->speelperiodes()->create(['orchestra_id' => $orchestra2->id]);
     Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $instrument->id]);
 
     $parts = app(MusicAccessService::class)->visibleParts($piece);
@@ -376,8 +376,8 @@ it('visibleParts for member with piece belonging to multiple orchestras shows pa
     ]);
 
     $piece = Piece::factory()->create();
-    $piece->orchestraUsages()->create(['orchestra_id' => $myOrchestra->id]);
-    $piece->orchestraUsages()->create(['orchestra_id' => $otherOrchestra->id]);
+    $piece->speelperiodes()->create(['orchestra_id' => $myOrchestra->id]);
+    $piece->speelperiodes()->create(['orchestra_id' => $otherOrchestra->id]);
     Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $instrument->id]);
 
     $parts = app(MusicAccessService::class)->visibleParts($piece);
@@ -427,7 +427,7 @@ it('visibleParts returns conductor + assigned parts with both download-score and
     ]);
 
     $piece = Piece::factory()->create();
-    $piece->orchestraUsages()->create(['orchestra_id' => $orchestra->id]);
+    $piece->speelperiodes()->create(['orchestra_id' => $orchestra->id]);
     Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $myInstrument->id]);
     Part::factory()->partituur()->create(['piece_id' => $piece->id]);
 
@@ -451,7 +451,7 @@ it('visibleParts excludes conductor parts with only download-assigned', function
     ]);
 
     $piece = Piece::factory()->create();
-    $piece->orchestraUsages()->create(['orchestra_id' => $orchestra->id]);
+    $piece->speelperiodes()->create(['orchestra_id' => $orchestra->id]);
     Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $myInstrument->id]);
     Part::factory()->partituur()->create(['piece_id' => $piece->id]);
 

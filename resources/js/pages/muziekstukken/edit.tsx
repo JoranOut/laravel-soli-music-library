@@ -1,5 +1,13 @@
 import { Head, router } from '@inertiajs/react';
-import { Music, Plus, Save, Trash2, TriangleAlert, Upload } from 'lucide-react';
+import {
+    CircleAlert,
+    Music,
+    Plus,
+    Save,
+    Trash2,
+    TriangleAlert,
+    Upload,
+} from 'lucide-react';
 import { useRef, useState, useMemo } from 'react';
 import { Heading } from '@/components/heading';
 import { Button } from '@/components/ui/button';
@@ -52,7 +60,7 @@ type Props = {
     orchestras: Orchestra[];
     instrumentTypes?: InstrumentType[];
     canEditAllFields?: boolean;
-    canEditUsages?: boolean;
+    canEditSpeelperiodes?: boolean;
     genreSuggestions?: string[];
     musicTypeSuggestions?: string[];
     composerSuggestions?: string[];
@@ -92,7 +100,7 @@ export default function Edit({
     orchestras,
     instrumentTypes = [],
     canEditAllFields = true,
-    canEditUsages = true,
+    canEditSpeelperiodes = true,
     genreSuggestions = [],
     musicTypeSuggestions = [],
     composerSuggestions = [],
@@ -109,12 +117,12 @@ export default function Edit({
     const [uploads, setUploads] = useState<PartUpload[]>([]);
     const [uploading, setUploading] = useState(false);
     const [deletePart, setDeletePart] = useState<Part | null>(null);
-    const [endUsageIndex, setEndUsageIndex] = useState<number | null>(null);
+    const [endSpeelperiodeIndex, setEndSpeelperiodeIndex] = useState<number | null>(null);
     const [partEdits, setPartEdits] = useState<Record<number, PartEdit>>({});
     const [saving, setSaving] = useState(false);
-    const [showPastUsages, setShowPastUsages] = useState(false);
-    const [usages, setUsages] = useState<UsageEdit[]>(() =>
-        (piece.orchestra_usages ?? []).map((u) => ({
+    const [showPastSpeelperiodes, setShowPastSpeelperiodes] = useState(false);
+    const [speelperiodes, setSpeelperiodes] = useState<UsageEdit[]>(() =>
+        (piece.speelperiodes ?? []).map((u) => ({
             id: u.id,
             orchestra_id: u.orchestra_id.toString(),
             van: u.van?.split('T')[0] ?? '',
@@ -148,31 +156,31 @@ export default function Edit({
     );
     const [initialMatrixEdits] = useState(() => ({ ...matrixEdits }));
 
-    const initialUsages = useMemo(
+    const initialSpeelperiodes = useMemo(
         () =>
-            (piece.orchestra_usages ?? []).map((u) => ({
+            (piece.speelperiodes ?? []).map((u) => ({
                 id: u.id,
                 orchestra_id: u.orchestra_id.toString(),
                 van: u.van?.split('T')[0] ?? '',
                 tot: u.tot?.split('T')[0] ?? '',
                 details: u.details ?? '',
             })),
-        [piece.orchestra_usages],
+        [piece.speelperiodes],
     );
 
     const hasPartChanges =
         Object.keys(partEdits).length > 0 &&
         piece.parts.some((p) => hasPartChanged(p));
 
-    const hasUsageChanges =
-        usages.length !== initialUsages.length ||
-        usages.some(
+    const hasSpeelperiodeChanges =
+        speelperiodes.length !== initialSpeelperiodes.length ||
+        speelperiodes.some(
             (u, i) =>
-                !initialUsages[i] ||
-                u.orchestra_id !== initialUsages[i].orchestra_id ||
-                u.van !== initialUsages[i].van ||
-                u.tot !== initialUsages[i].tot ||
-                u.details !== initialUsages[i].details,
+                !initialSpeelperiodes[i] ||
+                u.orchestra_id !== initialSpeelperiodes[i].orchestra_id ||
+                u.van !== initialSpeelperiodes[i].van ||
+                u.tot !== initialSpeelperiodes[i].tot ||
+                u.details !== initialSpeelperiodes[i].details,
         );
 
     const hasMatrixChanges =
@@ -186,12 +194,116 @@ export default function Edit({
     useUnsavedChanges(
         pieceFormDirty ||
             hasPartChanges ||
-            (canEditUsages && hasUsageChanges) ||
+            (canEditSpeelperiodes && hasSpeelperiodeChanges) ||
             hasMatrixChanges,
     );
 
     const today = new Date().toISOString().split('T')[0];
-    const isPastUsage = (u: { tot: string }) => !!u.tot && u.tot < today;
+    const isPast = (u: { tot: string }) => !!u.tot && u.tot < today;
+
+    // --- Validation warnings & errors ---
+    type Alert = {
+        type: 'error' | 'warning';
+        message: string;
+        partIds: number[];
+    };
+
+    const alerts = (() => {
+        const result: Alert[] = [];
+        const fileParts = piece.parts.filter(
+            (p) => p.original_filename !== null,
+        );
+
+        // Error: analog status with uploaded files
+        if (currentStatus !== 'digitaal' && fileParts.length > 0) {
+            result.push({
+                type: 'error',
+                message: t(
+                    'This piece has uploaded files but the status is not set to "digitaal". Uploaded parts will not be visible.',
+                ),
+                partIds: [],
+            });
+        }
+
+        // Warning: no partituur (conductor part)
+        const hasPartituur = piece.parts.some(
+            (p) => getPartEdit(p).is_conductor,
+        );
+        if (piece.parts.length > 0 && !hasPartituur) {
+            result.push({
+                type: 'warning',
+                message: t('There is no conductor part (partituur) assigned.'),
+                partIds: [],
+            });
+        }
+
+        // Warning: duplicate original filenames
+        if (fileParts.length > 0) {
+            const filenameCounts = new Map<string, number[]>();
+            for (const p of fileParts) {
+                const name = p.original_filename!;
+                if (!filenameCounts.has(name)) filenameCounts.set(name, []);
+                filenameCounts.get(name)!.push(p.id);
+            }
+            for (const [filename, ids] of filenameCounts) {
+                if (ids.length > 1) {
+                    result.push({
+                        type: 'warning',
+                        message: t(
+                            'Duplicate filename: ":filename" (:count times)',
+                            {
+                                filename,
+                                count: ids.length.toString(),
+                            },
+                        ),
+                        partIds: ids,
+                    });
+                }
+            }
+        }
+
+        // Warning: non-unique instrument+voice+note assignment
+        if (fileParts.length > 0) {
+            const assignmentCounts = new Map<
+                string,
+                { ids: number[]; label: string }
+            >();
+            for (const p of fileParts) {
+                const edit = getPartEdit(p);
+                if (edit.is_conductor) continue;
+                const typeName =
+                    instrumentTypes.find(
+                        (it) => it.id.toString() === edit.instrument_type_id,
+                    )?.name ?? edit.instrument_type_id;
+                const key = `${edit.instrument_type_id}-${edit.voice}-${edit.note}`;
+                let label = typeName;
+                if (edit.voice) label += ` ${edit.voice}`;
+                if (edit.note) label += ` (${edit.note})`;
+                if (!assignmentCounts.has(key))
+                    assignmentCounts.set(key, { ids: [], label });
+                assignmentCounts.get(key)!.ids.push(p.id);
+            }
+            for (const [, { ids, label }] of assignmentCounts) {
+                if (ids.length > 1) {
+                    result.push({
+                        type: 'warning',
+                        message: t(
+                            'Duplicate assignment: ":label" (:count times)',
+                            {
+                                label,
+                                count: ids.length.toString(),
+                            },
+                        ),
+                        partIds: ids,
+                    });
+                }
+            }
+        }
+
+        return result;
+    })();
+
+    const highlightedPartIds = new Set(alerts.flatMap((a) => a.partIds));
 
     const instOptions = instrumentOptions(instrumentTypes);
     const orchestraOptions: ComboboxOption[] = orchestras.map((o) => ({
@@ -242,15 +354,15 @@ export default function Edit({
         );
     }
 
-    function addUsage() {
-        setUsages((prev) => [
+    function addSpeelperiode() {
+        setSpeelperiodes((prev) => [
             ...prev,
             { id: null, orchestra_id: '', van: '', tot: '', details: '' },
         ]);
     }
 
-    function updateUsage(index: number, field: keyof UsageEdit, value: string) {
-        setUsages((prev) =>
+    function updateSpeelperiode(index: number, field: keyof UsageEdit, value: string) {
+        setSpeelperiodes((prev) =>
             prev.map((u, i) => (i === index ? { ...u, [field]: value } : u)),
         );
     }
@@ -334,7 +446,7 @@ export default function Edit({
                 };
             });
 
-        const usagePayload = usages
+        const speelperiodePayload = speelperiodes
             .filter((u) => u.orchestra_id !== '')
             .map((u) => ({
                 id: u.id,
@@ -353,7 +465,7 @@ export default function Edit({
             `/muziekstukken/${piece.id}`,
             {
                 ...pieceData,
-                usages: usagePayload,
+                speelperiodes: speelperiodePayload,
                 parts: changedParts,
                 ...(matrixPartsPayload
                     ? { matrix_parts: matrixPartsPayload }
@@ -568,17 +680,27 @@ export default function Edit({
                             )}
                         />
 
-                        {currentStatus !== 'digitaal' &&
-                            piece.parts.some(
-                                (p) => p.original_filename !== null,
-                            ) && (
-                                <div className="flex items-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 p-3 text-sm text-yellow-800 dark:border-yellow-700 dark:bg-yellow-950 dark:text-yellow-200">
-                                    <TriangleAlert className="size-4 shrink-0" />
-                                    {t(
-                                        'This piece has uploaded files but the status is not set to "digitaal". Uploaded parts will not be visible.',
-                                    )}
-                                </div>
-                            )}
+                        {alerts.length > 0 && (
+                            <div className="space-y-2">
+                                {alerts.map((alert, i) => (
+                                    <div
+                                        key={i}
+                                        className={`flex items-start gap-2 rounded-lg border p-3 text-sm ${
+                                            alert.type === 'error'
+                                                ? 'border-red-300 bg-red-50 text-red-800 dark:border-red-700 dark:bg-red-950 dark:text-red-200'
+                                                : 'border-yellow-300 bg-yellow-50 text-yellow-800 dark:border-yellow-700 dark:bg-yellow-950 dark:text-yellow-200'
+                                        }`}
+                                    >
+                                        {alert.type === 'error' ? (
+                                            <CircleAlert className="mt-0.5 size-4 shrink-0" />
+                                        ) : (
+                                            <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+                                        )}
+                                        {alert.message}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
 
                         {currentStatus === 'digitaal' ? (
                             <>
@@ -624,6 +746,13 @@ export default function Edit({
                                                         return (
                                                             <TableRow
                                                                 key={part.id}
+                                                                className={
+                                                                    highlightedPartIds.has(
+                                                                        part.id,
+                                                                    )
+                                                                        ? 'bg-yellow-50 dark:bg-yellow-950/50'
+                                                                        : undefined
+                                                                }
                                                             >
                                                                 <TableCell className="text-xs text-muted-foreground">
                                                                     {
@@ -959,24 +1088,24 @@ export default function Edit({
                     </section>
                 )}
 
-                {/* In use by — usage records */}
-                {canEditUsages && (
+                {/* In use by — speelperiodes */}
+                {canEditSpeelperiodes && (
                     <section className="space-y-6">
                         <Heading title={t('In use by')} />
 
-                        {usages.some((u) => isPastUsage(u)) && (
+                        {speelperiodes.some((u) => isPast(u)) && (
                             <label className="flex items-center gap-2 text-sm">
                                 <Checkbox
-                                    checked={showPastUsages}
+                                    checked={showPastSpeelperiodes}
                                     onCheckedChange={(checked) =>
-                                        setShowPastUsages(!!checked)
+                                        setShowPastSpeelperiodes(!!checked)
                                     }
                                 />
-                                {t('Show past usages')}
+                                {t('Show past play periods')}
                             </label>
                         )}
 
-                        {usages.length > 0 && (
+                        {speelperiodes.length > 0 && (
                             <div className="rounded-lg border">
                                 <Table>
                                     <TableHeader>
@@ -997,15 +1126,15 @@ export default function Edit({
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {usages.map((usage, i) => {
+                                        {speelperiodes.map((speelperiode, i) => {
                                             if (
-                                                !showPastUsages &&
-                                                isPastUsage(usage)
+                                                !showPastSpeelperiodes &&
+                                                isPast(speelperiode)
                                             )
                                                 return null;
                                             return (
                                                 <TableRow
-                                                    key={usage.id ?? `new-${i}`}
+                                                    key={speelperiode.id ?? `new-${i}`}
                                                 >
                                                     <TableCell>
                                                         <Combobox
@@ -1013,10 +1142,10 @@ export default function Edit({
                                                                 orchestraOptions
                                                             }
                                                             value={
-                                                                usage.orchestra_id
+                                                                speelperiode.orchestra_id
                                                             }
                                                             onChange={(v) =>
-                                                                updateUsage(
+                                                                updateSpeelperiode(
                                                                     i,
                                                                     'orchestra_id',
                                                                     v,
@@ -1028,9 +1157,9 @@ export default function Edit({
                                                     <TableCell>
                                                         <Input
                                                             type="date"
-                                                            value={usage.van}
+                                                            value={speelperiode.van}
                                                             onChange={(e) =>
-                                                                updateUsage(
+                                                                updateSpeelperiode(
                                                                     i,
                                                                     'van',
                                                                     e.target
@@ -1042,9 +1171,9 @@ export default function Edit({
                                                     <TableCell>
                                                         <Input
                                                             type="date"
-                                                            value={usage.tot}
+                                                            value={speelperiode.tot}
                                                             onChange={(e) =>
-                                                                updateUsage(
+                                                                updateSpeelperiode(
                                                                     i,
                                                                     'tot',
                                                                     e.target
@@ -1056,10 +1185,10 @@ export default function Edit({
                                                     <TableCell>
                                                         <Input
                                                             value={
-                                                                usage.details
+                                                                speelperiode.details
                                                             }
                                                             onChange={(e) =>
-                                                                updateUsage(
+                                                                updateSpeelperiode(
                                                                     i,
                                                                     'details',
                                                                     e.target
@@ -1072,12 +1201,12 @@ export default function Edit({
                                                         />
                                                     </TableCell>
                                                     <TableCell>
-                                                        {!usage.tot && (
+                                                        {!speelperiode.tot && (
                                                             <Button
                                                                 variant="outline"
                                                                 size="sm"
                                                                 onClick={() =>
-                                                                    setEndUsageIndex(
+                                                                    setEndSpeelperiodeIndex(
                                                                         i,
                                                                     )
                                                                 }
@@ -1094,9 +1223,9 @@ export default function Edit({
                             </div>
                         )}
 
-                        <Button variant="outline" onClick={addUsage}>
+                        <Button variant="outline" onClick={addSpeelperiode}>
                             <Plus />
-                            {t('Add usage')}
+                            {t('Add play period')}
                         </Button>
                     </section>
                 )}
@@ -1147,22 +1276,22 @@ export default function Edit({
             </Dialog>
 
             <Dialog
-                open={endUsageIndex !== null}
-                onOpenChange={() => setEndUsageIndex(null)}
+                open={endSpeelperiodeIndex !== null}
+                onOpenChange={() => setEndSpeelperiodeIndex(null)}
             >
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>{t('End usage')}</DialogTitle>
+                        <DialogTitle>{t('End play period')}</DialogTitle>
                         <DialogDescription>
                             {t(
-                                'Are you sure you want to end this usage? Members of ":orchestra" will no longer see this piece.',
+                                'Are you sure you want to end this play period? Members of ":orchestra" will no longer see this piece.',
                                 {
                                     orchestra:
-                                        endUsageIndex !== null
+                                        endSpeelperiodeIndex !== null
                                             ? (orchestras.find(
                                                   (o) =>
                                                       o.id.toString() ===
-                                                      usages[endUsageIndex]
+                                                      speelperiodes[endSpeelperiodeIndex]
                                                           ?.orchestra_id,
                                               )?.name ?? '')
                                             : '',
@@ -1173,20 +1302,20 @@ export default function Edit({
                     <DialogFooter>
                         <Button
                             variant="outline"
-                            onClick={() => setEndUsageIndex(null)}
+                            onClick={() => setEndSpeelperiodeIndex(null)}
                         >
                             {t('Cancel')}
                         </Button>
                         <Button
                             variant="destructive"
                             onClick={() => {
-                                if (endUsageIndex !== null) {
-                                    updateUsage(
-                                        endUsageIndex,
+                                if (endSpeelperiodeIndex !== null) {
+                                    updateSpeelperiode(
+                                        endSpeelperiodeIndex,
                                         'tot',
                                         new Date().toISOString().split('T')[0],
                                     );
-                                    setEndUsageIndex(null);
+                                    setEndSpeelperiodeIndex(null);
                                 }
                             }}
                         >

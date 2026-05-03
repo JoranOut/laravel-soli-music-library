@@ -1,7 +1,17 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Download, History, Pause, Pencil, Play, Plus } from 'lucide-react';
+import {
+    Download,
+    History,
+    Pause,
+    Pencil,
+    Play,
+    Plus,
+    Printer,
+} from 'lucide-react';
 import { useState } from 'react';
+import { BatchPrintDialog } from '@/components/batch-print-dialog';
 import { DateView } from '@/components/date-view';
+import { FamilyPartsGrid, VoiceLabel } from '@/components/family-parts-grid';
 import { Heading } from '@/components/heading';
 import { YouTubeIcon } from '@/components/icons/youtube';
 import { Badge } from '@/components/ui/badge';
@@ -44,7 +54,7 @@ type Props = {
     instrumentTypes: InstrumentType[];
     orchestras: Orchestra[];
     canEdit: boolean;
-    canEditUsages: boolean;
+    canEditSpeelperiodes: boolean;
 };
 
 function Field({ label, value }: { label: string; value: string | null }) {
@@ -90,6 +100,9 @@ function PartsOverview({
                                 <span>
                                     {part.original_filename ?? t('Partituur')}
                                 </span>
+                                <span className="text-muted-foreground">
+                                    {part.amount_bought ?? 1}&times;
+                                </span>
                                 {part.download_url && (
                                     <a href={part.download_url} download>
                                         <Download className="size-4 text-muted-foreground hover:text-foreground" />
@@ -104,190 +117,46 @@ function PartsOverview({
                 </div>
             )}
 
-            <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                {families
-                    .filter(({ types }) =>
-                        types.some(({ parts: tp }) => tp.length > 0),
-                    )
-                    .map(({ familyName, types }) => (
-                        <div key={familyName} className="space-y-2">
-                            <h3 className="text-sm font-semibold">
-                                {familyName}
-                            </h3>
-                            <ul className="space-y-1">
-                                {types
-                                    .filter(({ parts: tp }) => tp.length > 0)
-                                    .flatMap(({ type, parts: typeParts }) => {
-                                        // Group by voice number
-                                        const voiceMap = new Map<
-                                            number | null,
-                                            Part[]
-                                        >();
-                                        for (const p of typeParts) {
-                                            const key = p.voice;
-                                            if (!voiceMap.has(key))
-                                                voiceMap.set(key, []);
-                                            voiceMap.get(key)!.push(p);
-                                        }
-                                        const voices = Array.from(
-                                            voiceMap.entries(),
-                                        ).sort(
-                                            (a, b) => (a[0] ?? 0) - (b[0] ?? 0),
-                                        );
-                                        const hasMultipleVoices =
-                                            voices.length > 1 ||
-                                            voices[0]?.[0] !== null;
-
-                                        return voices.map(
-                                            ([voice, voiceParts]) => (
-                                                <li
-                                                    key={`${type.id}-${voice}`}
-                                                    className="flex items-center justify-between text-sm"
-                                                >
-                                                    <span>
-                                                        {type.name}
-                                                        {hasMultipleVoices &&
-                                                            voice !== null && (
-                                                                <span className="ml-1 text-muted-foreground">
-                                                                    {voice}
-                                                                </span>
-                                                            )}
-                                                    </span>
-                                                    {voiceParts.length === 1 &&
-                                                        voiceParts[0]
-                                                            .download_url && (
-                                                            <a
-                                                                href={
-                                                                    voiceParts[0]
-                                                                        .download_url
-                                                                }
-                                                                download
-                                                            >
-                                                                <Download className="size-4 text-muted-foreground hover:text-foreground" />
-                                                                <span className="sr-only">
-                                                                    {t(
-                                                                        'Download',
-                                                                    )}
-                                                                </span>
-                                                            </a>
-                                                        )}
-                                                </li>
-                                            ),
-                                        );
-                                    })}
-                            </ul>
-                        </div>
-                    ))}
-            </div>
-        </div>
-    );
-}
-
-function BumaOverview({
-    parts,
-    instrumentTypes,
-    t,
-}: {
-    parts: Part[];
-    instrumentTypes: InstrumentType[];
-    t: (key: string) => string;
-}) {
-    const { conductorParts, families } = useGroupedTypes(
-        instrumentTypes,
-        parts,
-    );
-
-    return (
-        <div className="space-y-6">
-            {conductorParts.length > 0 && (
-                <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-muted-foreground">
-                        {t('Conductor part')}
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                        {conductorParts.map((part) => (
-                            <div
-                                key={part.id}
-                                className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm"
-                            >
-                                <span>
-                                    {part.original_filename ?? t('Partituur')}
-                                </span>
+            <FamilyPartsGrid
+                families={families}
+                showEmptyTypes
+                renderEmptyType={(type) => (
+                    <li className="flex items-center justify-between text-sm text-muted-foreground/80">
+                        <span>{type.name}</span>
+                        <span>0&times;</span>
+                    </li>
+                )}
+                renderRow={(group) => {
+                    const totalBought = group.parts.reduce(
+                        (sum, p) => sum + (p.amount_bought ?? 1),
+                        0,
+                    );
+                    const downloadUrl =
+                        group.parts.length === 1
+                            ? group.parts[0].download_url
+                            : null;
+                    return (
+                        <li className="flex items-center justify-between gap-2 text-sm">
+                            <VoiceLabel group={group} />
+                            <span className="flex items-center gap-2">
                                 <span className="text-muted-foreground">
-                                    {part.amount_bought ?? 1}&times;
+                                    {totalBought}&times;
                                 </span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                {families.map(({ familyName, types }) => (
-                    <div key={familyName} className="space-y-2">
-                        <h3 className="text-sm font-semibold">{familyName}</h3>
-                        <ul className="space-y-1">
-                            {types.flatMap(({ type, parts: typeParts }) => {
-                                if (typeParts.length === 0) {
-                                    return (
-                                        <li
-                                            key={type.id}
-                                            className="flex items-center justify-between text-sm text-muted-foreground/80"
-                                        >
-                                            <span>{type.name}</span>
-                                            <span>0&times;</span>
-                                        </li>
-                                    );
-                                }
-
-                                const voiceMap = new Map<
-                                    number | null,
-                                    Part[]
-                                >();
-                                for (const p of typeParts) {
-                                    const key = p.voice;
-                                    if (!voiceMap.has(key))
-                                        voiceMap.set(key, []);
-                                    voiceMap.get(key)!.push(p);
-                                }
-                                const voices = Array.from(
-                                    voiceMap.entries(),
-                                ).sort((a, b) => (a[0] ?? 0) - (b[0] ?? 0));
-                                const hasMultipleVoices =
-                                    voices.length > 1 ||
-                                    voices[0]?.[0] !== null;
-
-                                return voices.map(([voice, voiceParts]) => {
-                                    const totalBought = voiceParts.reduce(
-                                        (sum, p) =>
-                                            sum + (p.amount_bought ?? 1),
-                                        0,
-                                    );
-                                    return (
-                                        <li
-                                            key={`${type.id}-${voice}`}
-                                            className="flex items-center justify-between text-sm"
-                                        >
-                                            <span>
-                                                {type.name}
-                                                {hasMultipleVoices &&
-                                                    voice !== null && (
-                                                        <span className="ml-1 text-muted-foreground">
-                                                            {voice}
-                                                        </span>
-                                                    )}
-                                            </span>
-                                            <span className="text-muted-foreground">
-                                                {totalBought}&times;
-                                            </span>
-                                        </li>
-                                    );
-                                });
-                            })}
-                        </ul>
-                    </div>
-                ))}
-            </div>
+                                {downloadUrl ? (
+                                    <a href={downloadUrl} download>
+                                        <Download className="size-4 text-muted-foreground hover:text-foreground" />
+                                        <span className="sr-only">
+                                            {t('Download')}
+                                        </span>
+                                    </a>
+                                ) : (
+                                    <span className="size-4" />
+                                )}
+                            </span>
+                        </li>
+                    );
+                }}
+            />
         </div>
     );
 }
@@ -299,13 +168,14 @@ export default function Show({
     instrumentTypes,
     orchestras,
     canEdit,
-    canEditUsages,
+    canEditSpeelperiodes,
 }: Props) {
     const { t } = useTranslation();
     const { isPlaying, isCurrentTrack, toggle } = useAudioPlayer();
-    const [showPreviousUsages, setShowPreviousUsages] = useState(false);
-    const [usageDialogOpen, setUsageDialogOpen] = useState(false);
-    const [usageForm, setUsageForm] = useState({
+    const [showPreviousSpeelperiodes, setShowPreviousSpeelperiodes] = useState(false);
+    const [batchPrintOpen, setBatchPrintOpen] = useState(false);
+    const [speelperiodeDialogOpen, setSpeelperiodeDialogOpen] = useState(false);
+    const [speelperiodeForm, setSpeelperiodeForm] = useState({
         orchestra_id: '',
         van: '',
         tot: '',
@@ -318,39 +188,39 @@ export default function Show({
         label: o.name,
     }));
 
-    function submitUsage() {
-        if (!usageForm.orchestra_id) return;
+    function submitSpeelperiode() {
+        if (!speelperiodeForm.orchestra_id) return;
         setSubmitting(true);
         router.post(
-            `/muziekstukken/${piece.id}/usages`,
+            `/muziekstukken/${piece.id}/speelperiodes`,
             {
-                orchestra_id: Number(usageForm.orchestra_id),
-                van: usageForm.van || null,
-                tot: usageForm.tot || null,
-                details: usageForm.details || null,
+                orchestra_id: Number(speelperiodeForm.orchestra_id),
+                van: speelperiodeForm.van || null,
+                tot: speelperiodeForm.tot || null,
+                details: speelperiodeForm.details || null,
             },
             {
                 preserveScroll: true,
                 onFinish: () => {
                     setSubmitting(false);
-                    setUsageDialogOpen(false);
+                    setSpeelperiodeDialogOpen(false);
                 },
             },
         );
     }
 
     const today = new Date().toISOString().split('T')[0];
-    const isPastUsage = (u: { tot?: string | null }) =>
+    const isPast = (u: { tot?: string | null }) =>
         !!u.tot && u.tot < today;
-    const currentUsages = (piece.orchestra_usages ?? []).filter(
-        (u) => !isPastUsage(u),
+    const currentSpeelperiodes = (piece.speelperiodes ?? []).filter(
+        (u) => !isPast(u),
     );
-    const previousUsages = (piece.orchestra_usages ?? []).filter((u) =>
-        isPastUsage(u),
+    const previousSpeelperiodes = (piece.speelperiodes ?? []).filter((u) =>
+        isPast(u),
     );
-    const visibleUsages = showPreviousUsages
-        ? [...currentUsages, ...previousUsages]
-        : currentUsages;
+    const visibleSpeelperiodes = showPreviousSpeelperiodes
+        ? [...currentSpeelperiodes, ...previousSpeelperiodes]
+        : currentSpeelperiodes;
 
     return (
         <AppLayout
@@ -371,21 +241,30 @@ export default function Show({
                             title={`${piece.archive_number ? piece.archive_number + ' — ' : ''}${piece.title}`}
                         />
                         <div className="flex items-center gap-2">
-                            {canEditUsages && (
+                            {canEditSpeelperiodes && (
                                 <Button
                                     variant="outline"
                                     onClick={() => {
-                                        setUsageForm({
+                                        setSpeelperiodeForm({
                                             orchestra_id: '',
                                             van: '',
                                             tot: '',
                                             details: '',
                                         });
-                                        setUsageDialogOpen(true);
+                                        setSpeelperiodeDialogOpen(true);
                                     }}
                                 >
                                     <Plus />
-                                    {t('Add usage')}
+                                    {t('Add play period')}
+                                </Button>
+                            )}
+                            {canEdit && parts.some((p) => p.download_url) && (
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setBatchPrintOpen(true)}
+                                >
+                                    <Printer />
+                                    {t('Drukklaar maken')}
                                 </Button>
                             )}
                             {canEdit && (
@@ -461,36 +340,36 @@ export default function Show({
                     </div>
 
                     {/* In use by */}
-                    {visibleUsages.length > 0 && (
+                    {visibleSpeelperiodes.length > 0 && (
                         <div className="space-y-3">
                             <div className="flex items-center justify-between">
                                 <dt className="text-sm text-muted-foreground">
                                     {t('In use by')}
                                 </dt>
-                                {previousUsages.length > 0 && (
+                                {previousSpeelperiodes.length > 0 && (
                                     <Button
                                         variant="outline"
                                         size="sm"
                                         onClick={() =>
-                                            setShowPreviousUsages((v) => !v)
+                                            setShowPreviousSpeelperiodes((v) => !v)
                                         }
                                     >
                                         <History />
-                                        {showPreviousUsages
-                                            ? t('Hide previous usage')
-                                            : t('Show previous usage')}
+                                        {showPreviousSpeelperiodes
+                                            ? t('Hide previous play periods')
+                                            : t('Show previous play periods')}
                                     </Button>
                                 )}
                             </div>
                             <dd className="flex flex-wrap gap-2">
-                                {visibleUsages.map((u) => (
+                                {visibleSpeelperiodes.map((u) => (
                                     <div
                                         key={u.id}
                                         className="flex items-center gap-1.5"
                                     >
                                         <Badge
                                             variant={
-                                                isPastUsage(u)
+                                                isPast(u)
                                                     ? 'outline'
                                                     : 'secondary'
                                             }
@@ -568,21 +447,10 @@ export default function Show({
                             <TabsTrigger value="overview">
                                 {t('Overview')}
                             </TabsTrigger>
-                            <TabsTrigger value="downloads">
-                                {t('Downloads')}
-                            </TabsTrigger>
                             <TabsTrigger value="list">{t('List')}</TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="overview">
-                            <BumaOverview
-                                parts={parts}
-                                instrumentTypes={instrumentTypes}
-                                t={t}
-                            />
-                        </TabsContent>
-
-                        <TabsContent value="downloads">
                             <PartsOverview
                                 parts={parts}
                                 instrumentTypes={instrumentTypes}
@@ -696,24 +564,30 @@ export default function Show({
                     </Tabs>
                 </section>
             </div>
+            <BatchPrintDialog
+                open={batchPrintOpen}
+                onOpenChange={setBatchPrintOpen}
+                parts={parts}
+                instrumentTypes={instrumentTypes}
+            />
             <Dialog
-                open={usageDialogOpen}
+                open={speelperiodeDialogOpen}
                 onOpenChange={(open) => {
-                    if (!open) setUsageDialogOpen(false);
+                    if (!open) setSpeelperiodeDialogOpen(false);
                 }}
             >
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>{t('Add usage')}</DialogTitle>
+                        <DialogTitle>{t('Add play period')}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4">
                         <div className="space-y-2">
                             <Label>{t('Orchestras')}</Label>
                             <Combobox
                                 options={orchestraOptions}
-                                value={usageForm.orchestra_id}
+                                value={speelperiodeForm.orchestra_id}
                                 onChange={(v) =>
-                                    setUsageForm((f) => ({
+                                    setSpeelperiodeForm((f) => ({
                                         ...f,
                                         orchestra_id: v,
                                     }))
@@ -724,9 +598,9 @@ export default function Show({
                             <Label>{t('From')}</Label>
                             <Input
                                 type="date"
-                                value={usageForm.van}
+                                value={speelperiodeForm.van}
                                 onChange={(e) =>
-                                    setUsageForm((f) => ({
+                                    setSpeelperiodeForm((f) => ({
                                         ...f,
                                         van: e.target.value,
                                     }))
@@ -737,9 +611,9 @@ export default function Show({
                             <Label>{t('Until')}</Label>
                             <Input
                                 type="date"
-                                value={usageForm.tot}
+                                value={speelperiodeForm.tot}
                                 onChange={(e) =>
-                                    setUsageForm((f) => ({
+                                    setSpeelperiodeForm((f) => ({
                                         ...f,
                                         tot: e.target.value,
                                     }))
@@ -749,9 +623,9 @@ export default function Show({
                         <div className="space-y-2">
                             <Label>{t('Details')}</Label>
                             <Input
-                                value={usageForm.details}
+                                value={speelperiodeForm.details}
                                 onChange={(e) =>
-                                    setUsageForm((f) => ({
+                                    setSpeelperiodeForm((f) => ({
                                         ...f,
                                         details: e.target.value,
                                     }))
@@ -762,8 +636,8 @@ export default function Show({
                     </div>
                     <DialogFooter>
                         <Button
-                            onClick={submitUsage}
-                            disabled={submitting || !usageForm.orchestra_id}
+                            onClick={submitSpeelperiode}
+                            disabled={submitting || !speelperiodeForm.orchestra_id}
                         >
                             {t('Save')}
                         </Button>

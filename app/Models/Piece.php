@@ -30,17 +30,17 @@ class Piece extends Model
     /** @return BelongsToMany<Orchestra, $this> */
     public function orchestras(): BelongsToMany
     {
-        return $this->belongsToMany(Orchestra::class, 'piece_orchestra')
+        return $this->belongsToMany(Orchestra::class, 'speelperiodes')
             ->where(function ($query) {
-                $query->whereNull('piece_orchestra.tot')
-                    ->orWhere('piece_orchestra.tot', '>=', now()->toDateString());
+                $query->whereNull('speelperiodes.tot')
+                    ->orWhere('speelperiodes.tot', '>=', now()->toDateString());
             });
     }
 
-    /** @return HasMany<PieceOrchestra, $this> */
-    public function orchestraUsages(): HasMany
+    /** @return HasMany<Speelperiode, $this> */
+    public function speelperiodes(): HasMany
     {
-        return $this->hasMany(PieceOrchestra::class);
+        return $this->hasMany(Speelperiode::class);
     }
 
     /** @return HasMany<Part, $this> */

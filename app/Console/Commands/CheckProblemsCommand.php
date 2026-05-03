@@ -4,7 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Part;
 use App\Models\Piece;
-use App\Models\PieceOrchestra;
+use App\Models\Speelperiode;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 
@@ -19,7 +19,7 @@ class CheckProblemsCommand extends Command
         $totalProblems = 0;
 
         $totalProblems += $this->checkPartsWithDeletedInstrumentType();
-        $totalProblems += $this->checkPieceOrchestrasWithDeletedOrchestra();
+        $totalProblems += $this->checkSpeelperiodesWithDeletedOrchestra();
         $totalProblems += $this->checkMissingFiles();
         $totalProblems += $this->checkPiecesWithoutParts();
 
@@ -61,28 +61,28 @@ class CheckProblemsCommand extends Command
         return $parts->count();
     }
 
-    private function checkPieceOrchestrasWithDeletedOrchestra(): int
+    private function checkSpeelperiodesWithDeletedOrchestra(): int
     {
-        $usages = PieceOrchestra::query()
+        $speelperiodes = Speelperiode::query()
             ->whereHas('orchestra', fn ($q) => $q->onlyTrashed())
             ->with(['piece:id,title', 'orchestra'])
             ->get();
 
-        if ($usages->isEmpty()) {
+        if ($speelperiodes->isEmpty()) {
             return 0;
         }
 
-        $this->warn('Piece-orchestra links with deleted orchestra:');
+        $this->warn('Speelperiodes with deleted orchestra:');
         $this->table(
             ['Piece', 'Orchestra', 'Deleted At'],
-            $usages->map(fn (PieceOrchestra $usage) => [
-                $usage->piece?->title ?? '—',
-                $usage->orchestra?->name ?? '—',
-                $usage->orchestra?->deleted_at?->toDateTimeString() ?? '—',
+            $speelperiodes->map(fn (Speelperiode $speelperiode) => [
+                $speelperiode->piece?->title ?? '—',
+                $speelperiode->orchestra?->name ?? '—',
+                $speelperiode->orchestra?->deleted_at?->toDateTimeString() ?? '—',
             ]),
         );
 
-        return $usages->count();
+        return $speelperiodes->count();
     }
 
     private function checkMissingFiles(): int

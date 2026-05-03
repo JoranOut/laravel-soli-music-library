@@ -41,8 +41,8 @@ class PieceController extends Controller
         }
 
         if ($orchestraId = $request->input('orchestra')) {
-            if ($request->boolean('include_past_usages')) {
-                $query->whereHas('orchestraUsages', fn ($q) => $q->where('orchestra_id', $orchestraId));
+            if ($request->boolean('include_past_speelperiodes')) {
+                $query->whereHas('speelperiodes', fn ($q) => $q->where('orchestra_id', $orchestraId));
             } else {
                 $query->whereHas('orchestras', fn ($q) => $q->where('orchestras.id', $orchestraId));
             }
@@ -132,16 +132,16 @@ class PieceController extends Controller
                 'boughtForOccasions' => Piece::whereNotNull('bought_for_occasion')->where('bought_for_occasion', '!=', '')->distinct()->pluck('bought_for_occasion')->sort()->values(),
                 'statuses' => Piece::whereNotNull('status')->where('status', '!=', '')->distinct()->pluck('status')->sort()->values(),
             ],
-            'filters' => $request->only(['search', 'orchestra', 'include_past_usages', 'instruments', 'composer', 'arranger', 'publisher', 'music_type', 'genre', 'difficulty', 'bought_for', 'bought_for_occasion', 'status', 'buy_date_from', 'buy_date_to']),
+            'filters' => $request->only(['search', 'orchestra', 'include_past_speelperiodes', 'instruments', 'composer', 'arranger', 'publisher', 'music_type', 'genre', 'difficulty', 'bought_for', 'bought_for_occasion', 'status', 'buy_date_from', 'buy_date_to']),
             'canEdit' => $canEdit,
-            'canEditUsages' => auth()->user()?->can('edit gebruik') ?? false,
+            'canEditSpeelperiodes' => auth()->user()?->can('edit speelperiode') ?? false,
         ]);
     }
 
     public function show(Piece $piece): Response
     {
         $access = app(MusicAccessService::class);
-        $piece->load(['orchestras', 'orchestraUsages.orchestra']);
+        $piece->load(['orchestras', 'speelperiodes.orchestra']);
 
         $parts = $access->visibleParts($piece)->map(fn ($part) => [
             ...$part->toArray(),
@@ -162,7 +162,7 @@ class PieceController extends Controller
             'audioUrl' => $audioUrl,
             'instrumentTypes' => InstrumentType::with('instrumentFamily')->orderBy('sort_order')->get(),
             'canEdit' => $canEdit,
-            'canEditUsages' => auth()->user()?->can('edit gebruik') ?? false,
+            'canEditSpeelperiodes' => auth()->user()?->can('edit speelperiode') ?? false,
             'orchestras' => Orchestra::where('is_active', true)->orderBy('sort_order')->get(),
         ]);
     }
@@ -224,7 +224,7 @@ class PieceController extends Controller
         $piece = Piece::create(collect($validated)->except('orchestras')->toArray());
 
         foreach ($validated['orchestras'] ?? [] as $orchestraId) {
-            $piece->orchestraUsages()->create(['orchestra_id' => $orchestraId]);
+            $piece->speelperiodes()->create(['orchestra_id' => $orchestraId]);
         }
 
         return redirect("/muziekstukken/{$piece->id}/edit");
@@ -235,7 +235,7 @@ class PieceController extends Controller
         $access = app(MusicAccessService::class);
         $canEditAllFields = $access->isEditor();
 
-        $piece->load(['orchestras', 'orchestraUsages.orchestra', 'parts.instrumentType.instrumentFamily']);
+        $piece->load(['orchestras', 'speelperiodes.orchestra', 'parts.instrumentType.instrumentFamily']);
 
         $suggestions = $this->getSuggestions();
 
@@ -248,7 +248,7 @@ class PieceController extends Controller
             'audioUrl' => $audioUrl,
             'orchestras' => Orchestra::where('is_active', true)->orderBy('sort_order')->get(),
             'canEditAllFields' => $canEditAllFields,
-            'canEditUsages' => auth()->user()?->can('edit gebruik') ?? false,
+            'canEditSpeelperiodes' => auth()->user()?->can('edit speelperiode') ?? false,
             'canArchive' => $canEditAllFields,
             'genreSuggestions' => $suggestions['genres'],
             'musicTypeSuggestions' => $suggestions['musicTypes'],
@@ -289,12 +289,12 @@ class PieceController extends Controller
                 'archive_number' => ['nullable', 'string', 'max:255'],
                 'status' => ['nullable', 'string', 'max:255'],
                 'audio_youtube_url' => ['nullable', 'url', 'max:500'],
-                'usages' => ['nullable', 'array'],
-                'usages.*.id' => ['nullable', 'integer'],
-                'usages.*.orchestra_id' => ['required', 'integer', 'exists:orchestras,id'],
-                'usages.*.van' => ['nullable', 'date'],
-                'usages.*.tot' => ['nullable', 'date'],
-                'usages.*.details' => ['nullable', 'string'],
+                'speelperiodes' => ['nullable', 'array'],
+                'speelperiodes.*.id' => ['nullable', 'integer'],
+                'speelperiodes.*.orchestra_id' => ['required', 'integer', 'exists:orchestras,id'],
+                'speelperiodes.*.van' => ['nullable', 'date'],
+                'speelperiodes.*.tot' => ['nullable', 'date'],
+                'speelperiodes.*.details' => ['nullable', 'string'],
                 'parts' => ['nullable', 'array'],
                 'parts.*.id' => ['required', 'integer'],
                 'parts.*.instrument_type_id' => ['required', 'integer', 'exists:instrument_types,id'],
@@ -309,10 +309,10 @@ class PieceController extends Controller
                 'matrix_parts.*.amount_bought' => ['required', 'integer', 'min:0'],
             ]);
 
-            $piece->update(collect($validated)->except('usages', 'parts', 'matrix_parts')->toArray());
+            $piece->update(collect($validated)->except('speelperiodes', 'parts', 'matrix_parts')->toArray());
 
-            if (auth()->user()?->can('edit gebruik')) {
-                $this->syncUsages($piece, $validated['usages'] ?? []);
+            if (auth()->user()?->can('edit speelperiode')) {
+                $this->syncSpeelperiodes($piece, $validated['speelperiodes'] ?? []);
             }
 
             foreach ($validated['parts'] ?? [] as $partData) {
@@ -330,24 +330,24 @@ class PieceController extends Controller
             if ($status !== 'digitaal' && ! empty($validated['matrix_parts'])) {
                 $this->syncMatrixParts($piece, $validated['matrix_parts']);
             }
-        } elseif (auth()->user()?->can('edit gebruik')) {
-            // Non-editor with usage permission: can only update usages
+        } elseif (auth()->user()?->can('edit speelperiode')) {
+            // Non-editor with speelperiode permission: can only update speelperiodes
             $validated = $request->validate([
-                'usages' => ['nullable', 'array'],
-                'usages.*.id' => ['nullable', 'integer'],
-                'usages.*.orchestra_id' => ['required', 'integer', 'exists:orchestras,id'],
-                'usages.*.van' => ['nullable', 'date'],
-                'usages.*.tot' => ['nullable', 'date'],
-                'usages.*.details' => ['nullable', 'string'],
+                'speelperiodes' => ['nullable', 'array'],
+                'speelperiodes.*.id' => ['nullable', 'integer'],
+                'speelperiodes.*.orchestra_id' => ['required', 'integer', 'exists:orchestras,id'],
+                'speelperiodes.*.van' => ['nullable', 'date'],
+                'speelperiodes.*.tot' => ['nullable', 'date'],
+                'speelperiodes.*.details' => ['nullable', 'string'],
             ]);
 
-            $this->syncUsages($piece, $validated['usages'] ?? []);
+            $this->syncSpeelperiodes($piece, $validated['speelperiodes'] ?? []);
         }
 
         return redirect()->route('muziekstukken.show', $piece);
     }
 
-    public function storeUsage(Request $request, Piece $piece): RedirectResponse
+    public function storeSpeelperiode(Request $request, Piece $piece): RedirectResponse
     {
         $validated = $request->validate([
             'orchestra_id' => ['required', 'integer', 'exists:orchestras,id'],
@@ -356,7 +356,7 @@ class PieceController extends Controller
             'details' => ['nullable', 'string'],
         ]);
 
-        $piece->orchestraUsages()->create($validated);
+        $piece->speelperiodes()->create($validated);
 
         return back();
     }
@@ -466,30 +466,30 @@ class PieceController extends Controller
         ]));
     }
 
-    /** @param array<int, array{id?: int|null, orchestra_id: int, van?: string|null, tot?: string|null, details?: string|null}> $usages */
-    private function syncUsages(Piece $piece, array $usages): void
+    /** @param array<int, array{id?: int|null, orchestra_id: int, van?: string|null, tot?: string|null, details?: string|null}> $speelperiodes */
+    private function syncSpeelperiodes(Piece $piece, array $speelperiodes): void
     {
-        $incomingIds = collect($usages)->pluck('id')->filter()->toArray();
+        $incomingIds = collect($speelperiodes)->pluck('id')->filter()->toArray();
 
         // Delete omitted records
-        $piece->orchestraUsages()->whereNotIn('id', $incomingIds)->delete();
+        $piece->speelperiodes()->whereNotIn('id', $incomingIds)->delete();
 
-        foreach ($usages as $usageData) {
-            if (! empty($usageData['id'])) {
+        foreach ($speelperiodes as $speelperiodeData) {
+            if (! empty($speelperiodeData['id'])) {
                 // Update existing
-                $piece->orchestraUsages()->where('id', $usageData['id'])->update([
-                    'orchestra_id' => $usageData['orchestra_id'],
-                    'van' => $usageData['van'] ?? null,
-                    'tot' => $usageData['tot'] ?? null,
-                    'details' => $usageData['details'] ?? null,
+                $piece->speelperiodes()->where('id', $speelperiodeData['id'])->update([
+                    'orchestra_id' => $speelperiodeData['orchestra_id'],
+                    'van' => $speelperiodeData['van'] ?? null,
+                    'tot' => $speelperiodeData['tot'] ?? null,
+                    'details' => $speelperiodeData['details'] ?? null,
                 ]);
             } else {
                 // Create new
-                $piece->orchestraUsages()->create([
-                    'orchestra_id' => $usageData['orchestra_id'],
-                    'van' => $usageData['van'] ?? null,
-                    'tot' => $usageData['tot'] ?? null,
-                    'details' => $usageData['details'] ?? null,
+                $piece->speelperiodes()->create([
+                    'orchestra_id' => $speelperiodeData['orchestra_id'],
+                    'van' => $speelperiodeData['van'] ?? null,
+                    'tot' => $speelperiodeData['tot'] ?? null,
+                    'details' => $speelperiodeData['details'] ?? null,
                 ]);
             }
         }

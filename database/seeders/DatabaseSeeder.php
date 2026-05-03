@@ -68,7 +68,7 @@ class DatabaseSeeder extends Seeder
             // Assign to 1-2 random orchestras with usage records
             $randomOrchestras = $orchestras->random(fake()->numberBetween(1, 2));
             foreach ($randomOrchestras as $orchestra) {
-                $piece->orchestraUsages()->create([
+                $piece->speelperiodes()->create([
                     'orchestra_id' => $orchestra->id,
                     'van' => fake()->optional(0.7)->dateTimeBetween('-5 years', 'now')?->format('Y-m-d'),
                 ]);

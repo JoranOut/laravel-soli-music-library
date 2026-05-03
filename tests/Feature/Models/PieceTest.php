@@ -3,7 +3,7 @@
 use App\Models\Orchestra;
 use App\Models\Part;
 use App\Models\Piece;
-use App\Models\PieceOrchestra;
+use App\Models\Speelperiode;
 
 it('can be created with factory', function () {
     $piece = Piece::factory()->create();
@@ -35,7 +35,7 @@ it('belongs to many orchestras via usages', function () {
     $orchestras = Orchestra::factory(2)->create();
 
     foreach ($orchestras as $orchestra) {
-        $piece->orchestraUsages()->create(['orchestra_id' => $orchestra->id]);
+        $piece->speelperiodes()->create(['orchestra_id' => $orchestra->id]);
     }
 
     expect($piece->orchestras)->toHaveCount(2)
@@ -48,9 +48,9 @@ it('orchestras only returns active usages (tot is null or in the future)', funct
     $future = Orchestra::factory()->create();
     $historical = Orchestra::factory()->create();
 
-    $piece->orchestraUsages()->create(['orchestra_id' => $current->id]);
-    $piece->orchestraUsages()->create(['orchestra_id' => $future->id, 'tot' => now()->addMonth()->toDateString()]);
-    $piece->orchestraUsages()->create(['orchestra_id' => $historical->id, 'tot' => '2025-01-01']);
+    $piece->speelperiodes()->create(['orchestra_id' => $current->id]);
+    $piece->speelperiodes()->create(['orchestra_id' => $future->id, 'tot' => now()->addMonth()->toDateString()]);
+    $piece->speelperiodes()->create(['orchestra_id' => $historical->id, 'tot' => '2025-01-01']);
 
     $orchestraIds = $piece->orchestras->pluck('id')->toArray();
     expect($orchestraIds)->toContain($current->id)
@@ -58,16 +58,16 @@ it('orchestras only returns active usages (tot is null or in the future)', funct
         ->not->toContain($historical->id);
 });
 
-it('has many orchestraUsages', function () {
+it('has many speelperiodes', function () {
     $piece = Piece::factory()->create();
     $orchestras = Orchestra::factory(3)->create();
 
     foreach ($orchestras as $orchestra) {
-        $piece->orchestraUsages()->create(['orchestra_id' => $orchestra->id]);
+        $piece->speelperiodes()->create(['orchestra_id' => $orchestra->id]);
     }
 
-    expect($piece->orchestraUsages)->toHaveCount(3)
-        ->each->toBeInstanceOf(PieceOrchestra::class);
+    expect($piece->speelperiodes)->toHaveCount(3)
+        ->each->toBeInstanceOf(Speelperiode::class);
 });
 
 it('has many parts', function () {

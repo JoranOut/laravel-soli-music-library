@@ -70,8 +70,8 @@ Route::middleware(['auth', EnsureUserIsEditorOrDirigent::class])->group(function
     Route::put('/muziekstukken/{piece}', [PieceController::class, 'update'])->name('muziekstukken.update')->withTrashed();
 });
 
-Route::middleware(['auth', 'can:create gebruik'])->group(function () {
-    Route::post('/muziekstukken/{piece}/usages', [PieceController::class, 'storeUsage'])->name('muziekstukken.usages.store');
+Route::middleware(['auth', 'can:create speelperiode'])->group(function () {
+    Route::post('/muziekstukken/{piece}/speelperiodes', [PieceController::class, 'storeSpeelperiode'])->name('muziekstukken.speelperiodes.store');
 });
 
 // Read routes (editors + dirigent + members with assignments)

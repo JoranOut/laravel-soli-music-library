@@ -151,7 +151,7 @@ it('soft-deletes removed orchestras and preserves piece links', function () {
     Orchestra::factory()->create(['external_id' => 2, 'name' => 'Bigband']);
     $orchestra = Orchestra::where('external_id', 1)->first();
     $piece = Piece::factory()->create();
-    $orchestra->pieceUsages()->create(['piece_id' => $piece->id]);
+    $orchestra->speelperiodes()->create(['piece_id' => $piece->id]);
 
     Http::fake([
         '*/api/v1/onderdelen' => Http::response([
@@ -166,7 +166,7 @@ it('soft-deletes removed orchestras and preserves piece links', function () {
 
     expect(Orchestra::count())->toBe(1)
         ->and(Orchestra::withTrashed()->count())->toBe(2)
-        ->and($piece->orchestraUsages()->count())->toBe(1);
+        ->and($piece->speelperiodes()->count())->toBe(1);
 });
 
 it('restores previously soft-deleted records when they reappear', function () {

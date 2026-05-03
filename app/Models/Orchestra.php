@@ -26,12 +26,16 @@ class Orchestra extends Model
     /** @return BelongsToMany<Piece, $this> */
     public function pieces(): BelongsToMany
     {
-        return $this->belongsToMany(Piece::class, 'piece_orchestra')->wherePivotNull('tot');
+        return $this->belongsToMany(Piece::class, 'speelperiodes')
+            ->where(function ($query) {
+                $query->whereNull('speelperiodes.tot')
+                    ->orWhere('speelperiodes.tot', '>=', now()->toDateString());
+            });
     }
 
-    /** @return HasMany<PieceOrchestra, $this> */
-    public function pieceUsages(): HasMany
+    /** @return HasMany<Speelperiode, $this> */
+    public function speelperiodes(): HasMany
     {
-        return $this->hasMany(PieceOrchestra::class);
+        return $this->hasMany(Speelperiode::class);
     }
 }
