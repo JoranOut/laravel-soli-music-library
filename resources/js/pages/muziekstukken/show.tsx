@@ -172,7 +172,8 @@ export default function Show({
 }: Props) {
     const { t } = useTranslation();
     const { isPlaying, isCurrentTrack, toggle } = useAudioPlayer();
-    const [showPreviousSpeelperiodes, setShowPreviousSpeelperiodes] = useState(false);
+    const [showPreviousSpeelperiodes, setShowPreviousSpeelperiodes] =
+        useState(false);
     const [batchPrintOpen, setBatchPrintOpen] = useState(false);
     const [speelperiodeDialogOpen, setSpeelperiodeDialogOpen] = useState(false);
     const [speelperiodeForm, setSpeelperiodeForm] = useState({
@@ -210,8 +211,7 @@ export default function Show({
     }
 
     const today = new Date().toISOString().split('T')[0];
-    const isPast = (u: { tot?: string | null }) =>
-        !!u.tot && u.tot < today;
+    const isPast = (u: { tot?: string | null }) => !!u.tot && u.tot < today;
     const currentSpeelperiodes = (piece.speelperiodes ?? []).filter(
         (u) => !isPast(u),
     );
@@ -351,7 +351,9 @@ export default function Show({
                                         variant="outline"
                                         size="sm"
                                         onClick={() =>
-                                            setShowPreviousSpeelperiodes((v) => !v)
+                                            setShowPreviousSpeelperiodes(
+                                                (v) => !v,
+                                            )
                                         }
                                     >
                                         <History />
@@ -637,7 +639,9 @@ export default function Show({
                     <DialogFooter>
                         <Button
                             onClick={submitSpeelperiode}
-                            disabled={submitting || !speelperiodeForm.orchestra_id}
+                            disabled={
+                                submitting || !speelperiodeForm.orchestra_id
+                            }
                         >
                             {t('Save')}
                         </Button>

@@ -117,7 +117,9 @@ export default function Edit({
     const [uploads, setUploads] = useState<PartUpload[]>([]);
     const [uploading, setUploading] = useState(false);
     const [deletePart, setDeletePart] = useState<Part | null>(null);
-    const [endSpeelperiodeIndex, setEndSpeelperiodeIndex] = useState<number | null>(null);
+    const [endSpeelperiodeIndex, setEndSpeelperiodeIndex] = useState<
+        number | null
+    >(null);
     const [partEdits, setPartEdits] = useState<Record<number, PartEdit>>({});
     const [saving, setSaving] = useState(false);
     const [showPastSpeelperiodes, setShowPastSpeelperiodes] = useState(false);
@@ -361,7 +363,11 @@ export default function Edit({
         ]);
     }
 
-    function updateSpeelperiode(index: number, field: keyof UsageEdit, value: string) {
+    function updateSpeelperiode(
+        index: number,
+        field: keyof UsageEdit,
+        value: string,
+    ) {
         setSpeelperiodes((prev) =>
             prev.map((u, i) => (i === index ? { ...u, [field]: value } : u)),
         );
@@ -708,98 +714,107 @@ export default function Edit({
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {speelperiodes.map((speelperiode, i) => {
-                                            if (
-                                                !showPastSpeelperiodes &&
-                                                isPast(speelperiode)
-                                            )
-                                                return null;
-                                            return (
-                                                <TableRow
-                                                    key={speelperiode.id ?? `new-${i}`}
-                                                >
-                                                    <TableCell>
-                                                        <Combobox
-                                                            options={
-                                                                orchestraOptions
-                                                            }
-                                                            value={
-                                                                speelperiode.orchestra_id
-                                                            }
-                                                            onChange={(v) =>
-                                                                updateSpeelperiode(
-                                                                    i,
-                                                                    'orchestra_id',
-                                                                    v,
-                                                                )
-                                                            }
-                                                            className="max-w-[250px]"
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Input
-                                                            type="date"
-                                                            value={speelperiode.van}
-                                                            onChange={(e) =>
-                                                                updateSpeelperiode(
-                                                                    i,
-                                                                    'van',
-                                                                    e.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Input
-                                                            type="date"
-                                                            value={speelperiode.tot}
-                                                            onChange={(e) =>
-                                                                updateSpeelperiode(
-                                                                    i,
-                                                                    'tot',
-                                                                    e.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Input
-                                                            value={
-                                                                speelperiode.details
-                                                            }
-                                                            onChange={(e) =>
-                                                                updateSpeelperiode(
-                                                                    i,
-                                                                    'details',
-                                                                    e.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                            placeholder={t(
-                                                                'Details',
-                                                            )}
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {!speelperiode.tot && (
-                                                            <Button
-                                                                variant="outline"
-                                                                size="sm"
-                                                                onClick={() =>
-                                                                    setEndSpeelperiodeIndex(
+                                        {speelperiodes.map(
+                                            (speelperiode, i) => {
+                                                if (
+                                                    !showPastSpeelperiodes &&
+                                                    isPast(speelperiode)
+                                                )
+                                                    return null;
+                                                return (
+                                                    <TableRow
+                                                        key={
+                                                            speelperiode.id ??
+                                                            `new-${i}`
+                                                        }
+                                                    >
+                                                        <TableCell>
+                                                            <Combobox
+                                                                options={
+                                                                    orchestraOptions
+                                                                }
+                                                                value={
+                                                                    speelperiode.orchestra_id
+                                                                }
+                                                                onChange={(v) =>
+                                                                    updateSpeelperiode(
                                                                         i,
+                                                                        'orchestra_id',
+                                                                        v,
                                                                     )
                                                                 }
-                                                            >
-                                                                {t('End')}
-                                                            </Button>
-                                                        )}
-                                                    </TableCell>
-                                                </TableRow>
-                                            );
-                                        })}
+                                                                className="max-w-[250px]"
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Input
+                                                                type="date"
+                                                                value={
+                                                                    speelperiode.van
+                                                                }
+                                                                onChange={(e) =>
+                                                                    updateSpeelperiode(
+                                                                        i,
+                                                                        'van',
+                                                                        e.target
+                                                                            .value,
+                                                                    )
+                                                                }
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Input
+                                                                type="date"
+                                                                value={
+                                                                    speelperiode.tot
+                                                                }
+                                                                onChange={(e) =>
+                                                                    updateSpeelperiode(
+                                                                        i,
+                                                                        'tot',
+                                                                        e.target
+                                                                            .value,
+                                                                    )
+                                                                }
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Input
+                                                                value={
+                                                                    speelperiode.details
+                                                                }
+                                                                onChange={(e) =>
+                                                                    updateSpeelperiode(
+                                                                        i,
+                                                                        'details',
+                                                                        e.target
+                                                                            .value,
+                                                                    )
+                                                                }
+                                                                placeholder={t(
+                                                                    'Details',
+                                                                )}
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {!speelperiode.tot && (
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={() =>
+                                                                        setEndSpeelperiodeIndex(
+                                                                            i,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    {t('End')}
+                                                                </Button>
+                                                            )}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                );
+                                            },
+                                        )}
                                     </TableBody>
                                 </Table>
                             </div>
@@ -1291,8 +1306,9 @@ export default function Edit({
                                             ? (orchestras.find(
                                                   (o) =>
                                                       o.id.toString() ===
-                                                      speelperiodes[endSpeelperiodeIndex]
-                                                          ?.orchestra_id,
+                                                      speelperiodes[
+                                                          endSpeelperiodeIndex
+                                                      ]?.orchestra_id,
                                               )?.name ?? '')
                                             : '',
                                 },

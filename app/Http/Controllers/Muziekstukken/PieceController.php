@@ -227,7 +227,7 @@ class PieceController extends Controller
         $piece = Piece::create(collect($validated)->except('orchestras')->toArray());
 
         foreach ($validated['orchestras'] ?? [] as $orchestraId) {
-            $piece->speelperiodes()->create(['orchestra_id' => $orchestraId]);
+            $piece->speelperiodes()->create(['orchestra_id' => $orchestraId, 'van' => now()]);
         }
 
         return redirect("/muziekstukken/{$piece->id}/edit");
