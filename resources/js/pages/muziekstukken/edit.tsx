@@ -670,6 +670,148 @@ export default function Edit({
                     />
                 </section>
 
+                {/* In use by — speelperiodes */}
+                {canEditSpeelperiodes && (
+                    <section className="space-y-6">
+                        <Heading title={t('In use by')} />
+
+                        {speelperiodes.some((u) => isPast(u)) && (
+                            <label className="flex items-center gap-2 text-sm">
+                                <Checkbox
+                                    checked={showPastSpeelperiodes}
+                                    onCheckedChange={(checked) =>
+                                        setShowPastSpeelperiodes(!!checked)
+                                    }
+                                />
+                                {t('Show past play periods')}
+                            </label>
+                        )}
+
+                        {speelperiodes.length > 0 && (
+                            <div className="rounded-lg border">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>
+                                                {t('Orchestras')}
+                                            </TableHead>
+                                            <TableHead className="w-[150px]">
+                                                {t('From')}
+                                            </TableHead>
+                                            <TableHead className="w-[150px]">
+                                                {t('Until')}
+                                            </TableHead>
+                                            <TableHead>
+                                                {t('Details')}
+                                            </TableHead>
+                                            <TableHead className="w-[80px]" />
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {speelperiodes.map((speelperiode, i) => {
+                                            if (
+                                                !showPastSpeelperiodes &&
+                                                isPast(speelperiode)
+                                            )
+                                                return null;
+                                            return (
+                                                <TableRow
+                                                    key={speelperiode.id ?? `new-${i}`}
+                                                >
+                                                    <TableCell>
+                                                        <Combobox
+                                                            options={
+                                                                orchestraOptions
+                                                            }
+                                                            value={
+                                                                speelperiode.orchestra_id
+                                                            }
+                                                            onChange={(v) =>
+                                                                updateSpeelperiode(
+                                                                    i,
+                                                                    'orchestra_id',
+                                                                    v,
+                                                                )
+                                                            }
+                                                            className="max-w-[250px]"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Input
+                                                            type="date"
+                                                            value={speelperiode.van}
+                                                            onChange={(e) =>
+                                                                updateSpeelperiode(
+                                                                    i,
+                                                                    'van',
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Input
+                                                            type="date"
+                                                            value={speelperiode.tot}
+                                                            onChange={(e) =>
+                                                                updateSpeelperiode(
+                                                                    i,
+                                                                    'tot',
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Input
+                                                            value={
+                                                                speelperiode.details
+                                                            }
+                                                            onChange={(e) =>
+                                                                updateSpeelperiode(
+                                                                    i,
+                                                                    'details',
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            placeholder={t(
+                                                                'Details',
+                                                            )}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {!speelperiode.tot && (
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() =>
+                                                                    setEndSpeelperiodeIndex(
+                                                                        i,
+                                                                    )
+                                                                }
+                                                            >
+                                                                {t('End')}
+                                                            </Button>
+                                                        )}
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        })}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        )}
+
+                        <Button variant="outline" onClick={addSpeelperiode}>
+                            <Plus />
+                            {t('Add play period')}
+                        </Button>
+                    </section>
+                )}
+
                 {/* Parts management */}
                 {canEditAllFields && (
                     <section className="space-y-6">
@@ -1085,148 +1227,6 @@ export default function Edit({
                                 onMatrixChange={handleMatrixChange}
                             />
                         )}
-                    </section>
-                )}
-
-                {/* In use by — speelperiodes */}
-                {canEditSpeelperiodes && (
-                    <section className="space-y-6">
-                        <Heading title={t('In use by')} />
-
-                        {speelperiodes.some((u) => isPast(u)) && (
-                            <label className="flex items-center gap-2 text-sm">
-                                <Checkbox
-                                    checked={showPastSpeelperiodes}
-                                    onCheckedChange={(checked) =>
-                                        setShowPastSpeelperiodes(!!checked)
-                                    }
-                                />
-                                {t('Show past play periods')}
-                            </label>
-                        )}
-
-                        {speelperiodes.length > 0 && (
-                            <div className="rounded-lg border">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>
-                                                {t('Orchestras')}
-                                            </TableHead>
-                                            <TableHead className="w-[150px]">
-                                                {t('From')}
-                                            </TableHead>
-                                            <TableHead className="w-[150px]">
-                                                {t('Until')}
-                                            </TableHead>
-                                            <TableHead>
-                                                {t('Details')}
-                                            </TableHead>
-                                            <TableHead className="w-[80px]" />
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {speelperiodes.map((speelperiode, i) => {
-                                            if (
-                                                !showPastSpeelperiodes &&
-                                                isPast(speelperiode)
-                                            )
-                                                return null;
-                                            return (
-                                                <TableRow
-                                                    key={speelperiode.id ?? `new-${i}`}
-                                                >
-                                                    <TableCell>
-                                                        <Combobox
-                                                            options={
-                                                                orchestraOptions
-                                                            }
-                                                            value={
-                                                                speelperiode.orchestra_id
-                                                            }
-                                                            onChange={(v) =>
-                                                                updateSpeelperiode(
-                                                                    i,
-                                                                    'orchestra_id',
-                                                                    v,
-                                                                )
-                                                            }
-                                                            className="max-w-[250px]"
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Input
-                                                            type="date"
-                                                            value={speelperiode.van}
-                                                            onChange={(e) =>
-                                                                updateSpeelperiode(
-                                                                    i,
-                                                                    'van',
-                                                                    e.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Input
-                                                            type="date"
-                                                            value={speelperiode.tot}
-                                                            onChange={(e) =>
-                                                                updateSpeelperiode(
-                                                                    i,
-                                                                    'tot',
-                                                                    e.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Input
-                                                            value={
-                                                                speelperiode.details
-                                                            }
-                                                            onChange={(e) =>
-                                                                updateSpeelperiode(
-                                                                    i,
-                                                                    'details',
-                                                                    e.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                            placeholder={t(
-                                                                'Details',
-                                                            )}
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {!speelperiode.tot && (
-                                                            <Button
-                                                                variant="outline"
-                                                                size="sm"
-                                                                onClick={() =>
-                                                                    setEndSpeelperiodeIndex(
-                                                                        i,
-                                                                    )
-                                                                }
-                                                            >
-                                                                {t('End')}
-                                                            </Button>
-                                                        )}
-                                                    </TableCell>
-                                                </TableRow>
-                                            );
-                                        })}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                        )}
-
-                        <Button variant="outline" onClick={addSpeelperiode}>
-                            <Plus />
-                            {t('Add play period')}
-                        </Button>
                     </section>
                 )}
 
