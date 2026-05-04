@@ -10,6 +10,7 @@ use App\Models\Orchestra;
 use App\Models\Piece;
 use App\Services\MusicAccessService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -182,7 +183,7 @@ class PieceController extends Controller
         $lastNumber = (int) Piece::withTrashed()
             ->whereNotNull('archive_number')
             ->whereRaw('archive_number REGEXP "^[0-9]+$"')
-            ->max('archive_number');
+            ->max(DB::raw('CAST(archive_number AS UNSIGNED)'));
 
         $nextArchiveNumber = (string) ($lastNumber + 1);
 
@@ -214,11 +215,13 @@ class PieceController extends Controller
             'genre' => ['nullable', 'array'],
             'genre.*' => ['string', 'max:255'],
             'music_type' => ['nullable', 'string', 'max:255'],
-            'archive_number' => ['nullable', 'string', 'max:255'],
+            'archive_number' => ['nullable', 'string', 'max:255', 'unique:pieces,archive_number'],
             'status' => ['nullable', 'string', 'max:255'],
             'audio_youtube_url' => ['nullable', 'url', 'max:500'],
             'orchestras' => ['nullable', 'array'],
             'orchestras.*' => ['integer', 'exists:orchestras,id'],
+        ], [
+            'archive_number.unique' => __('This archive number is already in use.'),
         ]);
 
         $piece = Piece::create(collect($validated)->except('orchestras')->toArray());
@@ -286,7 +289,7 @@ class PieceController extends Controller
                 'genre' => ['nullable', 'array'],
                 'genre.*' => ['string', 'max:255'],
                 'music_type' => ['nullable', 'string', 'max:255'],
-                'archive_number' => ['nullable', 'string', 'max:255'],
+                'archive_number' => ['nullable', 'string', 'max:255', "unique:pieces,archive_number,{$piece->id}"],
                 'status' => ['nullable', 'string', 'max:255'],
                 'audio_youtube_url' => ['nullable', 'url', 'max:500'],
                 'speelperiodes' => ['nullable', 'array'],
@@ -307,6 +310,8 @@ class PieceController extends Controller
                 'matrix_parts.*.is_conductor' => ['required', 'boolean'],
                 'matrix_parts.*.voice' => ['nullable', 'integer', 'min:1'],
                 'matrix_parts.*.amount_bought' => ['required', 'integer', 'min:0'],
+            ], [
+                'archive_number.unique' => __('This archive number is already in use.'),
             ]);
 
             $piece->update(collect($validated)->except('speelperiodes', 'parts', 'matrix_parts')->toArray());

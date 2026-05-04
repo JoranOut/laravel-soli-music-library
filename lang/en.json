@@ -167,5 +167,7 @@
     "Alles openen": "Open all",
     "Dubbelzijdig printen (lege pagina na oneven partijen)": "Double-sided printing (blank page after odd-numbered parts)",
     "An unknown error occurred": "An unknown error occurred",
-    "Show past play periods": "Show past play periods"
+    "Show past play periods": "Show past play periods",
+    "This archive number is already in use.": "This archive number is already in use.",
+    "member": "Member"
 }
