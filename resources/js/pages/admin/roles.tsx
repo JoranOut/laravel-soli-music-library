@@ -77,7 +77,7 @@ export default function Roles({ roles, permissions }: Props) {
                                         key={role.id}
                                         className="px-4 py-3 text-center font-medium capitalize"
                                     >
-                                        {role.name}
+                                        {t(role.name)}
                                     </th>
                                 ))}
                             </tr>

@@ -7,9 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable(['piece_id', 'orchestra_id', 'van', 'tot', 'details'])]
-class PieceOrchestra extends Model
+class Speelperiode extends Model
 {
-    protected $table = 'piece_orchestra';
+    protected $table = 'speelperiodes';
 
     /** @return array<string, string> */
     protected function casts(): array

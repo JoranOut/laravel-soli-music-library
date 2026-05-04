@@ -536,7 +536,7 @@ it('allows member with matching assignment to download', function () {
     $instrumentType = InstrumentType::factory()->create();
 
     $piece = Piece::factory()->create();
-    $piece->orchestraUsages()->create(['orchestra_id' => $orchestra->id]);
+    $piece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $orchestra->id]);
     $part = Part::factory()->create([
         'piece_id' => $piece->id,
         'instrument_type_id' => $instrumentType->id,
@@ -568,7 +568,7 @@ it('denies member without matching assignment from downloading', function () {
     $instrumentType = InstrumentType::factory()->create();
 
     $piece = Piece::factory()->create();
-    $piece->orchestraUsages()->create(['orchestra_id' => $orchestra->id]);
+    $piece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $orchestra->id]);
     $part = Part::factory()->create([
         'piece_id' => $piece->id,
         'instrument_type_id' => $instrumentType->id,
@@ -664,7 +664,7 @@ it('denies member with matching instrument but wrong orchestra from downloading'
     $instrumentType = InstrumentType::factory()->create();
 
     $piece = Piece::factory()->create();
-    $piece->orchestraUsages()->create(['orchestra_id' => $pieceOrchestra->id]);
+    $piece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $pieceOrchestra->id]);
     $part = Part::factory()->create([
         'piece_id' => $piece->id,
         'instrument_type_id' => $instrumentType->id,
@@ -696,7 +696,7 @@ it('denies member with matching orchestra but wrong instrument from downloading'
     $memberInstrument = InstrumentType::factory()->create();
 
     $piece = Piece::factory()->create();
-    $piece->orchestraUsages()->create(['orchestra_id' => $orchestra->id]);
+    $piece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $orchestra->id]);
     $part = Part::factory()->create([
         'piece_id' => $piece->id,
         'instrument_type_id' => $partInstrument->id,

@@ -34,7 +34,7 @@ export type Part = {
     download_url?: string | null;
 };
 
-export type OrchestraUsage = {
+export type Speelperiode = {
     id: number;
     piece_id: number;
     orchestra_id: number;
@@ -64,7 +64,7 @@ export type Piece = {
     audio_url?: string | null;
     deleted_at: string | null;
     orchestras: Orchestra[];
-    orchestra_usages: OrchestraUsage[];
+    speelperiodes: Speelperiode[];
     parts: Part[];
     parts_count?: number;
 };

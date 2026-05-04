@@ -79,7 +79,7 @@ type Props = {
     filters: {
         search?: string;
         orchestra?: string;
-        include_past_usages?: string;
+        include_past_speelperiodes?: string;
         instruments?: string;
         composer?: string;
         arranger?: string;
@@ -217,8 +217,8 @@ export default function Index({
     function handleOrchestraFilter(orchestra: string) {
         navigate({
             orchestra: orchestra || undefined,
-            include_past_usages: orchestra
-                ? filters.include_past_usages
+            include_past_speelperiodes: orchestra
+                ? filters.include_past_speelperiodes
                 : undefined,
         });
     }
@@ -282,17 +282,18 @@ export default function Index({
                             <label className="flex items-center gap-2 text-sm">
                                 <Checkbox
                                     checked={
-                                        filters.include_past_usages === '1'
+                                        filters.include_past_speelperiodes ===
+                                        '1'
                                     }
                                     onCheckedChange={(checked) =>
                                         navigate({
-                                            include_past_usages: checked
+                                            include_past_speelperiodes: checked
                                                 ? '1'
                                                 : undefined,
                                         })
                                     }
                                 />
-                                {t('Include past usages')}
+                                {t('Include past play periods')}
                             </label>
                         )}
                         <Button

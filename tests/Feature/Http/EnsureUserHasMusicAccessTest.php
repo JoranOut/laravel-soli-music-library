@@ -72,7 +72,7 @@ it('allows member with resolved assignments through', function () {
 
     // Need at least one piece in the member's orchestra for the index to return results
     $piece = Piece::factory()->create();
-    $piece->orchestraUsages()->create(['orchestra_id' => $orchestra->id]);
+    $piece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $orchestra->id]);
 
     $this->actingAs($user)
         ->withSession([
@@ -160,7 +160,7 @@ it('allows member with assignments even when combined with other non-qualifying 
     $instrumentType = InstrumentType::factory()->create();
 
     $piece = Piece::factory()->create();
-    $piece->orchestraUsages()->create(['orchestra_id' => $orchestra->id]);
+    $piece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $orchestra->id]);
 
     $this->actingAs($user)
         ->withSession([

@@ -42,12 +42,12 @@ it('detects parts with soft-deleted instrument type', function () {
 it('detects piece-orchestra links with soft-deleted orchestra', function () {
     $orchestra = Orchestra::factory()->create(['name' => 'Bigband']);
     $piece = Piece::factory()->create(['title' => 'Test Stuk']);
-    $piece->orchestraUsages()->create(['orchestra_id' => $orchestra->id]);
+    $piece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $orchestra->id]);
 
     $orchestra->delete();
 
     $this->artisan('music:check-problems')
-        ->expectsOutputToContain('Piece-orchestra links with deleted orchestra')
+        ->expectsOutputToContain('Speelperiodes with deleted orchestra')
         ->expectsOutputToContain('Bigband')
         ->assertFailed();
 });
