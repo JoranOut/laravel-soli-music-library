@@ -233,7 +233,7 @@ it('filters pieces by orchestra', function () {
     $user = User::factory()->create();
     $orchestra = Orchestra::factory()->create();
     $piece = Piece::factory()->create();
-    $piece->speelperiodes()->create(['orchestra_id' => $orchestra->id]);
+    $piece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $orchestra->id]);
     Piece::factory()->create();
 
     $this->actingAs($user)
@@ -462,10 +462,10 @@ it('member sees only their orchestra pieces on index', function () {
     $instrumentType = InstrumentType::factory()->create();
 
     $myPiece = Piece::factory()->create();
-    $myPiece->speelperiodes()->create(['orchestra_id' => $myOrchestra->id]);
+    $myPiece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $myOrchestra->id]);
 
     $otherPiece = Piece::factory()->create();
-    $otherPiece->speelperiodes()->create(['orchestra_id' => $otherOrchestra->id]);
+    $otherPiece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $otherOrchestra->id]);
 
     $session = [
         'roles' => ['member'],
@@ -492,7 +492,7 @@ it('show returns only matching instrument parts for member', function () {
     $otherInstrument = InstrumentType::factory()->create();
 
     $piece = Piece::factory()->create();
-    $piece->speelperiodes()->create(['orchestra_id' => $orchestra->id]);
+    $piece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $orchestra->id]);
     Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $myInstrument->id]);
     Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $otherInstrument->id]);
 
@@ -586,13 +586,13 @@ it('member with multiple orchestras sees pieces from all their orchestras', func
     $instrumentType = InstrumentType::factory()->create();
 
     $piece1 = Piece::factory()->create();
-    $piece1->speelperiodes()->create(['orchestra_id' => $orchestra1->id]);
+    $piece1->speelperiodes()->create(['van' => now(), 'orchestra_id' => $orchestra1->id]);
 
     $piece2 = Piece::factory()->create();
-    $piece2->speelperiodes()->create(['orchestra_id' => $orchestra2->id]);
+    $piece2->speelperiodes()->create(['van' => now(), 'orchestra_id' => $orchestra2->id]);
 
     $otherPiece = Piece::factory()->create();
-    $otherPiece->speelperiodes()->create(['orchestra_id' => $otherOrchestra->id]);
+    $otherPiece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $otherOrchestra->id]);
 
     $session = [
         'roles' => ['member'],
@@ -618,8 +618,8 @@ it('member sees piece belonging to multiple orchestras if at least one matches',
     $instrumentType = InstrumentType::factory()->create();
 
     $piece = Piece::factory()->create();
-    $piece->speelperiodes()->create(['orchestra_id' => $myOrchestra->id]);
-    $piece->speelperiodes()->create(['orchestra_id' => $otherOrchestra->id]);
+    $piece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $myOrchestra->id]);
+    $piece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $otherOrchestra->id]);
 
     $session = [
         'roles' => ['member'],
@@ -643,10 +643,10 @@ it('member search filter still works within their orchestras', function () {
     $instrumentType = InstrumentType::factory()->create();
 
     $matchingPiece = Piece::factory()->create(['title' => 'Symphony']);
-    $matchingPiece->speelperiodes()->create(['orchestra_id' => $orchestra->id]);
+    $matchingPiece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $orchestra->id]);
 
     $nonMatchingPiece = Piece::factory()->create(['title' => 'March']);
-    $nonMatchingPiece->speelperiodes()->create(['orchestra_id' => $orchestra->id]);
+    $nonMatchingPiece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $orchestra->id]);
 
     $session = [
         'roles' => ['member'],
@@ -672,7 +672,7 @@ it('member sees no pieces when they have no matching orchestras', function () {
 
     // Piece only belongs to the other orchestra
     $piece = Piece::factory()->create();
-    $piece->speelperiodes()->create(['orchestra_id' => $otherOrchestra->id]);
+    $piece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $otherOrchestra->id]);
 
     $session = [
         'roles' => ['member'],
@@ -716,7 +716,7 @@ it('show returns empty parts for member when piece is not in their orchestra', f
     $instrumentType = InstrumentType::factory()->create();
 
     $piece = Piece::factory()->create();
-    $piece->speelperiodes()->create(['orchestra_id' => $otherOrchestra->id]);
+    $piece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $otherOrchestra->id]);
     Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $instrumentType->id]);
 
     $session = [
@@ -740,10 +740,10 @@ it('orchestra filter excludes past usages by default', function () {
     $orchestra = Orchestra::factory()->create();
 
     $currentPiece = Piece::factory()->create();
-    $currentPiece->speelperiodes()->create(['orchestra_id' => $orchestra->id, 'tot' => null]);
+    $currentPiece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $orchestra->id, 'tot' => null]);
 
     $pastPiece = Piece::factory()->create();
-    $pastPiece->speelperiodes()->create(['orchestra_id' => $orchestra->id, 'tot' => '2024-01-01']);
+    $pastPiece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $orchestra->id, 'tot' => '2024-01-01']);
 
     $this->actingAs($user)
         ->withSession(['roles' => ['admin']])
@@ -759,10 +759,10 @@ it('orchestra filter includes past usages when include_past_speelperiodes is set
     $orchestra = Orchestra::factory()->create();
 
     $currentPiece = Piece::factory()->create();
-    $currentPiece->speelperiodes()->create(['orchestra_id' => $orchestra->id, 'tot' => null]);
+    $currentPiece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $orchestra->id, 'tot' => null]);
 
     $pastPiece = Piece::factory()->create();
-    $pastPiece->speelperiodes()->create(['orchestra_id' => $orchestra->id, 'tot' => '2024-01-01']);
+    $pastPiece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $orchestra->id, 'tot' => '2024-01-01']);
 
     $this->actingAs($user)
         ->withSession(['roles' => ['admin']])
@@ -779,10 +779,10 @@ it('dirigent can use orchestra filter on index', function () {
     $orchestra2 = Orchestra::factory()->create();
 
     $piece1 = Piece::factory()->create();
-    $piece1->speelperiodes()->create(['orchestra_id' => $orchestra1->id]);
+    $piece1->speelperiodes()->create(['van' => now(), 'orchestra_id' => $orchestra1->id]);
 
     $piece2 = Piece::factory()->create();
-    $piece2->speelperiodes()->create(['orchestra_id' => $orchestra2->id]);
+    $piece2->speelperiodes()->create(['van' => now(), 'orchestra_id' => $orchestra2->id]);
 
     $this->actingAs($user)
         ->withSession(['roles' => ['dirigent']])
@@ -1473,10 +1473,10 @@ it('member can use more filters within their orchestras', function () {
     $instrumentType = InstrumentType::factory()->create();
 
     $bachPiece = Piece::factory()->create(['composer' => 'Bach']);
-    $bachPiece->speelperiodes()->create(['orchestra_id' => $orchestra->id]);
+    $bachPiece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $orchestra->id]);
 
     $mozartPiece = Piece::factory()->create(['composer' => 'Mozart']);
-    $mozartPiece->speelperiodes()->create(['orchestra_id' => $orchestra->id]);
+    $mozartPiece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $orchestra->id]);
 
     $session = [
         'roles' => ['member'],
@@ -1976,7 +1976,7 @@ it('member can use voice filter within their orchestras', function () {
     $type = InstrumentType::factory()->create();
 
     $piece = Piece::factory()->create();
-    $piece->speelperiodes()->create(['orchestra_id' => $orchestra->id]);
+    $piece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $orchestra->id]);
     Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $type->id, 'voice' => 1]);
     Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $type->id, 'voice' => 2]);
 

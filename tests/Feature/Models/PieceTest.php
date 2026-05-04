@@ -35,7 +35,7 @@ it('belongs to many orchestras via usages', function () {
     $orchestras = Orchestra::factory(2)->create();
 
     foreach ($orchestras as $orchestra) {
-        $piece->speelperiodes()->create(['orchestra_id' => $orchestra->id]);
+        $piece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $orchestra->id]);
     }
 
     expect($piece->orchestras)->toHaveCount(2)
@@ -48,9 +48,9 @@ it('orchestras only returns active usages (tot is null or in the future)', funct
     $future = Orchestra::factory()->create();
     $historical = Orchestra::factory()->create();
 
-    $piece->speelperiodes()->create(['orchestra_id' => $current->id]);
-    $piece->speelperiodes()->create(['orchestra_id' => $future->id, 'tot' => now()->addMonth()->toDateString()]);
-    $piece->speelperiodes()->create(['orchestra_id' => $historical->id, 'tot' => '2025-01-01']);
+    $piece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $current->id]);
+    $piece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $future->id, 'tot' => now()->addMonth()->toDateString()]);
+    $piece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $historical->id, 'tot' => '2025-01-01']);
 
     $orchestraIds = $piece->orchestras->pluck('id')->toArray();
     expect($orchestraIds)->toContain($current->id)
@@ -63,7 +63,7 @@ it('has many speelperiodes', function () {
     $orchestras = Orchestra::factory(3)->create();
 
     foreach ($orchestras as $orchestra) {
-        $piece->speelperiodes()->create(['orchestra_id' => $orchestra->id]);
+        $piece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $orchestra->id]);
     }
 
     expect($piece->speelperiodes)->toHaveCount(3)

@@ -151,7 +151,7 @@ it('soft-deletes removed orchestras and preserves piece links', function () {
     Orchestra::factory()->create(['external_id' => 2, 'name' => 'Bigband']);
     $orchestra = Orchestra::where('external_id', 1)->first();
     $piece = Piece::factory()->create();
-    $orchestra->speelperiodes()->create(['piece_id' => $piece->id]);
+    $orchestra->speelperiodes()->create(['van' => now(), 'piece_id' => $piece->id]);
 
     Http::fake([
         '*/api/v1/onderdelen' => Http::response([

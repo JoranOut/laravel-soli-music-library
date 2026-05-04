@@ -31,7 +31,7 @@ it('belongs to many pieces via usages', function () {
     $pieces = Piece::factory(3)->create();
 
     foreach ($pieces as $piece) {
-        $orchestra->speelperiodes()->create(['piece_id' => $piece->id]);
+        $orchestra->speelperiodes()->create(['van' => now(), 'piece_id' => $piece->id]);
     }
 
     expect($orchestra->pieces)->toHaveCount(3)
@@ -44,9 +44,9 @@ it('pieces only returns active usages (tot is null or in the future)', function 
     $future = Piece::factory()->create();
     $historical = Piece::factory()->create();
 
-    $orchestra->speelperiodes()->create(['piece_id' => $current->id]);
-    $orchestra->speelperiodes()->create(['piece_id' => $future->id, 'tot' => now()->addMonth()->toDateString()]);
-    $orchestra->speelperiodes()->create(['piece_id' => $historical->id, 'tot' => '2025-01-01']);
+    $orchestra->speelperiodes()->create(['van' => now(), 'piece_id' => $current->id]);
+    $orchestra->speelperiodes()->create(['van' => now(), 'piece_id' => $future->id, 'tot' => now()->addMonth()->toDateString()]);
+    $orchestra->speelperiodes()->create(['van' => now(), 'piece_id' => $historical->id, 'tot' => '2025-01-01']);
 
     $pieceIds = $orchestra->pieces->pluck('id')->toArray();
     expect($pieceIds)->toContain($current->id)
@@ -67,7 +67,7 @@ it('can be soft-deleted', function () {
 it('preserves speelperiode links when soft-deleted', function () {
     $orchestra = Orchestra::factory()->create();
     $piece = Piece::factory()->create();
-    $orchestra->speelperiodes()->create(['piece_id' => $piece->id]);
+    $orchestra->speelperiodes()->create(['van' => now(), 'piece_id' => $piece->id]);
 
     $orchestra->delete();
 

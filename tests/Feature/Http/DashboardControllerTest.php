@@ -19,7 +19,7 @@ it('shows pieces with no end date on the dashboard', function () {
 
     $piece = Piece::factory()->create(['title' => 'Active Piece']);
     Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $instrumentType->id]);
-    $orchestra->speelperiodes()->create(['piece_id' => $piece->id]);
+    $orchestra->speelperiodes()->create(['van' => now(), 'piece_id' => $piece->id]);
 
     $session = [
         'roles' => ['member'],
@@ -48,6 +48,7 @@ it('shows pieces with a future end date on the dashboard', function () {
     $piece = Piece::factory()->create(['title' => 'Future End Date Piece']);
     Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $instrumentType->id]);
     $orchestra->speelperiodes()->create([
+        'van' => now(),
         'piece_id' => $piece->id,
         'tot' => now()->addMonth()->toDateString(),
     ]);
@@ -79,6 +80,7 @@ it('hides pieces with a past end date on the dashboard', function () {
     $piece = Piece::factory()->create(['title' => 'Past End Date Piece']);
     Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $instrumentType->id]);
     $orchestra->speelperiodes()->create([
+        'van' => now(),
         'piece_id' => $piece->id,
         'tot' => '2025-01-01',
     ]);
