@@ -346,7 +346,7 @@ export function BatchPrintDialog({
                                             <p className="text-sm font-medium">
                                                 {result.quantity}&times;
                                             </p>
-                                            <p className="truncate text-xs text-muted-foreground">
+                                            <p className="text-xs text-muted-foreground">
                                                 {result.partLabels.join(', ')}
                                             </p>
                                         </div>
