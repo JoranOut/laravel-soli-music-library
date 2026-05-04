@@ -85,10 +85,10 @@ function PartsOverview({
     );
 
     return (
-        <div className="space-y-6">
+        <div className="mt-4 space-y-6">
             {conductorParts.length > 0 && (
                 <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-muted-foreground">
+                    <h3 className="text-sm font-semibold">
                         {t('Conductor part')}
                     </h3>
                     <div className="flex flex-wrap gap-2">

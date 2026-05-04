@@ -144,9 +144,15 @@ class PieceController extends Controller
         $access = app(MusicAccessService::class);
         $piece->load(['orchestras', 'speelperiodes.orchestra']);
 
-        $parts = $access->visibleParts($piece)->map(fn ($part) => [
+        $downloadableIds = $access->visibleParts($piece)->pluck('id')->toArray();
+        $allParts = $piece->parts()->with('instrumentType.instrumentFamily')->get();
+        $displayParts = $allParts->where('is_conductor', true)
+            ->merge($allParts->whereIn('id', $downloadableIds))
+            ->unique('id');
+
+        $parts = $displayParts->values()->map(fn ($part) => [
             ...$part->toArray(),
-            'download_url' => $part->file_path
+            'download_url' => in_array($part->id, $downloadableIds) && $part->file_path
                 ? URL::temporarySignedRoute('parts.download', now()->addDay(), ['part' => $part->id])
                 : null,
         ]);
