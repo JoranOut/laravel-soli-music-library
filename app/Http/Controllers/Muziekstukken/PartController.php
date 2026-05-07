@@ -79,6 +79,18 @@ class PartController extends Controller
         return back();
     }
 
+    public function destroyAll(Piece $piece): RedirectResponse
+    {
+        foreach ($piece->parts as $part) {
+            if ($part->file_path) {
+                Storage::disk('sheets')->delete($part->file_path);
+            }
+            $part->delete();
+        }
+
+        return back();
+    }
+
     public function downloadUrl(Part $part): JsonResponse
     {
         abort_unless($part->file_path, 404);

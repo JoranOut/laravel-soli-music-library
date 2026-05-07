@@ -8,6 +8,11 @@ use Illuminate\Support\Collection;
 
 class MusicAccessService
 {
+    public function isAdmin(): bool
+    {
+        return in_array('admin', session('roles', []));
+    }
+
     public function isEditor(): bool
     {
         return (bool) array_intersect(

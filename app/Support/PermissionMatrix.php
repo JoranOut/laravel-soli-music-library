@@ -29,6 +29,7 @@ class PermissionMatrix
         'manage-instrument-aliases',
         'manage-genres',
         'manage-music-types',
+        'manage-instrument-types',
     ];
 
     /** Roles and their default permission sets. */
@@ -40,6 +41,7 @@ class PermissionMatrix
             'view speelperiode', 'create speelperiode', 'edit speelperiode', 'delete speelperiode',
             'manage-roles',
             'manage-instrument-aliases',
+            'manage-instrument-types',
             'manage-genres',
             'manage-music-types',
         ],
@@ -49,6 +51,7 @@ class PermissionMatrix
             'download-assigned partijen', 'download-score partijen', 'download-all partijen',
             'view speelperiode', 'create speelperiode', 'edit speelperiode', 'delete speelperiode',
             'manage-instrument-aliases',
+            'manage-instrument-types',
         ],
         'dirigent' => [
             'view muziekstukken',

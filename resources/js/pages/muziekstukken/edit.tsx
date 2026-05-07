@@ -53,6 +53,7 @@ type Props = {
     orchestras: Orchestra[];
     instrumentTypes?: InstrumentType[];
     canEditAllFields?: boolean;
+    isAdmin?: boolean;
     canEditSpeelperiodes?: boolean;
     genreSuggestions?: string[];
     musicTypeSuggestions?: string[];
@@ -93,6 +94,7 @@ export default function Edit({
     orchestras,
     instrumentTypes = [],
     canEditAllFields = true,
+    isAdmin = false,
     canEditSpeelperiodes = true,
     genreSuggestions = [],
     musicTypeSuggestions = [],
@@ -110,6 +112,7 @@ export default function Edit({
     const [uploads, setUploads] = useState<PartUpload[]>([]);
     const [prepareDialogOpen, setPrepareDialogOpen] = useState(false);
     const [deletePart, setDeletePart] = useState<Part | null>(null);
+    const [deleteAllPartsOpen, setDeleteAllPartsOpen] = useState(false);
     const [endSpeelperiodeIndex, setEndSpeelperiodeIndex] = useState<
         number | null
     >(null);
@@ -503,6 +506,13 @@ export default function Edit({
         router.delete(`/muziekstukken/${piece.id}/parts/${deletePart.id}`, {
             preserveScroll: true,
             onFinish: () => setDeletePart(null),
+        });
+    }
+
+    function confirmDeleteAllParts() {
+        router.delete(`/muziekstukken/${piece.id}/parts`, {
+            preserveScroll: true,
+            onFinish: () => setDeleteAllPartsOpen(false),
         });
     }
 
@@ -979,7 +989,7 @@ export default function Edit({
                                 )}
 
                                 {/* Upload new parts */}
-                                <div>
+                                <div className="flex items-center gap-2">
                                     <input
                                         ref={fileInputRef}
                                         type="file"
@@ -997,6 +1007,17 @@ export default function Edit({
                                         <Upload />
                                         {t('Select PDF files')}
                                     </Button>
+                                    {isAdmin && piece.parts.length > 0 && (
+                                        <Button
+                                            variant="outline"
+                                            onClick={() =>
+                                                setDeleteAllPartsOpen(true)
+                                            }
+                                        >
+                                            <Trash2 className="text-destructive" />
+                                            {t('Delete all parts')}
+                                        </Button>
+                                    )}
                                 </div>
                             </>
                         ) : (
@@ -1048,6 +1069,41 @@ export default function Edit({
                         <Button
                             variant="destructive"
                             onClick={confirmDeletePart}
+                        >
+                            {t('Delete')}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={deleteAllPartsOpen}
+                onOpenChange={setDeleteAllPartsOpen}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>
+                            {t('Delete all parts')}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {t(
+                                'Are you sure you want to delete all :count parts? This action cannot be undone.',
+                                {
+                                    count: piece.parts.length.toString(),
+                                },
+                            )}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setDeleteAllPartsOpen(false)}
+                        >
+                            {t('Cancel')}
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={confirmDeleteAllParts}
                         >
                             {t('Delete')}
                         </Button>

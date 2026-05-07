@@ -1101,3 +1101,137 @@ it('deletes a fileless part without storage errors', function () {
 
     expect(Part::find($part->id))->toBeNull();
 });
+
+// ---------------------------------------------------------------------------
+// Delete all parts — admin-only bulk delete
+// ---------------------------------------------------------------------------
+
+it('deletes all parts and removes files from disk', function () {
+    $user = User::factory()->create();
+    $piece = Piece::factory()->create();
+    $instrumentType = InstrumentType::factory()->create();
+
+    $part1 = Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $instrumentType->id]);
+    $part2 = Part::factory()->create(['piece_id' => $piece->id, 'instrument_type_id' => $instrumentType->id]);
+
+    Storage::disk('sheets')->put($part1->file_path, 'pdf-content');
+    Storage::disk('sheets')->put($part2->file_path, 'pdf-content');
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->delete("/muziekstukken/{$piece->id}/parts")
+        ->assertRedirect();
+
+    expect(Part::where('piece_id', $piece->id)->count())->toBe(0);
+    Storage::disk('sheets')->assertMissing($part1->file_path);
+    Storage::disk('sheets')->assertMissing($part2->file_path);
+});
+
+it('delete all parts handles mixed file and fileless parts', function () {
+    $user = User::factory()->create();
+    $piece = Piece::factory()->create();
+
+    $filePart = Part::factory()->create(['piece_id' => $piece->id]);
+    $filelessPart = Part::factory()->fileless()->create(['piece_id' => $piece->id]);
+
+    Storage::disk('sheets')->put($filePart->file_path, 'pdf-content');
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->delete("/muziekstukken/{$piece->id}/parts")
+        ->assertRedirect();
+
+    expect(Part::where('piece_id', $piece->id)->count())->toBe(0);
+    Storage::disk('sheets')->assertMissing($filePart->file_path);
+});
+
+it('delete all parts succeeds on piece with no parts', function () {
+    $user = User::factory()->create();
+    $piece = Piece::factory()->create();
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->delete("/muziekstukken/{$piece->id}/parts")
+        ->assertRedirect();
+
+    expect(Part::where('piece_id', $piece->id)->count())->toBe(0);
+});
+
+it('delete all parts does not affect parts of other pieces', function () {
+    $user = User::factory()->create();
+    $piece = Piece::factory()->create();
+    $otherPiece = Piece::factory()->create();
+    $otherPart = Part::factory()->create(['piece_id' => $otherPiece->id]);
+
+    Part::factory()->create(['piece_id' => $piece->id]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->delete("/muziekstukken/{$piece->id}/parts")
+        ->assertRedirect();
+
+    expect(Part::find($otherPart->id))->not->toBeNull();
+});
+
+it('delete all parts preserves the piece itself', function () {
+    $user = User::factory()->create();
+    $piece = Piece::factory()->create();
+    Part::factory()->count(3)->create(['piece_id' => $piece->id]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['admin']])
+        ->delete("/muziekstukken/{$piece->id}/parts")
+        ->assertRedirect();
+
+    expect(Piece::find($piece->id))->not->toBeNull();
+    expect(Part::where('piece_id', $piece->id)->count())->toBe(0);
+});
+
+it('redirects guests from delete all parts', function () {
+    $piece = Piece::factory()->create();
+    Part::factory()->create(['piece_id' => $piece->id]);
+
+    $this->delete("/muziekstukken/{$piece->id}/parts")
+        ->assertRedirect('/auth/redirect');
+
+    expect($piece->parts()->count())->toBe(1);
+});
+
+it('denies non-admin editor from deleting all parts', function () {
+    $user = User::factory()->create();
+    $piece = Piece::factory()->create();
+    $part = Part::factory()->create(['piece_id' => $piece->id]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => ['muziekbeheer']])
+        ->delete("/muziekstukken/{$piece->id}/parts")
+        ->assertForbidden();
+
+    expect(Part::find($part->id))->not->toBeNull();
+});
+
+it('denies non-admin roles from deleting all parts', function (string $role) {
+    $user = User::factory()->create();
+    $piece = Piece::factory()->create();
+    $part = Part::factory()->create(['piece_id' => $piece->id]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => [$role]])
+        ->delete("/muziekstukken/{$piece->id}/parts")
+        ->assertForbidden();
+
+    expect(Part::find($part->id))->not->toBeNull();
+})->with(['member', 'lid', 'dirigent', 'vrijwilliger']);
+
+it('denies users with no roles from deleting all parts', function () {
+    $user = User::factory()->create(['oidc_roles' => []]);
+    $piece = Piece::factory()->create();
+    $part = Part::factory()->create(['piece_id' => $piece->id]);
+
+    $this->actingAs($user)
+        ->withSession(['roles' => []])
+        ->delete("/muziekstukken/{$piece->id}/parts")
+        ->assertForbidden();
+
+    expect(Part::find($part->id))->not->toBeNull();
+});

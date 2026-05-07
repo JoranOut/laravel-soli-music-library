@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\GenreController;
 use App\Http\Controllers\Admin\InstrumentAliasController;
+use App\Http\Controllers\Admin\InstrumentTypeController;
 use App\Http\Controllers\Admin\MusicTypeController;
 use App\Http\Controllers\Admin\RolePermissionController;
 use App\Http\Controllers\Auth\AuthController;
@@ -97,9 +98,20 @@ Route::middleware(['auth', EnsureUserHasMusicAccess::class])->group(function () 
 Route::middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
     Route::get('/admin/roles', [RolePermissionController::class, 'index'])->name('admin.roles');
     Route::put('/admin/roles/{role}', [RolePermissionController::class, 'update'])->name('admin.roles.update');
+    Route::delete('/muziekstukken/{piece}/parts', [PartController::class, 'destroyAll'])->name('muziekstukken.parts.destroy-all');
 });
 
 Route::middleware(['auth', 'can:manage-instrument-aliases'])->group(function () {
     Route::get('/admin/instrument-aliases', [InstrumentAliasController::class, 'index'])->name('admin.instrument-aliases');
     Route::put('/admin/instrument-aliases/{instrumentType}', [InstrumentAliasController::class, 'update'])->name('admin.instrument-aliases.update');
+});
+
+Route::middleware(['auth', 'can:manage-instrument-types'])->group(function () {
+    Route::get('/admin/instrument-types', [InstrumentTypeController::class, 'index'])->name('admin.instrument-types');
+    Route::post('/admin/instrument-types', [InstrumentTypeController::class, 'store'])->name('admin.instrument-types.store');
+    Route::put('/admin/instrument-types/{instrumentType}', [InstrumentTypeController::class, 'update'])->name('admin.instrument-types.update');
+    Route::delete('/admin/instrument-types/{instrumentType}', [InstrumentTypeController::class, 'destroy'])->name('admin.instrument-types.destroy');
+    Route::post('/admin/instrument-types/families', [InstrumentTypeController::class, 'storeFamily'])->name('admin.instrument-types.families.store');
+    Route::put('/admin/instrument-types/families/{instrumentFamily}', [InstrumentTypeController::class, 'updateFamily'])->name('admin.instrument-types.families.update');
+    Route::delete('/admin/instrument-types/families/{instrumentFamily}', [InstrumentTypeController::class, 'destroyFamily'])->name('admin.instrument-types.families.destroy');
 });
