@@ -67,26 +67,9 @@ export default function PrepareUploadsDialog({
     const [uploading, setUploading] = useState(false);
     const [uploadError, setUploadError] = useState<string | null>(null);
     const blobUrlsRef = useRef<Map<number, string>>(new Map());
+    const [activeBlobUrl, setActiveBlobUrl] = useState<string | undefined>();
 
     const instOptions = instrumentOptions(instrumentTypes);
-
-    // Initialize form values from uploads when dialog opens
-    useEffect(() => {
-        if (open && uploads.length > 0) {
-            setFormValues(uploads.map((u) => ({ ...u })));
-            setActiveIndex(0);
-            setApprovedIndices(new Set());
-            setUploadError(null);
-        }
-    }, [open, uploads]);
-
-    // Clean up blob URLs on close
-    const cleanupBlobUrls = useCallback(() => {
-        for (const url of blobUrlsRef.current.values()) {
-            URL.revokeObjectURL(url);
-        }
-        blobUrlsRef.current.clear();
-    }, []);
 
     function getBlobUrl(index: number): string | undefined {
         if (!uploads[index]) return undefined;
@@ -98,6 +81,30 @@ export default function PrepareUploadsDialog({
         }
         return blobUrlsRef.current.get(index)!;
     }
+
+    // Initialize form values from uploads when dialog opens
+    useEffect(() => {
+        if (open && uploads.length > 0) {
+            setFormValues(uploads.map((u) => ({ ...u })));
+            setActiveIndex(0);
+            setApprovedIndices(new Set());
+            setUploadError(null);
+        }
+    }, [open, uploads]);
+
+    // Update active blob URL when index changes
+    useEffect(() => {
+        setActiveBlobUrl(getBlobUrl(activeIndex));
+    }, [activeIndex, uploads]);
+
+    // Clean up blob URLs on close
+    const cleanupBlobUrls = useCallback(() => {
+        for (const url of blobUrlsRef.current.values()) {
+            URL.revokeObjectURL(url);
+        }
+        blobUrlsRef.current.clear();
+        setActiveBlobUrl(undefined);
+    }, []);
 
     function handleClose(nextOpen: boolean) {
         if (nextOpen) {
@@ -443,9 +450,9 @@ export default function PrepareUploadsDialog({
 
                     {/* Right panel: PDF preview */}
                     <div className="min-h-0 overflow-hidden rounded-lg border">
-                        {activeUpload && getBlobUrl(activeIndex) && (
+                        {activeUpload && activeBlobUrl && (
                             <iframe
-                                src={getBlobUrl(activeIndex)}
+                                src={activeBlobUrl}
                                 className="h-full w-full"
                                 title={activeUpload.file.name}
                             />
