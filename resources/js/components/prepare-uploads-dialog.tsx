@@ -269,6 +269,16 @@ export default function PrepareUploadsDialog({
                         {formValues.map((upload, i) => {
                             const isApproved = approvedIndices.has(i);
                             const isActive = i === activeIndex;
+                            const typeName = instrumentTypes.find(
+                                (it) =>
+                                    it.id.toString() ===
+                                    upload.instrument_type_id,
+                            )?.name;
+                            const label = typeName
+                                ? [typeName, upload.voice, upload.note]
+                                      .filter(Boolean)
+                                      .join(' - ')
+                                : null;
                             return (
                                 <button
                                     key={i}
@@ -285,8 +295,15 @@ export default function PrepareUploadsDialog({
                                     ) : (
                                         <span className="size-4 shrink-0" />
                                     )}
-                                    <span className="truncate">
-                                        {upload.file.name}
+                                    <span className="min-w-0">
+                                        <span className="block truncate">
+                                            {upload.file.name}
+                                        </span>
+                                        {label && (
+                                            <span className="block truncate text-xs text-muted-foreground">
+                                                {label}
+                                            </span>
+                                        )}
                                     </span>
                                 </button>
                             );
