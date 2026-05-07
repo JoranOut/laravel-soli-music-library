@@ -72,6 +72,8 @@ class InstrumentTypeController extends Controller
                 ->update(['instrument_type_id' => $replacementId]);
         }
 
+        $instrumentType->replaced_by_id = $replacementId;
+        $instrumentType->save();
         $instrumentType->delete();
 
         return back();

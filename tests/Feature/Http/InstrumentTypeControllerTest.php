@@ -159,7 +159,8 @@ it('allows admin to delete instrument type without parts', function () {
         ->delete("/admin/instrument-types/{$type->id}")
         ->assertRedirect();
 
-    expect($type->fresh()->deleted_at)->not->toBeNull();
+    expect($type->fresh()->deleted_at)->not->toBeNull()
+        ->and($type->fresh()->replaced_by_id)->toBeNull();
 });
 
 it('allows admin to delete instrument type with replacement', function () {
@@ -175,7 +176,8 @@ it('allows admin to delete instrument type with replacement', function () {
         ])
         ->assertRedirect();
 
-    expect($type->fresh()->deleted_at)->not->toBeNull();
+    expect($type->fresh()->deleted_at)->not->toBeNull()
+        ->and($type->fresh()->replaced_by_id)->toBe($replacement->id);
     expect($part->fresh()->instrument_type_id)->toBe($replacement->id);
 });
 

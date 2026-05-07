@@ -12,6 +12,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Combobox } from '@/components/ui/combobox';
 import { Select } from '@/components/ui/select';
 import {
     Table,
@@ -423,23 +424,18 @@ export default function InstrumentTypes({ instrumentTypes, families }: Props) {
                             <label className="text-sm font-medium">
                                 {t('Reassign to')}
                             </label>
-                            <Select
+                            <Combobox
                                 value={replaceWithId}
-                                onChange={(e) =>
-                                    setReplaceWithId(e.target.value)
-                                }
-                            >
-                                <option value="">
-                                    {t('Remove from all parts')}
-                                </option>
-                                {instrumentTypes
+                                onChange={setReplaceWithId}
+                                placeholder={t('Search instrument type...')}
+                                options={instrumentTypes
                                     .filter((it) => it.id !== deleteTarget.id)
-                                    .map((it) => (
-                                        <option key={it.id} value={it.id}>
-                                            {it.name}
-                                        </option>
-                                    ))}
-                            </Select>
+                                    .map((it) => ({
+                                        value: String(it.id),
+                                        label: it.name,
+                                        group: it.instrument_family?.name,
+                                    }))}
+                            />
                         </div>
                     )}
 

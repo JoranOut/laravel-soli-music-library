@@ -52,4 +52,8 @@ return [
         'secret' => env('SOLI_ADMIN_WEBHOOK_SECRET'),
     ],
 
+    'soli_instruments_api' => [
+        'api_key' => env('SOLI_INSTRUMENTS_API_KEY'),
+    ],
+
 ];
