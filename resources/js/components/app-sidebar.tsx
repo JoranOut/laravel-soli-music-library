@@ -30,7 +30,7 @@ import { useTranslation } from '@/hooks/use-translation';
 import type { NavItem } from '@/types';
 
 export function AppSidebar() {
-    const { auth, adminUrl } = usePage().props;
+    const { auth } = usePage().props;
     const { t } = useTranslation();
     const roles: string[] = auth.roles ?? [];
     const isEditor = roles.includes('admin') || roles.includes('muziekbeheer');
@@ -74,12 +74,11 @@ export function AppSidebar() {
         });
     }
 
-    if (roles.includes('admin')) {
+    if (permissions.includes('manage-instrument-types')) {
         adminItems.push({
             title: t('Instrument types'),
-            href: `${adminUrl}/admin/instrumentsoorten`,
+            href: '/admin/instrument-types',
             icon: Guitar,
-            external: true,
         });
     }
 

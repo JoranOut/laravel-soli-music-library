@@ -257,6 +257,7 @@ class PieceController extends Controller
             'audioUrl' => $audioUrl,
             'orchestras' => Orchestra::where('is_active', true)->orderBy('sort_order')->get(),
             'canEditAllFields' => $canEditAllFields,
+            'isAdmin' => $access->isAdmin(),
             'canEditSpeelperiodes' => auth()->user()?->can('edit speelperiode') ?? false,
             'canArchive' => $canEditAllFields,
             'genreSuggestions' => $suggestions['genres'],

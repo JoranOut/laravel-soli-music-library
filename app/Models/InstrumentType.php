@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['external_id', 'name', 'instrument_family_id', 'sort_order', 'aliases'])]
+#[Fillable(['external_id', 'name', 'instrument_family_id', 'sort_order', 'aliases', 'replaced_by_id'])]
 class InstrumentType extends Model
 {
     /** @use HasFactory<InstrumentTypeFactory> */
@@ -26,6 +26,12 @@ class InstrumentType extends Model
     public function instrumentFamily(): BelongsTo
     {
         return $this->belongsTo(InstrumentFamily::class);
+    }
+
+    /** @return BelongsTo<self, $this> */
+    public function replacedBy(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'replaced_by_id');
     }
 
     /** @return HasMany<Part, $this> */

@@ -19,16 +19,6 @@ class AdminApiService
     }
 
     /**
-     * @return array{families: array<int, array{id: int, naam: string}>, soorten: array<int, array{id: int, naam: string, instrument_familie_id: int}>}
-     *
-     * @throws ConnectionException
-     */
-    public function getInstruments(): array
-    {
-        return $this->get('/api/v1/instruments');
-    }
-
-    /**
      * @return array{onderdelen: array<int, array{id: int, naam: string, afkorting: string|null, type: string, actief: bool}>}
      *
      * @throws ConnectionException

@@ -151,7 +151,7 @@
     "Violation of these terms may result in termination of your membership and/or legal action.": "Overtreding van deze voorwaarden kan leiden tot beëindiging van je lidmaatschap en/of juridische acties.",
     "I agree": "Ik ga akkoord",
     "I do not agree": "Ik ga niet akkoord",
-    "There is no conductor part (partituur) assigned.": "Er is geen directiepartij (partituur) toegewezen.",
+    "There is no conductor part uploaded. Please check with the muziekbeheer volunteers.": "Er is geen directiepartij geüpload. Neem contact op met de muziekbeheer-vrijwilligers.",
     "Duplicate filename: \":filename\" (:count times)": "Dubbele bestandsnaam: \":filename\" (:count keer)",
     "Duplicate assignment: \":label\" (:count times)": "Dubbele toewijzing: \":label\" (:count keer)",
     "Drukklaar maken": "Drukklaar maken",
@@ -169,5 +169,15 @@
     "An unknown error occurred": "Er is een onbekende fout opgetreden",
     "Show past play periods": "Vorige speelperiodes tonen",
     "This archive number is already in use.": "Dit archiefnummer is al in gebruik.",
-    "member": "Lid"
+    "member": "Lid",
+    "Prepare uploads": "Uploads voorbereiden",
+    "Review and upload each file individually.": "Bekijk en upload elk bestand afzonderlijk.",
+    "Approve & next": "Goedkeuren & volgende",
+    "Upload all parts": "Alle partijen uploaden",
+    "Are you sure you want to close? Changes will be lost.": "Weet je zeker dat je wilt sluiten? Wijzigingen gaan verloren.",
+    "Duplicate filename: \":filename\"": "Dubbele bestandsnaam: \":filename\"",
+    "Duplicate assignment: \":label\"": "Dubbele toewijzing: \":label\"",
+    "Upload failed": "Upload mislukt",
+    "Close": "Sluiten",
+    "of": "van"
 }
