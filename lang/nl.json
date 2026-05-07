@@ -169,5 +169,15 @@
     "An unknown error occurred": "Er is een onbekende fout opgetreden",
     "Show past play periods": "Vorige speelperiodes tonen",
     "This archive number is already in use.": "Dit archiefnummer is al in gebruik.",
-    "member": "Lid"
+    "member": "Lid",
+    "Prepare uploads": "Uploads voorbereiden",
+    "Review and upload each file individually.": "Bekijk en upload elk bestand afzonderlijk.",
+    "Approve & next": "Goedkeuren & volgende",
+    "Upload all parts": "Alle partijen uploaden",
+    "Are you sure you want to close? Changes will be lost.": "Weet je zeker dat je wilt sluiten? Wijzigingen gaan verloren.",
+    "Duplicate filename: \":filename\"": "Dubbele bestandsnaam: \":filename\"",
+    "Duplicate assignment: \":label\"": "Dubbele toewijzing: \":label\"",
+    "Upload failed": "Upload mislukt",
+    "Close": "Sluiten",
+    "of": "van"
 }

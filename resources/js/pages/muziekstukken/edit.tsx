@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import { useRef, useState, useMemo } from 'react';
 import { Heading } from '@/components/heading';
+import type { PartUpload } from '@/components/prepare-uploads-dialog';
+import PrepareUploadsDialog from '@/components/prepare-uploads-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { ComboboxOption } from '@/components/ui/combobox';
@@ -44,15 +46,6 @@ import type {
 import PartsMatrix from './parts-matrix';
 import type { PieceFormHandle } from './piece-form';
 import PieceForm from './piece-form';
-
-type PartUpload = {
-    file: File;
-    instrument_type_id: string;
-    is_conductor: boolean;
-    voice: string;
-    amount_bought: string;
-    note: string;
-};
 
 type Props = {
     piece: Piece;
@@ -115,7 +108,7 @@ export default function Edit({
     const audioInputRef = useRef<HTMLInputElement>(null);
     const [audioUploading, setAudioUploading] = useState(false);
     const [uploads, setUploads] = useState<PartUpload[]>([]);
-    const [uploading, setUploading] = useState(false);
+    const [prepareDialogOpen, setPrepareDialogOpen] = useState(false);
     const [deletePart, setDeletePart] = useState<Part | null>(null);
     const [endSpeelperiodeIndex, setEndSpeelperiodeIndex] = useState<
         number | null
@@ -493,71 +486,16 @@ export default function Edit({
             const guess = guessFromFilename(file.name, instrumentTypes);
             return {
                 file,
-                instrument_type_id:
-                    guess.instrument_type_id ??
-                    instrumentTypes[0]?.id.toString() ??
-                    '',
+                instrument_type_id: guess.instrument_type_id ?? '',
                 is_conductor: guess.is_conductor ?? false,
                 voice: guess.voice ?? '',
                 amount_bought: '1',
                 note: '',
             };
         });
-        setUploads((prev) => [...prev, ...newUploads]);
+        setUploads(newUploads);
+        setPrepareDialogOpen(true);
         if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-
-    function updateUpload(
-        index: number,
-        field: keyof PartUpload,
-        value: string | boolean,
-    ) {
-        setUploads((prev) =>
-            prev.map((u, i) => (i === index ? { ...u, [field]: value } : u)),
-        );
-    }
-
-    function removeUpload(index: number) {
-        setUploads((prev) => prev.filter((_, i) => i !== index));
-    }
-
-    function submitUploads() {
-        if (uploads.length === 0) return;
-
-        const formData = new FormData();
-        uploads.forEach((upload, i) => {
-            formData.append(`parts[${i}][file]`, upload.file);
-            formData.append(
-                `parts[${i}][instrument_type_id]`,
-                upload.instrument_type_id,
-            );
-            formData.append(
-                `parts[${i}][is_conductor]`,
-                upload.is_conductor ? '1' : '0',
-            );
-            if (upload.voice !== '') {
-                formData.append(`parts[${i}][voice]`, upload.voice);
-            }
-            if (upload.amount_bought !== '') {
-                formData.append(
-                    `parts[${i}][amount_bought]`,
-                    upload.amount_bought,
-                );
-            }
-            if (upload.note !== '') {
-                formData.append(`parts[${i}][note]`, upload.note);
-            }
-        });
-
-        setUploading(true);
-        router.post(`/muziekstukken/${piece.id}/parts`, formData, {
-            forceFormData: true,
-            preserveScroll: true,
-            onFinish: () => {
-                setUploading(false);
-                setUploads([]);
-            },
-        });
     }
 
     function confirmDeletePart() {
@@ -1041,197 +979,24 @@ export default function Edit({
                                 )}
 
                                 {/* Upload new parts */}
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-4">
-                                        <input
-                                            ref={fileInputRef}
-                                            type="file"
-                                            accept=".pdf"
-                                            multiple
-                                            onChange={handleFilesSelected}
-                                            className="hidden"
-                                        />
-                                        <Button
-                                            variant="outline"
-                                            onClick={() =>
-                                                fileInputRef.current?.click()
-                                            }
-                                        >
-                                            <Upload />
-                                            {t('Select PDF files')}
-                                        </Button>
-                                    </div>
-
-                                    {uploads.length > 0 && (
-                                        <div className="rounded-lg border">
-                                            <Table>
-                                                <TableHeader>
-                                                    <TableRow>
-                                                        <TableHead>
-                                                            {t('File')}
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            {t('Instrument')}
-                                                        </TableHead>
-                                                        <TableHead className="w-[150px]">
-                                                            {t('Note')}
-                                                        </TableHead>
-                                                        <TableHead className="w-[100px]">
-                                                            {t('Voice')}
-                                                        </TableHead>
-                                                        <TableHead className="w-[120px]">
-                                                            {t('Amount bought')}
-                                                        </TableHead>
-                                                        <TableHead>
-                                                            {t('Partituur')}
-                                                        </TableHead>
-                                                        <TableHead className="w-[80px]" />
-                                                    </TableRow>
-                                                </TableHeader>
-                                                <TableBody>
-                                                    {uploads.map(
-                                                        (upload, i) => (
-                                                            <TableRow key={i}>
-                                                                <TableCell>
-                                                                    {
-                                                                        upload
-                                                                            .file
-                                                                            .name
-                                                                    }
-                                                                </TableCell>
-                                                                <TableCell>
-                                                                    <Combobox
-                                                                        options={
-                                                                            instOptions
-                                                                        }
-                                                                        value={
-                                                                            upload.instrument_type_id
-                                                                        }
-                                                                        onChange={(
-                                                                            v,
-                                                                        ) =>
-                                                                            updateUpload(
-                                                                                i,
-                                                                                'instrument_type_id',
-                                                                                v,
-                                                                            )
-                                                                        }
-                                                                        className="max-w-[250px]"
-                                                                    />
-                                                                </TableCell>
-                                                                <TableCell>
-                                                                    <Input
-                                                                        maxLength={
-                                                                            20
-                                                                        }
-                                                                        value={
-                                                                            upload.note
-                                                                        }
-                                                                        onChange={(
-                                                                            e,
-                                                                        ) =>
-                                                                            updateUpload(
-                                                                                i,
-                                                                                'note',
-                                                                                e
-                                                                                    .target
-                                                                                    .value,
-                                                                            )
-                                                                        }
-                                                                        className="w-[130px]"
-                                                                        placeholder="-"
-                                                                    />
-                                                                </TableCell>
-                                                                <TableCell>
-                                                                    <Input
-                                                                        type="number"
-                                                                        min="1"
-                                                                        value={
-                                                                            upload.voice
-                                                                        }
-                                                                        onChange={(
-                                                                            e,
-                                                                        ) =>
-                                                                            updateUpload(
-                                                                                i,
-                                                                                'voice',
-                                                                                e
-                                                                                    .target
-                                                                                    .value,
-                                                                            )
-                                                                        }
-                                                                        className="w-[80px]"
-                                                                        placeholder="-"
-                                                                    />
-                                                                </TableCell>
-                                                                <TableCell>
-                                                                    <Input
-                                                                        type="number"
-                                                                        min="0"
-                                                                        value={
-                                                                            upload.amount_bought
-                                                                        }
-                                                                        onChange={(
-                                                                            e,
-                                                                        ) =>
-                                                                            updateUpload(
-                                                                                i,
-                                                                                'amount_bought',
-                                                                                e
-                                                                                    .target
-                                                                                    .value,
-                                                                            )
-                                                                        }
-                                                                        className="w-[100px]"
-                                                                        placeholder="-"
-                                                                    />
-                                                                </TableCell>
-                                                                <TableCell>
-                                                                    <Checkbox
-                                                                        checked={
-                                                                            upload.is_conductor
-                                                                        }
-                                                                        onCheckedChange={(
-                                                                            checked,
-                                                                        ) =>
-                                                                            updateUpload(
-                                                                                i,
-                                                                                'is_conductor',
-                                                                                !!checked,
-                                                                            )
-                                                                        }
-                                                                    />
-                                                                </TableCell>
-                                                                <TableCell>
-                                                                    <Button
-                                                                        variant="ghost"
-                                                                        size="icon"
-                                                                        onClick={() =>
-                                                                            removeUpload(
-                                                                                i,
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        <Trash2 className="text-destructive" />
-                                                                    </Button>
-                                                                </TableCell>
-                                                            </TableRow>
-                                                        ),
-                                                    )}
-                                                </TableBody>
-                                            </Table>
-
-                                            <div className="border-t p-4">
-                                                <Button
-                                                    onClick={submitUploads}
-                                                    disabled={uploading}
-                                                >
-                                                    <Upload />
-                                                    {t('Upload parts')}
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    )}
+                                <div>
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept=".pdf"
+                                        multiple
+                                        onChange={handleFilesSelected}
+                                        className="hidden"
+                                    />
+                                    <Button
+                                        variant="outline"
+                                        onClick={() =>
+                                            fileInputRef.current?.click()
+                                        }
+                                    >
+                                        <Upload />
+                                        {t('Select PDF files')}
+                                    </Button>
                                 </div>
                             </>
                         ) : (
@@ -1340,6 +1105,19 @@ export default function Edit({
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+            <PrepareUploadsDialog
+                open={prepareDialogOpen}
+                onOpenChange={(open) => {
+                    setPrepareDialogOpen(open);
+                    if (!open) setUploads([]);
+                }}
+                pieceId={piece.id}
+                instrumentTypes={instrumentTypes}
+                uploads={uploads}
+                existingParts={piece.parts.filter(
+                    (p) => p.original_filename !== null,
+                )}
+            />
         </AppLayout>
     );
 }

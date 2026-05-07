@@ -169,5 +169,15 @@
     "An unknown error occurred": "An unknown error occurred",
     "Show past play periods": "Show past play periods",
     "This archive number is already in use.": "This archive number is already in use.",
-    "member": "Member"
+    "member": "Member",
+    "Prepare uploads": "Prepare uploads",
+    "Review and upload each file individually.": "Review and upload each file individually.",
+    "Approve & next": "Approve & next",
+    "Upload all parts": "Upload all parts",
+    "Are you sure you want to close? Changes will be lost.": "Are you sure you want to close? Changes will be lost.",
+    "Duplicate filename: \":filename\"": "Duplicate filename: \":filename\"",
+    "Duplicate assignment: \":label\"": "Duplicate assignment: \":label\"",
+    "Upload failed": "Upload failed",
+    "Close": "Close",
+    "of": "of"
 }
