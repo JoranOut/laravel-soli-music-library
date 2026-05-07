@@ -227,7 +227,7 @@ export default function Edit({
         if (piece.parts.length > 0 && !hasPartituur) {
             result.push({
                 type: 'warning',
-                message: t('There is no conductor part (partituur) assigned.'),
+                message: t('There is no conductor part uploaded. Please check with the muziekbeheer volunteers.'),
                 partIds: [],
             });
         }
