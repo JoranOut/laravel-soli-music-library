@@ -3,6 +3,7 @@ import { Check, Pencil, Plus, Settings, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { Heading } from '@/components/heading';
 import { Button } from '@/components/ui/button';
+import { Combobox } from '@/components/ui/combobox';
 import {
     Dialog,
     DialogContent,
@@ -11,7 +12,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import {

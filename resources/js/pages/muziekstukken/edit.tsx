@@ -1162,6 +1162,11 @@ export default function Edit({
                 </DialogContent>
             </Dialog>
             <PrepareUploadsDialog
+                key={
+                    uploads.length > 0
+                        ? uploads.map((u) => u.file.name).join(',')
+                        : 'empty'
+                }
                 open={prepareDialogOpen}
                 onOpenChange={(open) => {
                     setPrepareDialogOpen(open);

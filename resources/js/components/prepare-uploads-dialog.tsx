@@ -6,7 +6,7 @@ import {
     TriangleAlert,
     Upload,
 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { ComboboxOption } from '@/components/ui/combobox';
@@ -63,47 +63,30 @@ export default function PrepareUploadsDialog({
     const [approvedIndices, setApprovedIndices] = useState<Set<number>>(
         new Set(),
     );
-    const [formValues, setFormValues] = useState<PartUpload[]>([]);
+    const [formValues, setFormValues] = useState<PartUpload[]>(() =>
+        uploads.map((u) => ({ ...u })),
+    );
     const [uploading, setUploading] = useState(false);
     const [uploadError, setUploadError] = useState<string | null>(null);
-    const blobUrlsRef = useRef<Map<number, string>>(new Map());
-    const [activeBlobUrl, setActiveBlobUrl] = useState<string | undefined>();
+    const [blobUrls, setBlobUrls] = useState<Map<number, string>>(() => {
+        const urls = new Map<number, string>();
+        uploads.forEach((u, i) => {
+            urls.set(i, URL.createObjectURL(u.file));
+        });
+        return urls;
+    });
 
     const instOptions = instrumentOptions(instrumentTypes);
-
-    function getBlobUrl(index: number): string | undefined {
-        if (!uploads[index]) return undefined;
-        if (!blobUrlsRef.current.has(index)) {
-            blobUrlsRef.current.set(
-                index,
-                URL.createObjectURL(uploads[index].file),
-            );
-        }
-        return blobUrlsRef.current.get(index)!;
-    }
-
-    // Initialize form values from uploads when dialog opens
-    useEffect(() => {
-        if (open && uploads.length > 0) {
-            setFormValues(uploads.map((u) => ({ ...u })));
-            setActiveIndex(0);
-            setApprovedIndices(new Set());
-            setUploadError(null);
-        }
-    }, [open, uploads]);
-
-    // Update active blob URL when index changes
-    useEffect(() => {
-        setActiveBlobUrl(getBlobUrl(activeIndex));
-    }, [activeIndex, uploads]);
+    const activeBlobUrl = blobUrls.get(activeIndex);
 
     // Clean up blob URLs on close
     const cleanupBlobUrls = useCallback(() => {
-        for (const url of blobUrlsRef.current.values()) {
-            URL.revokeObjectURL(url);
-        }
-        blobUrlsRef.current.clear();
-        setActiveBlobUrl(undefined);
+        setBlobUrls((prev) => {
+            for (const url of prev.values()) {
+                URL.revokeObjectURL(url);
+            }
+            return new Map();
+        });
     }, []);
 
     function handleClose(nextOpen: boolean) {
