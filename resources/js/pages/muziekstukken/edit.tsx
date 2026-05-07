@@ -230,7 +230,9 @@ export default function Edit({
         if (piece.parts.length > 0 && !hasPartituur) {
             result.push({
                 type: 'warning',
-                message: t('There is no conductor part uploaded. Please check with the muziekbeheer volunteers.'),
+                message: t(
+                    'There is no conductor part uploaded. Please check with the muziekbeheer volunteers.',
+                ),
                 partIds: [],
             });
         }
@@ -1082,9 +1084,7 @@ export default function Edit({
             >
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>
-                            {t('Delete all parts')}
-                        </DialogTitle>
+                        <DialogTitle>{t('Delete all parts')}</DialogTitle>
                         <DialogDescription>
                             {t(
                                 'Are you sure you want to delete all :count parts? This action cannot be undone.',

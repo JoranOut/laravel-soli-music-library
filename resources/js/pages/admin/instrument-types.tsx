@@ -58,7 +58,9 @@ export default function InstrumentTypes({ instrumentTypes, families }: Props) {
     const [newFamilyId, setNewFamilyId] = useState('');
 
     // Delete dialog state
-    const [deleteTarget, setDeleteTarget] = useState<InstrumentType | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<InstrumentType | null>(
+        null,
+    );
     const [replaceWithId, setReplaceWithId] = useState<string>('');
 
     // Manage families dialog state
@@ -85,7 +87,11 @@ export default function InstrumentTypes({ instrumentTypes, families }: Props) {
     function saveEdit(id: number) {
         router.put(
             `/admin/instrument-types/${id}`,
-            { name: editName, instrument_family_id: editFamilyId, sort_order: editSortOrder },
+            {
+                name: editName,
+                instrument_family_id: editFamilyId,
+                sort_order: editSortOrder,
+            },
             { preserveScroll: true, onSuccess: () => cancelEdit() },
         );
     }
@@ -195,7 +201,10 @@ export default function InstrumentTypes({ instrumentTypes, families }: Props) {
         <AppLayout
             breadcrumbs={[
                 { title: t('Admin'), href: '/admin/roles' },
-                { title: t('Instrument types'), href: '/admin/instrument-types' },
+                {
+                    title: t('Instrument types'),
+                    href: '/admin/instrument-types',
+                },
             ]}
         >
             <Head title={t('Instrument types')} />
@@ -245,10 +254,15 @@ export default function InstrumentTypes({ instrumentTypes, families }: Props) {
                                                 <Input
                                                     value={editName}
                                                     onChange={(e) =>
-                                                        setEditName(e.target.value)
+                                                        setEditName(
+                                                            e.target.value,
+                                                        )
                                                     }
                                                     onKeyDown={(e) =>
-                                                        handleEditKeyDown(e, type.id)
+                                                        handleEditKeyDown(
+                                                            e,
+                                                            type.id,
+                                                        )
                                                     }
                                                     className="h-8"
                                                     autoFocus
@@ -258,7 +272,9 @@ export default function InstrumentTypes({ instrumentTypes, families }: Props) {
                                                 <Select
                                                     value={editFamilyId}
                                                     onChange={(e) =>
-                                                        setEditFamilyId(e.target.value)
+                                                        setEditFamilyId(
+                                                            e.target.value,
+                                                        )
                                                     }
                                                     className="h-8"
                                                 >
@@ -266,7 +282,10 @@ export default function InstrumentTypes({ instrumentTypes, families }: Props) {
                                                         {t('Select...')}
                                                     </option>
                                                     {families.map((f) => (
-                                                        <option key={f.id} value={f.id}>
+                                                        <option
+                                                            key={f.id}
+                                                            value={f.id}
+                                                        >
                                                             {f.name}
                                                         </option>
                                                     ))}
@@ -278,25 +297,35 @@ export default function InstrumentTypes({ instrumentTypes, families }: Props) {
                                                     value={editSortOrder}
                                                     onChange={(e) =>
                                                         setEditSortOrder(
-                                                            parseInt(e.target.value) || 0,
+                                                            parseInt(
+                                                                e.target.value,
+                                                            ) || 0,
                                                         )
                                                     }
                                                     onKeyDown={(e) =>
-                                                        handleEditKeyDown(e, type.id)
+                                                        handleEditKeyDown(
+                                                            e,
+                                                            type.id,
+                                                        )
                                                     }
                                                     className="h-8 w-20"
                                                 />
                                             </TableCell>
-                                            <TableCell>{type.parts_count}</TableCell>
+                                            <TableCell>
+                                                {type.parts_count}
+                                            </TableCell>
                                             <TableCell>
                                                 <div className="flex gap-1">
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
                                                         className="h-7 w-7 p-0"
-                                                        onClick={() => saveEdit(type.id)}
+                                                        onClick={() =>
+                                                            saveEdit(type.id)
+                                                        }
                                                         disabled={
-                                                            !editName.trim() || !editFamilyId
+                                                            !editName.trim() ||
+                                                            !editFamilyId
                                                         }
                                                     >
                                                         <Check className="h-4 w-4" />
@@ -318,15 +347,21 @@ export default function InstrumentTypes({ instrumentTypes, families }: Props) {
                                             <TableCell>
                                                 {type.instrument_family?.name}
                                             </TableCell>
-                                            <TableCell>{type.sort_order}</TableCell>
-                                            <TableCell>{type.parts_count}</TableCell>
+                                            <TableCell>
+                                                {type.sort_order}
+                                            </TableCell>
+                                            <TableCell>
+                                                {type.parts_count}
+                                            </TableCell>
                                             <TableCell>
                                                 <div className="flex gap-1">
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
                                                         className="h-7 w-7 p-0"
-                                                        onClick={() => startEdit(type)}
+                                                        onClick={() =>
+                                                            startEdit(type)
+                                                        }
                                                     >
                                                         <Pencil className="h-4 w-4" />
                                                     </Button>
@@ -335,8 +370,12 @@ export default function InstrumentTypes({ instrumentTypes, families }: Props) {
                                                         size="sm"
                                                         className="h-7 w-7 p-0 text-destructive hover:text-destructive"
                                                         onClick={() => {
-                                                            setDeleteTarget(type);
-                                                            setReplaceWithId('');
+                                                            setDeleteTarget(
+                                                                type,
+                                                            );
+                                                            setReplaceWithId(
+                                                                '',
+                                                            );
                                                         }}
                                                     >
                                                         <Trash2 className="h-4 w-4" />
@@ -351,19 +390,27 @@ export default function InstrumentTypes({ instrumentTypes, families }: Props) {
                                 <TableCell>
                                     <Input
                                         value={newName}
-                                        onChange={(e) => setNewName(e.target.value)}
+                                        onChange={(e) =>
+                                            setNewName(e.target.value)
+                                        }
                                         onKeyDown={handleAddKeyDown}
-                                        placeholder={t('New instrument type...')}
+                                        placeholder={t(
+                                            'New instrument type...',
+                                        )}
                                         className="h-8"
                                     />
                                 </TableCell>
                                 <TableCell>
                                     <Select
                                         value={newFamilyId}
-                                        onChange={(e) => setNewFamilyId(e.target.value)}
+                                        onChange={(e) =>
+                                            setNewFamilyId(e.target.value)
+                                        }
                                         className="h-8"
                                     >
-                                        <option value="">{t('Select...')}</option>
+                                        <option value="">
+                                            {t('Select...')}
+                                        </option>
                                         {families.map((f) => (
                                             <option key={f.id} value={f.id}>
                                                 {f.name}
@@ -379,7 +426,9 @@ export default function InstrumentTypes({ instrumentTypes, families }: Props) {
                                         size="sm"
                                         className="h-7 w-7 p-0"
                                         onClick={addType}
-                                        disabled={!newName.trim() || !newFamilyId}
+                                        disabled={
+                                            !newName.trim() || !newFamilyId
+                                        }
                                     >
                                         <Plus className="h-4 w-4" />
                                     </Button>
@@ -410,7 +459,9 @@ export default function InstrumentTypes({ instrumentTypes, families }: Props) {
                                 ? t(
                                       ':count parts use this instrument type. Choose a replacement or remove it from all parts.',
                                       {
-                                          count: String(deleteTarget.parts_count),
+                                          count: String(
+                                              deleteTarget.parts_count,
+                                          ),
                                       },
                                   )
                                 : t(
@@ -462,7 +513,9 @@ export default function InstrumentTypes({ instrumentTypes, families }: Props) {
                     <DialogHeader>
                         <DialogTitle>{t('Manage families')}</DialogTitle>
                         <DialogDescription>
-                            {t('Manage the instrument families that group instrument types.')}
+                            {t(
+                                'Manage the instrument families that group instrument types.',
+                            )}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
@@ -477,10 +530,15 @@ export default function InstrumentTypes({ instrumentTypes, families }: Props) {
                                             <Input
                                                 value={editFamilyName}
                                                 onChange={(e) =>
-                                                    setEditFamilyName(e.target.value)
+                                                    setEditFamilyName(
+                                                        e.target.value,
+                                                    )
                                                 }
                                                 onKeyDown={(e) =>
-                                                    handleEditFamilyKeyDown(e, family.id)
+                                                    handleEditFamilyKeyDown(
+                                                        e,
+                                                        family.id,
+                                                    )
                                                 }
                                                 className="h-8"
                                                 autoFocus
@@ -489,8 +547,12 @@ export default function InstrumentTypes({ instrumentTypes, families }: Props) {
                                                 variant="ghost"
                                                 size="sm"
                                                 className="h-7 w-7 p-0"
-                                                onClick={() => saveEditFamily(family.id)}
-                                                disabled={!editFamilyName.trim()}
+                                                onClick={() =>
+                                                    saveEditFamily(family.id)
+                                                }
+                                                disabled={
+                                                    !editFamilyName.trim()
+                                                }
                                             >
                                                 <Check className="h-4 w-4" />
                                             </Button>
@@ -505,13 +567,17 @@ export default function InstrumentTypes({ instrumentTypes, families }: Props) {
                                         </div>
                                     ) : (
                                         <>
-                                            <span className="text-sm">{family.name}</span>
+                                            <span className="text-sm">
+                                                {family.name}
+                                            </span>
                                             <div className="flex items-center gap-1">
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
                                                     className="h-7 w-7 p-0"
-                                                    onClick={() => startEditFamily(family)}
+                                                    onClick={() =>
+                                                        startEditFamily(family)
+                                                    }
                                                 >
                                                     <Pencil className="h-3 w-3" />
                                                 </Button>
@@ -519,8 +585,12 @@ export default function InstrumentTypes({ instrumentTypes, families }: Props) {
                                                     variant="ghost"
                                                     size="sm"
                                                     className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                                                    onClick={() => deleteFamily(family.id)}
-                                                    disabled={familyHasTypes(family.id)}
+                                                    onClick={() =>
+                                                        deleteFamily(family.id)
+                                                    }
+                                                    disabled={familyHasTypes(
+                                                        family.id,
+                                                    )}
                                                 >
                                                     <Trash2 className="h-3 w-3" />
                                                 </Button>
@@ -533,7 +603,9 @@ export default function InstrumentTypes({ instrumentTypes, families }: Props) {
                         <div className="flex items-center gap-2">
                             <Input
                                 value={newFamilyName}
-                                onChange={(e) => setNewFamilyName(e.target.value)}
+                                onChange={(e) =>
+                                    setNewFamilyName(e.target.value)
+                                }
                                 onKeyDown={handleAddFamilyKeyDown}
                                 placeholder={t('New family...')}
                                 className="h-8"
