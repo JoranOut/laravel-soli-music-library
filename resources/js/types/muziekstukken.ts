@@ -32,6 +32,7 @@ export type Part = {
     original_filename: string | null;
     instrument_type: InstrumentType;
     download_url?: string | null;
+    view_url?: string | null;
 };
 
 export type Speelperiode = {

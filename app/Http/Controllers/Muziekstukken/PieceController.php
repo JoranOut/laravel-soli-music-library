@@ -155,6 +155,9 @@ class PieceController extends Controller
             'download_url' => in_array($part->id, $downloadableIds) && $part->file_path
                 ? URL::temporarySignedRoute('parts.download', now()->addDay(), ['part' => $part->id])
                 : null,
+            'view_url' => in_array($part->id, $downloadableIds) && $part->file_path
+                ? URL::temporarySignedRoute('parts.view', now()->addDay(), ['part' => $part->id])
+                : null,
         ]);
 
         $audioUrl = $piece->audio_file_path
