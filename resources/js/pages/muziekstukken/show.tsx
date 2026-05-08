@@ -97,9 +97,22 @@ function PartsOverview({
                                 key={part.id}
                                 className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm"
                             >
-                                <span>
-                                    {part.original_filename ?? t('Partituur')}
-                                </span>
+                                {part.view_url ? (
+                                    <a
+                                        href={part.view_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="hover:underline"
+                                    >
+                                        {part.original_filename ??
+                                            t('Partituur')}
+                                    </a>
+                                ) : (
+                                    <span>
+                                        {part.original_filename ??
+                                            t('Partituur')}
+                                    </span>
+                                )}
                                 <span className="text-muted-foreground">
                                     {part.amount_bought ?? 1}&times;
                                 </span>
@@ -131,19 +144,28 @@ function PartsOverview({
                         (sum, p) => sum + (p.amount_bought ?? 1),
                         0,
                     );
-                    const downloadUrl =
-                        group.parts.length === 1
-                            ? group.parts[0].download_url
-                            : null;
+                    const singlePart =
+                        group.parts.length === 1 ? group.parts[0] : null;
                     return (
                         <li className="flex items-center justify-between gap-2 text-sm">
-                            <VoiceLabel group={group} />
+                            {singlePart?.view_url ? (
+                                <a
+                                    href={singlePart.view_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="hover:underline"
+                                >
+                                    <VoiceLabel group={group} />
+                                </a>
+                            ) : (
+                                <VoiceLabel group={group} />
+                            )}
                             <span className="flex items-center gap-2">
                                 <span className="text-muted-foreground">
                                     {totalBought}&times;
                                 </span>
-                                {downloadUrl ? (
-                                    <a href={downloadUrl} download>
+                                {singlePart?.download_url ? (
+                                    <a href={singlePart.download_url} download>
                                         <Download className="size-4 text-muted-foreground hover:text-foreground" />
                                         <span className="sr-only">
                                             {t('Download')}
@@ -492,10 +514,25 @@ export default function Show({
                                             {parts.map((part) => (
                                                 <TableRow key={part.id}>
                                                     <TableCell>
-                                                        {
+                                                        {part.view_url ? (
+                                                            <a
+                                                                href={
+                                                                    part.view_url
+                                                                }
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="hover:underline"
+                                                            >
+                                                                {
+                                                                    part
+                                                                        .instrument_type
+                                                                        .name
+                                                                }
+                                                            </a>
+                                                        ) : (
                                                             part.instrument_type
                                                                 .name
-                                                        }
+                                                        )}
                                                         {part.note && (
                                                             <span className="text-muted-foreground">
                                                                 {' - '}
@@ -504,8 +541,25 @@ export default function Show({
                                                         )}
                                                     </TableCell>
                                                     <TableCell className="text-muted-foreground">
-                                                        {part.original_filename ?? (
-                                                            <span>&mdash;</span>
+                                                        {part.view_url ? (
+                                                            <a
+                                                                href={
+                                                                    part.view_url
+                                                                }
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="hover:underline"
+                                                            >
+                                                                {
+                                                                    part.original_filename
+                                                                }
+                                                            </a>
+                                                        ) : (
+                                                            (part.original_filename ?? (
+                                                                <span>
+                                                                    &mdash;
+                                                                </span>
+                                                            ))
                                                         )}
                                                     </TableCell>
                                                     <TableCell>

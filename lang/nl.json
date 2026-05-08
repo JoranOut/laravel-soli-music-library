@@ -180,5 +180,8 @@
     "Upload failed": "Upload mislukt",
     "Close": "Sluiten",
     "of": "van",
-    "This document contains another instrument": "Dit document bevat nog een ander instrument"
+    "This document contains another instrument": "Dit document bevat nog een ander instrument",
+    "Skip": "Overslaan",
+    "Skipped": "Overgeslagen",
+    "Unskip": "Niet meer overslaan"
 }

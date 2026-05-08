@@ -3,6 +3,7 @@ import {
     Check,
     CircleAlert,
     Loader2,
+    SkipForward,
     TriangleAlert,
     Upload,
 } from 'lucide-react';
@@ -90,6 +91,9 @@ export default function PrepareUploadsDialog({
     const [approvedIndices, setApprovedIndices] = useState<Set<number>>(
         new Set(),
     );
+    const [skippedIndices, setSkippedIndices] = useState<Set<number>>(
+        new Set(),
+    );
     const [formValues, setFormValues] = useState<PartUpload[]>(() =>
         uploads.map((u) => ({ ...u })),
     );
@@ -144,26 +148,41 @@ export default function PrepareUploadsDialog({
         );
     }
 
-    function handleApproveAndNext() {
-        const newApproved = new Set(approvedIndices);
-        newApproved.add(activeIndex);
-        setApprovedIndices(newApproved);
+    function advanceToNext(handled: Set<number>, alsoHandled?: Set<number>) {
+        const isHandled = (i: number) =>
+            handled.has(i) || (alsoHandled?.has(i) ?? false);
 
-        // Advance to next unapproved file
         const nextIndex = formValues.findIndex(
-            (_, i) => i > activeIndex && !newApproved.has(i),
+            (_, i) => i > activeIndex && !isHandled(i),
         );
         if (nextIndex !== -1) {
             setActiveIndex(nextIndex);
         } else {
-            // Try wrapping around
-            const wrapIndex = formValues.findIndex(
-                (_, i) => !newApproved.has(i),
-            );
+            const wrapIndex = formValues.findIndex((_, i) => !isHandled(i));
             if (wrapIndex !== -1) {
                 setActiveIndex(wrapIndex);
             }
         }
+    }
+
+    function handleApproveAndNext() {
+        const newApproved = new Set(approvedIndices);
+        newApproved.add(activeIndex);
+        setApprovedIndices(newApproved);
+        advanceToNext(newApproved, skippedIndices);
+    }
+
+    function handleSkip() {
+        const newSkipped = new Set(skippedIndices);
+        newSkipped.add(activeIndex);
+        setSkippedIndices(newSkipped);
+        // Un-approve if it was previously approved
+        setApprovedIndices((prev) => {
+            const next = new Set(prev);
+            next.delete(activeIndex);
+            return next;
+        });
+        advanceToNext(newSkipped, approvedIndices);
     }
 
     function handleDuplicateDocument() {
@@ -205,21 +224,28 @@ export default function PrepareUploadsDialog({
             return next;
         });
 
-        // Shift approved indices at and after the insertion point up by 1
-        setApprovedIndices((prev) => {
+        // Shift approved and skipped indices at and after the insertion point up by 1
+        const shiftIndices = (prev: Set<number>) => {
             const next = new Set<number>();
             for (const i of prev) {
                 next.add(i >= insertAt ? i + 1 : i);
             }
             return next;
-        });
+        };
+        setApprovedIndices(shiftIndices);
+        setSkippedIndices(shiftIndices);
     }
 
     function handleUploadAll() {
         if (uploading || formValues.length === 0) return;
 
+        const partsToUpload = formValues.filter(
+            (_, i) => !skippedIndices.has(i),
+        );
+        if (partsToUpload.length === 0) return;
+
         const formData = new FormData();
-        formValues.forEach((upload, i) => {
+        partsToUpload.forEach((upload, i) => {
             formData.append(`parts[${i}][file]`, upload.file);
             formData.append(
                 `parts[${i}][instrument_type_id]`,
@@ -267,9 +293,12 @@ export default function PrepareUploadsDialog({
 
     const activeUpload = formValues[activeIndex];
     const isActiveApproved = approvedIndices.has(activeIndex);
+    const isActiveSkipped = skippedIndices.has(activeIndex);
     const canApprove = !!activeUpload?.instrument_type_id;
-    const allApproved =
-        formValues.length > 0 && approvedIndices.size === formValues.length;
+    const allHandled =
+        formValues.length > 0 &&
+        approvedIndices.size + skippedIndices.size === formValues.length &&
+        approvedIndices.size > 0;
 
     // Warnings for the active file
     const activeWarnings: string[] = [];
@@ -334,17 +363,20 @@ export default function PrepareUploadsDialog({
                     <div className="overflow-y-auto rounded-lg border p-2">
                         {formValues.map((upload, i) => {
                             const isApproved = approvedIndices.has(i);
+                            const isSkipped = skippedIndices.has(i);
                             const isActive = i === activeIndex;
                             const typeName = instrumentTypes.find(
                                 (it) =>
                                     it.id.toString() ===
                                     upload.instrument_type_id,
                             )?.name;
-                            const label = typeName
-                                ? [typeName, upload.voice, upload.note]
-                                      .filter(Boolean)
-                                      .join(' - ')
-                                : null;
+                            const label = isSkipped
+                                ? t('Skipped')
+                                : typeName
+                                  ? [typeName, upload.voice, upload.note]
+                                        .filter(Boolean)
+                                        .join(' - ')
+                                  : null;
                             return (
                                 <button
                                     key={i}
@@ -354,15 +386,19 @@ export default function PrepareUploadsDialog({
                                         isActive
                                             ? 'bg-accent text-accent-foreground'
                                             : 'hover:bg-muted'
-                                    }`}
+                                    } ${isSkipped ? 'opacity-50' : ''}`}
                                 >
                                     {isApproved ? (
                                         <Check className="size-4 shrink-0 text-green-600" />
+                                    ) : isSkipped ? (
+                                        <SkipForward className="size-4 shrink-0 text-muted-foreground" />
                                     ) : (
                                         <span className="size-4 shrink-0" />
                                     )}
                                     <span className="min-w-0">
-                                        <span className="block truncate">
+                                        <span
+                                            className={`block truncate ${isSkipped ? 'line-through' : ''}`}
+                                        >
                                             {upload.file.name}
                                         </span>
                                         {label && (
@@ -496,26 +532,57 @@ export default function PrepareUploadsDialog({
                                         </Label>
                                     </div>
 
-                                    {!isActiveApproved && (
+                                    {isActiveSkipped ? (
                                         <Button
-                                            onClick={handleApproveAndNext}
-                                            disabled={!canApprove}
+                                            variant="outline"
+                                            onClick={() => {
+                                                setSkippedIndices((prev) => {
+                                                    const next = new Set(prev);
+                                                    next.delete(activeIndex);
+                                                    return next;
+                                                });
+                                            }}
                                             className="w-full"
                                         >
-                                            <Check />
-                                            {t('Approve & next')}
+                                            {t('Unskip')}
                                         </Button>
-                                    )}
+                                    ) : (
+                                        <>
+                                            {!isActiveApproved && (
+                                                <Button
+                                                    onClick={
+                                                        handleApproveAndNext
+                                                    }
+                                                    disabled={!canApprove}
+                                                    className="w-full"
+                                                >
+                                                    <Check />
+                                                    {t('Approve & next')}
+                                                </Button>
+                                            )}
 
-                                    <button
-                                        type="button"
-                                        onClick={handleDuplicateDocument}
-                                        className="w-full cursor-pointer text-center text-sm text-muted-foreground underline hover:text-foreground"
-                                    >
-                                        {t(
-                                            'This document contains another instrument',
-                                        )}
-                                    </button>
+                                            <Button
+                                                variant="ghost"
+                                                onClick={handleSkip}
+                                                className="w-full text-muted-foreground"
+                                            >
+                                                <SkipForward />
+                                                {t('Skip')}
+                                            </Button>
+
+                                            <button
+                                                type="button"
+                                                onClick={
+                                                    handleDuplicateDocument
+                                                }
+                                                className="w-full cursor-pointer text-center text-sm text-muted-foreground underline hover:text-foreground"
+                                            >
+                                                {t(
+                                                    'This document contains another instrument',
+                                                )}
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
                             </>
                         )}
@@ -542,7 +609,7 @@ export default function PrepareUploadsDialog({
                     </Button>
                     <Button
                         onClick={handleUploadAll}
-                        disabled={!allApproved || uploading}
+                        disabled={!allHandled || uploading}
                     >
                         {uploading ? (
                             <Loader2 className="animate-spin" />
