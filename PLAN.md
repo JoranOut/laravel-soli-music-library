@@ -1,6 +1,6 @@
 # Laravel Soli Music Library — Implementation Plan
 
-A separate Laravel application at `muziek.soli.nl` for secure music sheet
+A separate Laravel application at `muzitheek.soli.nl` for secure music sheet
 sharing. Replaces `wp-soli-music-library-plugin`.
 
 ## Stack
@@ -13,7 +13,7 @@ sharing. Replaces `wp-soli-music-library-plugin`.
 ## Architecture overview
 
 ```
-admin.soli.nl (IdP)                  muziek.soli.nl
+admin.soli.nl (IdP)                  muzitheek.soli.nl
 ┌────────────────────┐               ┌─────────────────────┐
 │ Passport (OIDC)    │◀── login ─────│ Socialite            │
 │ /api/v1/orchestras │◀── API ───────│ catalog sync job     │
@@ -252,15 +252,15 @@ serving.
 
 ### Phase 8 — Deploy pipeline + production
 
-**Goal:** `muziek.soli.nl` live on the Hetzner VPS.
+**Goal:** `muzitheek.soli.nl` live on the Hetzner VPS.
 
 **VPS prep:**
 
-1. `mkdir -p /var/www/muziek.soli.nl/{shared/storage/app/sheets,current}`
+1. `mkdir -p /var/www/muzitheek.soli.nl/{shared/storage/app/sheets,current}`
 2. Write `shared/.env` (production credentials)
 3. MySQL: `CREATE DATABASE muziek` + dedicated user
-4. nginx vhost for `muziek.soli.nl` → `current/public`
-5. TLS: `certbot --nginx -d muziek.soli.nl`
+4. nginx vhost for `muzitheek.soli.nl` → `current/public`
+5. TLS: `certbot --nginx -d muzitheek.soli.nl`
 6. php-fpm pool (optional, recommended)
 7. systemd queue worker + cron scheduler
 8. Register production OAuth client in admin Passport
@@ -272,7 +272,7 @@ serving.
 3. Add SSH secrets
 4. `gh workflow run deploy.yml --ref main`
 
-**Testable:** `https://muziek.soli.nl` loads, login works via
+**Testable:** `https://muzitheek.soli.nl` loads, login works via
 `admin.soli.nl`, pieces display correctly.
 
 ---

@@ -42,6 +42,33 @@ type Props = {
     existingParts: Part[];
 };
 
+function generateCopyName(
+    originalName: string,
+    existingNames: string[],
+): string {
+    const dotIndex = originalName.lastIndexOf('.');
+    const ext = dotIndex !== -1 ? originalName.slice(dotIndex) : '';
+    const nameWithoutExt =
+        dotIndex !== -1 ? originalName.slice(0, dotIndex) : originalName;
+
+    // Strip any existing -kopie or -kopie-N suffix to find the base name
+    const kopieMatch = nameWithoutExt.match(/^(.+)-kopie(-\d+)?$/);
+    const baseName = kopieMatch ? kopieMatch[1] : nameWithoutExt;
+
+    // Try "baseName-kopie.ext" first
+    const firstCopy = `${baseName}-kopie${ext}`;
+    if (!existingNames.includes(firstCopy)) {
+        return firstCopy;
+    }
+
+    // Try "baseName-kopie-N.ext" starting from 2
+    let n = 2;
+    while (existingNames.includes(`${baseName}-kopie-${n}${ext}`)) {
+        n++;
+    }
+    return `${baseName}-kopie-${n}${ext}`;
+}
+
 function instrumentOptions(types: InstrumentType[]): ComboboxOption[] {
     return types.map((t) => ({
         value: t.id.toString(),
@@ -137,6 +164,55 @@ export default function PrepareUploadsDialog({
                 setActiveIndex(wrapIndex);
             }
         }
+    }
+
+    function handleDuplicateDocument() {
+        if (!activeUpload) return;
+
+        const existingNames = formValues.map((u) => u.file.name);
+        const copyName = generateCopyName(
+            activeUpload.file.name,
+            existingNames,
+        );
+        const newFile = new File([activeUpload.file], copyName, {
+            type: activeUpload.file.type,
+        });
+
+        const newUpload: PartUpload = {
+            file: newFile,
+            instrument_type_id: '',
+            is_conductor: false,
+            voice: '',
+            amount_bought: '1',
+            note: '',
+        };
+
+        const insertAt = activeIndex + 1;
+
+        setFormValues((prev) => [
+            ...prev.slice(0, insertAt),
+            newUpload,
+            ...prev.slice(insertAt),
+        ]);
+
+        // Shift blob URLs at and after the insertion point up by 1
+        setBlobUrls((prev) => {
+            const next = new Map<number, string>();
+            for (const [i, url] of prev) {
+                next.set(i >= insertAt ? i + 1 : i, url);
+            }
+            next.set(insertAt, URL.createObjectURL(newFile));
+            return next;
+        });
+
+        // Shift approved indices at and after the insertion point up by 1
+        setApprovedIndices((prev) => {
+            const next = new Set<number>();
+            for (const i of prev) {
+                next.add(i >= insertAt ? i + 1 : i);
+            }
+            return next;
+        });
     }
 
     function handleUploadAll() {
@@ -301,7 +377,7 @@ export default function PrepareUploadsDialog({
                     </div>
 
                     {/* Middle panel: form */}
-                    <div className="space-y-4 overflow-y-auto rounded-lg border p-4">
+                    <div className="space-y-4 overflow-y-auto rounded-lg border bg-muted/80 p-4">
                         {activeUpload && (
                             <>
                                 <p className="text-sm text-muted-foreground">
@@ -335,6 +411,7 @@ export default function PrepareUploadsDialog({
                                             </span>
                                         </Label>
                                         <Combobox
+                                            className="bg-background"
                                             options={instOptions}
                                             value={
                                                 activeUpload.instrument_type_id
@@ -354,6 +431,7 @@ export default function PrepareUploadsDialog({
                                         <Input
                                             type="number"
                                             min="1"
+                                            className="bg-background"
                                             value={activeUpload.voice}
                                             onChange={(e) =>
                                                 updateFormValue(
@@ -369,6 +447,7 @@ export default function PrepareUploadsDialog({
                                     <div className="space-y-1">
                                         <Label>{t('Note')}</Label>
                                         <Input
+                                            className="bg-background"
                                             maxLength={20}
                                             value={activeUpload.note}
                                             onChange={(e) =>
@@ -387,6 +466,7 @@ export default function PrepareUploadsDialog({
                                         <Input
                                             type="number"
                                             min="0"
+                                            className="bg-background"
                                             value={activeUpload.amount_bought}
                                             onChange={(e) =>
                                                 updateFormValue(
@@ -426,6 +506,16 @@ export default function PrepareUploadsDialog({
                                             {t('Approve & next')}
                                         </Button>
                                     )}
+
+                                    <button
+                                        type="button"
+                                        onClick={handleDuplicateDocument}
+                                        className="w-full cursor-pointer text-center text-sm text-muted-foreground underline hover:text-foreground"
+                                    >
+                                        {t(
+                                            'This document contains another instrument',
+                                        )}
+                                    </button>
                                 </div>
                             </>
                         )}

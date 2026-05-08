@@ -24,6 +24,7 @@ function Combobox({ options, value, onChange, placeholder, className, allowCusto
     const [open, setOpen] = useState(false);
     const [search, setSearch] = useState('');
     const inputRef = useRef<HTMLInputElement>(null);
+    const pointerDownRef = useRef(false);
 
     const selectedLabel = options.find((o) => o.value === value)?.label ?? value;
 
@@ -83,6 +84,7 @@ function Combobox({ options, value, onChange, placeholder, className, allowCusto
                         'relative flex h-9 w-full items-center rounded-md border border-input bg-transparent text-sm shadow-xs transition-colors focus-within:ring-1 focus-within:ring-ring',
                         className,
                     )}
+                    onPointerDown={() => { pointerDownRef.current = true; }}
                 >
                     {!search && selectedLabel && (
                         <span className={cn(
@@ -98,7 +100,10 @@ function Combobox({ options, value, onChange, placeholder, className, allowCusto
                         value={search}
                         onChange={handleInputChange}
                         onFocus={() => {
-                            setOpen(true);
+                            if (!pointerDownRef.current) {
+                                setOpen(true);
+                            }
+                            pointerDownRef.current = false;
                             setSearch('');
                         }}
                         onBlur={() => setSearch('')}

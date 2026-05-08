@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\DownloadLog;
-use App\Models\InstrumentFamily;
 use App\Models\InstrumentType;
 use App\Models\Orchestra;
 use App\Models\Part;
@@ -22,8 +21,9 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call(RolesAndPermissionsSeeder::class);
+        $this->call(InstrumentTypeSeeder::class);
 
-        // Sync orchestras and instruments from admin, fall back to hardcoded data
+        // Sync orchestras from admin, fall back to hardcoded data
         $this->seedCatalog();
 
         // Fixed seed for deterministic output
@@ -141,33 +141,6 @@ class DatabaseSeeder extends Seeder
 
         foreach ($orchestrasData as $i => $data) {
             Orchestra::factory()->create([...$data, 'external_id' => $i + 1]);
-        }
-
-        $familiesData = [
-            'Koper' => ['Trompet', 'Cornet', 'Bugel', 'Hoorn', 'Trombone', 'Euphonium', 'Tuba'],
-            'Hout' => ['Klarinet', 'Klarinet Bes', 'Basklarinet', 'Hobo', 'Fagot'],
-            'Saxofoon' => ['Sopraansax', 'Altsax', 'Tenorsax', 'Baritonsax'],
-            'Dwarsfluit' => ['Dwarsfluit', 'Piccolo'],
-            'Slagwerk' => ['Pauken', 'Mallet', 'Drumstel', 'Percussie'],
-            'Partituur' => ['Partituur'],
-        ];
-
-        $externalId = 1;
-        $familyExternalId = 1;
-        foreach ($familiesData as $familyName => $types) {
-            $family = InstrumentFamily::factory()->create([
-                'external_id' => $familyExternalId++,
-                'name' => $familyName,
-            ]);
-
-            foreach ($types as $sortOrder => $typeName) {
-                InstrumentType::factory()->create([
-                    'external_id' => $externalId++,
-                    'name' => $typeName,
-                    'instrument_family_id' => $family->id,
-                    'sort_order' => $sortOrder,
-                ]);
-            }
         }
     }
 }
