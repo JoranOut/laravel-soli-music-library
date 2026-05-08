@@ -30,7 +30,7 @@ import { useTranslation } from '@/hooks/use-translation';
 import type { NavItem } from '@/types';
 
 export function AppSidebar() {
-    const { auth } = usePage().props;
+    const { auth, adminUrl } = usePage().props;
     const { t } = useTranslation();
     const roles: string[] = auth.roles ?? [];
     const isEditor = roles.includes('admin') || roles.includes('muziekbeheer');
@@ -123,8 +123,8 @@ export function AppSidebar() {
             icon: ShoppingCart,
         },
         {
-            title: 'dev.soli.nl',
-            href: 'https://dev.soli.nl',
+            title: t('Admin'),
+            href: adminUrl,
             icon: Rocket,
         },
     ];
