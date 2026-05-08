@@ -104,11 +104,13 @@ function PartsOverview({
                                         rel="noopener noreferrer"
                                         className="hover:underline"
                                     >
-                                        {part.original_filename ?? t('Partituur')}
+                                        {part.original_filename ??
+                                            t('Partituur')}
                                     </a>
                                 ) : (
                                     <span>
-                                        {part.original_filename ?? t('Partituur')}
+                                        {part.original_filename ??
+                                            t('Partituur')}
                                     </span>
                                 )}
                                 <span className="text-muted-foreground">
@@ -143,9 +145,7 @@ function PartsOverview({
                         0,
                     );
                     const singlePart =
-                        group.parts.length === 1
-                            ? group.parts[0]
-                            : null;
+                        group.parts.length === 1 ? group.parts[0] : null;
                     return (
                         <li className="flex items-center justify-between gap-2 text-sm">
                             {singlePart?.view_url ? (
@@ -516,15 +516,22 @@ export default function Show({
                                                     <TableCell>
                                                         {part.view_url ? (
                                                             <a
-                                                                href={part.view_url}
+                                                                href={
+                                                                    part.view_url
+                                                                }
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
                                                                 className="hover:underline"
                                                             >
-                                                                {part.instrument_type.name}
+                                                                {
+                                                                    part
+                                                                        .instrument_type
+                                                                        .name
+                                                                }
                                                             </a>
                                                         ) : (
-                                                            part.instrument_type.name
+                                                            part.instrument_type
+                                                                .name
                                                         )}
                                                         {part.note && (
                                                             <span className="text-muted-foreground">
@@ -536,17 +543,23 @@ export default function Show({
                                                     <TableCell className="text-muted-foreground">
                                                         {part.view_url ? (
                                                             <a
-                                                                href={part.view_url}
+                                                                href={
+                                                                    part.view_url
+                                                                }
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
                                                                 className="hover:underline"
                                                             >
-                                                                {part.original_filename}
+                                                                {
+                                                                    part.original_filename
+                                                                }
                                                             </a>
                                                         ) : (
-                                                            part.original_filename ?? (
-                                                                <span>&mdash;</span>
-                                                            )
+                                                            (part.original_filename ?? (
+                                                                <span>
+                                                                    &mdash;
+                                                                </span>
+                                                            ))
                                                         )}
                                                     </TableCell>
                                                     <TableCell>

@@ -148,10 +148,7 @@ export default function PrepareUploadsDialog({
         );
     }
 
-    function advanceToNext(
-        handled: Set<number>,
-        alsoHandled?: Set<number>,
-    ) {
+    function advanceToNext(handled: Set<number>, alsoHandled?: Set<number>) {
         const isHandled = (i: number) =>
             handled.has(i) || (alsoHandled?.has(i) ?? false);
 
@@ -161,9 +158,7 @@ export default function PrepareUploadsDialog({
         if (nextIndex !== -1) {
             setActiveIndex(nextIndex);
         } else {
-            const wrapIndex = formValues.findIndex(
-                (_, i) => !isHandled(i),
-            );
+            const wrapIndex = formValues.findIndex((_, i) => !isHandled(i));
             if (wrapIndex !== -1) {
                 setActiveIndex(wrapIndex);
             }
@@ -401,7 +396,9 @@ export default function PrepareUploadsDialog({
                                         <span className="size-4 shrink-0" />
                                     )}
                                     <span className="min-w-0">
-                                        <span className={`block truncate ${isSkipped ? 'line-through' : ''}`}>
+                                        <span
+                                            className={`block truncate ${isSkipped ? 'line-through' : ''}`}
+                                        >
                                             {upload.file.name}
                                         </span>
                                         {label && (
