@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\InstrumentType;
 use App\Models\Part;
 use App\Models\Piece;
 use Illuminate\Support\Collection;
@@ -63,10 +64,17 @@ class MusicAccessService
             $pieceOrchestraIds = $piece->orchestras->pluck('id')->toArray();
             $assignments = $this->getResolvedAssignments();
 
-            $allowedInstrumentTypeIds = collect($assignments)
+            $assignedTypeIds = collect($assignments)
                 ->filter(fn ($a) => in_array($a['orchestra_id'], $pieceOrchestraIds))
                 ->pluck('instrument_type_id')
-                ->unique()
+                ->unique();
+
+            $familyIds = InstrumentType::whereIn('id', $assignedTypeIds)
+                ->pluck('instrument_family_id')
+                ->unique();
+
+            $allowedInstrumentTypeIds = InstrumentType::whereIn('instrument_family_id', $familyIds)
+                ->pluck('id')
                 ->toArray();
 
             $visible = $visible->merge(
