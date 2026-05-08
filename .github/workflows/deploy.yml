@@ -50,14 +50,14 @@ jobs:
             --exclude='tests/' \
             --exclude='.github/' \
             -e "ssh -i ~/.ssh/deploy_key" \
-            ./ ${{ secrets.HETZNER_SSH_USER }}@${{ secrets.HETZNER_SSH_HOST }}:/var/www/muziek.soli.nl/staging/
+            ./ ${{ secrets.HETZNER_SSH_USER }}@${{ secrets.HETZNER_SSH_HOST }}:/var/www/muzitheek.soli.nl/staging/
 
       - name: Run deploy script
         run: |
           ssh -i ~/.ssh/deploy_key ${{ secrets.HETZNER_SSH_USER }}@${{ secrets.HETZNER_SSH_HOST }} bash -s << 'DEPLOY_SCRIPT'
           set -e
 
-          APP_DIR=/var/www/muziek.soli.nl
+          APP_DIR=/var/www/muzitheek.soli.nl
           STAGING="$APP_DIR/staging"
           SHARED="$APP_DIR/shared"
 
@@ -104,7 +104,7 @@ jobs:
 
           # Health check — rollback if site is broken
           sleep 2
-          HTTP_STATUS=$(curl -sL -o /dev/null -w "%{http_code}" --max-time 10 https://muziek.soli.nl || echo "000")
+          HTTP_STATUS=$(curl -sL -o /dev/null -w "%{http_code}" --max-time 10 https://muzitheek.soli.nl || echo "000")
           if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 500 ]; then
             echo "Health check failed (HTTP $HTTP_STATUS) — rolling back"
             cd "$APP_DIR"
