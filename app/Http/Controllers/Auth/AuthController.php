@@ -59,7 +59,9 @@ class AuthController extends Controller
         $assignments = $user->oidc_assignments ?? [];
 
         $resolvedAssignments = collect($assignments)->map(function ($a) {
-            $orchestra = Orchestra::where('external_id', $a['onderdeel_id'])->first();
+            $orchestra = Orchestra::where('external_id', $a['onderdeel_id'])
+                ->where('is_active', true)
+                ->first();
             $instrumentType = InstrumentType::where('external_id', $a['instrument_soort_id'])->first();
 
             return [
