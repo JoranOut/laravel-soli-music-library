@@ -109,17 +109,27 @@ class InstrumentTypeSeeder extends Seeder
         // Create families first
         $familyNames = collect($types)->pluck('family')->unique();
         $familyMap = [];
+        $familyIndex = 1;
         foreach ($familyNames as $name) {
-            $family = InstrumentFamily::updateOrCreate(['name' => $name]);
+            $family = InstrumentFamily::updateOrCreate(
+                ['name' => $name],
+                ['external_id' => $familyIndex]
+            );
             $familyMap[$name] = $family->id;
+            $familyIndex++;
         }
 
         // Create types with FK
+        $typeIndex = 1;
         foreach ($types as $type) {
             InstrumentType::updateOrCreate(
                 ['name' => $type['name']],
-                ['instrument_family_id' => $familyMap[$type['family']]]
+                [
+                    'instrument_family_id' => $familyMap[$type['family']],
+                    'external_id' => $typeIndex,
+                ]
             );
+            $typeIndex++;
         }
     }
 }
