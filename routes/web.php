@@ -17,9 +17,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [DashboardController::class, 'index'])->middleware('auth');
 
-Route::get('/auth/redirect', [AuthController::class, 'redirect'])->name('login');
-Route::get('/auth/callback', [AuthController::class, 'callback']);
-Route::post('/auth/logout', [AuthController::class, 'logout'])->name('logout');
+Route::middleware('throttle:10,1')->group(function () {
+    Route::get('/auth/redirect', [AuthController::class, 'redirect'])->name('login');
+    Route::get('/auth/callback', [AuthController::class, 'callback']);
+    Route::post('/auth/logout', [AuthController::class, 'logout'])->name('logout');
+});
 
 Route::post('/legal-agreement/accept', function () {
     $user = request()->user();
