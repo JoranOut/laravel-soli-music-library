@@ -169,7 +169,7 @@ class PartController extends Controller
             'user_id' => $request->user()->id,
             'part_id' => $part->id,
             'downloaded_at' => now(),
-            'ip' => $request->ip(),
+            'ip_hash' => hash('sha256', $request->ip()),
         ]);
 
         $part->loadMissing('instrumentType');
