@@ -9,9 +9,10 @@ Findings from security sweep (2026-05-10). Items ordered by risk.
 - [x] **#3 Reduce signed URL expiry** — `addDay()` → `addHours(2)` across 8 call sites (3 controllers)
 - [x] **#4 Use `storeAs()` for audio upload** — replace `file_get_contents()` in PieceController:419
 
+- [x] **#5 Rate limit auth routes** — `throttle:10,1` on `/auth/*`
+- [x] **#6 Rate limit webhook route** — `throttle:60,1` on `/api/webhooks/admin`
+
 ## Next up (requires testing)
-- [ ] **#5 Rate limit auth routes** — `/auth/redirect`, `/auth/callback`, `/auth/logout`
-- [ ] **#6 Rate limit webhook route** — `/api/webhooks/admin`
 - [ ] **#7 Authorization on `updateAudio`** — verify user can edit the specific piece
 - [ ] **#8 Security headers / CSP** — consider `bepsvpt/secure-headers` (used in admin app)
 - [ ] **#9 Session encryption + secure cookies** — production `.env` only: `SESSION_ENCRYPT=true`, `SESSION_SECURE_COOKIE=true`
