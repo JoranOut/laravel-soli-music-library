@@ -55,5 +55,8 @@ jobs:
       - name: Build Assets
         run: npm run build
 
+      - name: Audit PHP dependencies
+        run: composer audit
+
       - name: Tests
         run: ./vendor/bin/pest
