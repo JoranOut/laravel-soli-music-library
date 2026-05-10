@@ -47,7 +47,7 @@ class DashboardController extends Controller
                     'composer' => $piece->composer,
                     'audio_youtube_url' => $piece->audio_youtube_url,
                     'audio_url' => $piece->audio_file_path
-                        ? URL::temporarySignedRoute('muziekstukken.audio.stream', now()->addDay(), ['piece' => $piece->id])
+                        ? URL::temporarySignedRoute('muziekstukken.audio.stream', now()->addHours(2), ['piece' => $piece->id])
                         : null,
                     'parts' => $piece->parts->map(fn ($part) => $part->toArray())->values(),
                 ])

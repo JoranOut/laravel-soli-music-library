@@ -103,7 +103,7 @@ class PartController extends Controller
         }
 
         return response()->json([
-            'url' => URL::temporarySignedRoute('parts.download', now()->addDay(), ['part' => $part->id]),
+            'url' => URL::temporarySignedRoute('parts.download', now()->addHours(2), ['part' => $part->id]),
         ]);
     }
 
@@ -119,7 +119,7 @@ class PartController extends Controller
         }
 
         return response()->json([
-            'url' => URL::temporarySignedRoute('parts.view', now()->addDay(), ['part' => $part->id]),
+            'url' => URL::temporarySignedRoute('parts.view', now()->addHours(2), ['part' => $part->id]),
         ]);
     }
 

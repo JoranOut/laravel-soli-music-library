@@ -113,7 +113,7 @@ class PieceController extends Controller
             $piece->toArray(),
             [
                 'audio_url' => $piece->audio_file_path
-                    ? URL::temporarySignedRoute('muziekstukken.audio.stream', now()->addDay(), ['piece' => $piece->id])
+                    ? URL::temporarySignedRoute('muziekstukken.audio.stream', now()->addHours(2), ['piece' => $piece->id])
                     : null,
             ],
         ));
@@ -153,15 +153,15 @@ class PieceController extends Controller
         $parts = $displayParts->values()->map(fn ($part) => [
             ...$part->toArray(),
             'download_url' => in_array($part->id, $downloadableIds) && $part->file_path
-                ? URL::temporarySignedRoute('parts.download', now()->addDay(), ['part' => $part->id])
+                ? URL::temporarySignedRoute('parts.download', now()->addHours(2), ['part' => $part->id])
                 : null,
             'view_url' => in_array($part->id, $downloadableIds) && $part->file_path
-                ? URL::temporarySignedRoute('parts.view', now()->addDay(), ['part' => $part->id])
+                ? URL::temporarySignedRoute('parts.view', now()->addHours(2), ['part' => $part->id])
                 : null,
         ]);
 
         $audioUrl = $piece->audio_file_path
-            ? URL::temporarySignedRoute('muziekstukken.audio.stream', now()->addDay(), ['piece' => $piece->id])
+            ? URL::temporarySignedRoute('muziekstukken.audio.stream', now()->addHours(2), ['piece' => $piece->id])
             : null;
 
         $canEdit = $access->isEditor() || $access->isDirigent();
@@ -252,7 +252,7 @@ class PieceController extends Controller
         $suggestions = $this->getSuggestions();
 
         $audioUrl = $piece->audio_file_path
-            ? URL::temporarySignedRoute('muziekstukken.audio.stream', now()->addDay(), ['piece' => $piece->id])
+            ? URL::temporarySignedRoute('muziekstukken.audio.stream', now()->addHours(2), ['piece' => $piece->id])
             : null;
 
         $props = [
@@ -416,7 +416,7 @@ class PieceController extends Controller
 
         $path = "pieces/{$piece->id}/audio.mp3";
 
-        Storage::disk('sheets')->put($path, file_get_contents($request->file('audio')->getRealPath()));
+        $request->file('audio')->storeAs(dirname($path), basename($path), 'sheets');
 
         $piece->update([
             'audio_file_path' => $path,
