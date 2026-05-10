@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureSessionHasRoles;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\VerifyInstrumentsApiKey;
 use App\Http\Middleware\VerifyWebhookSignature;
@@ -17,6 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->web(prepend: [
+            SecurityHeaders::class,
+        ]);
+
         $middleware->web(append: [
             EnsureSessionHasRoles::class,
             SetLocale::class,
