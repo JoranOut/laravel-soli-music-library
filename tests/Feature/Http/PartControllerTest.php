@@ -794,7 +794,7 @@ it('multiple downloads create multiple log entries', function () {
     expect(DownloadLog::count())->toBe(2);
 });
 
-it('download log records IP address', function () {
+it('download log records hashed IP address', function () {
     $user = User::factory()->create();
     Permission::findOrCreate('download-all partijen');
     $user->givePermissionTo('download-all partijen');
@@ -811,7 +811,8 @@ it('download log records IP address', function () {
         ->assertOk();
 
     $log = DownloadLog::first();
-    expect($log->ip)->not->toBeNull();
+    expect($log->ip_hash)->not->toBeNull()
+        ->and($log->ip_hash)->toHaveLength(64);
 });
 
 it('denies member without any roles on download route', function () {

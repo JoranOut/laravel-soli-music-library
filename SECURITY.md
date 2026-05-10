@@ -15,10 +15,11 @@ Findings from security sweep (2026-05-10). Items ordered by risk.
 - [x] **#7 Authorization on `updateAudio`** — already covered by `EnsureUserIsEditor` middleware on route
 - [x] **#8 Security headers / CSP** — custom `SecurityHeaders` middleware (matches admin app pattern)
 
-## Next up (requires testing)
+- [x] **#11 GDPR-compliant IP logging** — new entries store SHA-256 hash instead of raw IP, added `country` column for future GeoIP
+
+## Remaining
 - [ ] **#9 Session encryption + secure cookies** — production `.env` only: `SESSION_ENCRYPT=true`, `SESSION_SECURE_COOKIE=true`
 - [ ] **#10 Stale session role re-validation** — add TTL check on `last_synced_at`
-- [ ] **#11 GDPR-compliant IP logging** — hash/truncate IPs in `download_logs`, add retention policy
 
 ## Discovered during sweep
 

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['user_id', 'part_id', 'downloaded_at', 'ip'])]
+#[Fillable(['user_id', 'part_id', 'downloaded_at', 'ip', 'ip_hash', 'country'])]
 class DownloadLog extends Model
 {
     public $timestamps = false;

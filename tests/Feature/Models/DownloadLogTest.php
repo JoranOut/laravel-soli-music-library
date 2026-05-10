@@ -12,11 +12,11 @@ it('can be created', function () {
         'user_id' => $user->id,
         'part_id' => $part->id,
         'downloaded_at' => '2026-03-15 14:30:00',
-        'ip' => '10.0.0.1',
+        'ip_hash' => hash('sha256', '10.0.0.1'),
     ]);
 
     expect($log)->toBeInstanceOf(DownloadLog::class)
-        ->and($log->ip)->toBe('10.0.0.1');
+        ->and($log->ip_hash)->toBe(hash('sha256', '10.0.0.1'));
 });
 
 it('has no timestamps', function () {
@@ -27,7 +27,7 @@ it('has no timestamps', function () {
         'user_id' => $user->id,
         'part_id' => $part->id,
         'downloaded_at' => now(),
-        'ip' => '10.0.0.1',
+        'ip_hash' => hash('sha256', '10.0.0.1'),
     ]);
 
     $log->refresh();
@@ -44,7 +44,7 @@ it('casts downloaded_at to datetime', function () {
         'user_id' => $user->id,
         'part_id' => $part->id,
         'downloaded_at' => '2026-03-15 14:30:00',
-        'ip' => '10.0.0.1',
+        'ip_hash' => hash('sha256', '10.0.0.1'),
     ]);
 
     $log->refresh();
@@ -60,7 +60,7 @@ it('belongs to a user', function () {
         'user_id' => $user->id,
         'part_id' => $part->id,
         'downloaded_at' => now(),
-        'ip' => '10.0.0.1',
+        'ip_hash' => hash('sha256', '10.0.0.1'),
     ]);
 
     expect($log->user)->toBeInstanceOf(User::class)
@@ -75,7 +75,7 @@ it('belongs to a part', function () {
         'user_id' => $user->id,
         'part_id' => $part->id,
         'downloaded_at' => now(),
-        'ip' => '10.0.0.1',
+        'ip_hash' => hash('sha256', '10.0.0.1'),
     ]);
 
     expect($log->part)->toBeInstanceOf(Part::class)
@@ -90,7 +90,7 @@ it('nullifies user_id when user is deleted', function () {
         'user_id' => $user->id,
         'part_id' => $part->id,
         'downloaded_at' => now(),
-        'ip' => '10.0.0.1',
+        'ip_hash' => hash('sha256', '10.0.0.1'),
     ]);
 
     $user->delete();
@@ -109,7 +109,7 @@ it('nullifies part_id when part is deleted', function () {
         'user_id' => $user->id,
         'part_id' => $part->id,
         'downloaded_at' => now(),
-        'ip' => '10.0.0.1',
+        'ip_hash' => hash('sha256', '10.0.0.1'),
     ]);
 
     $part->delete();
