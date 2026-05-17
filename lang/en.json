@@ -179,5 +179,13 @@
     "Duplicate assignment: \":label\"": "Duplicate assignment: \":label\"",
     "Upload failed": "Upload failed",
     "Close": "Close",
-    "of": "of"
+    "of": "of",
+    "Download logs": "Download logs",
+    "View download activity for all users.": "View download activity for all users.",
+    "Downloaded at": "Downloaded at",
+    "Country": "Country",
+    "User": "User",
+    "Deleted user": "Deleted user",
+    "Deleted part": "Deleted part",
+    "No download logs found.": "No download logs found."
 }

@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
+    Download,
     Globe,
     Guitar,
     Library,
@@ -103,6 +104,14 @@ export function AppSidebar() {
             title: t('Instrument aliases'),
             href: '/admin/instrument-aliases',
             icon: SlidersHorizontal,
+        });
+    }
+
+    if (permissions.includes('view-download-logs')) {
+        adminItems.push({
+            title: t('Download logs'),
+            href: '/admin/download-logs',
+            icon: Download,
         });
     }
 
