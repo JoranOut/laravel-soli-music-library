@@ -27,7 +27,10 @@ class Orchestra extends Model
     public function pieces(): BelongsToMany
     {
         return $this->belongsToMany(Piece::class, 'speelperiodes')
-            ->whereNotNull('speelperiodes.van')
+            ->where(function ($query) {
+                $query->whereNull('speelperiodes.van')
+                    ->orWhere('speelperiodes.van', '<=', now()->toDateString());
+            })
             ->where(function ($query) {
                 $query->whereNull('speelperiodes.tot')
                     ->orWhere('speelperiodes.tot', '>=', now()->toDateString());
