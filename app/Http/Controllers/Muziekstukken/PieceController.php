@@ -249,6 +249,14 @@ class PieceController extends Controller
 
         $piece->load(['orchestras', 'speelperiodes.orchestra', 'parts.instrumentType.instrumentFamily']);
 
+        $piece->parts->transform(function ($part) {
+            $part->view_url = $part->file_path
+                ? URL::temporarySignedRoute('parts.view', now()->addHours(2), ['part' => $part->id])
+                : null;
+
+            return $part;
+        });
+
         $suggestions = $this->getSuggestions();
 
         $audioUrl = $piece->audio_file_path

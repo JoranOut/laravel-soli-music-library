@@ -1,6 +1,7 @@
 import { Head, router } from '@inertiajs/react';
 import {
     CircleAlert,
+    Eye,
     Music,
     Plus,
     Save,
@@ -10,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useRef, useState, useMemo } from 'react';
 import { Heading } from '@/components/heading';
+import PartEditFields from '@/components/part-edit-fields';
 import type { PartUpload } from '@/components/prepare-uploads-dialog';
 import PrepareUploadsDialog from '@/components/prepare-uploads-dialog';
 import { Button } from '@/components/ui/button';
@@ -112,6 +114,7 @@ export default function Edit({
     const [uploads, setUploads] = useState<PartUpload[]>([]);
     const [prepareDialogOpen, setPrepareDialogOpen] = useState(false);
     const [deletePart, setDeletePart] = useState<Part | null>(null);
+    const [viewPart, setViewPart] = useState<Part | null>(null);
     const [deleteAllPartsOpen, setDeleteAllPartsOpen] = useState(false);
     const [endSpeelperiodeIndex, setEndSpeelperiodeIndex] = useState<
         number | null
@@ -828,7 +831,7 @@ export default function Edit({
                                                     <TableHead className="w-[150px]">
                                                         {t('Note')}
                                                     </TableHead>
-                                                    <TableHead className="w-[100px]">
+                                                    <TableHead className="w-[90px]">
                                                         {t('Voice')}
                                                     </TableHead>
                                                     <TableHead className="w-[120px]">
@@ -927,7 +930,7 @@ export default function Edit({
                                                                                     .value,
                                                                             )
                                                                         }
-                                                                        className="w-[80px]"
+                                                                        className="w-full"
                                                                         placeholder="-"
                                                                     />
                                                                 </TableCell>
@@ -970,17 +973,32 @@ export default function Edit({
                                                                     />
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    <Button
-                                                                        variant="ghost"
-                                                                        size="icon"
-                                                                        onClick={() =>
-                                                                            setDeletePart(
-                                                                                part,
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        <Trash2 className="text-destructive" />
-                                                                    </Button>
+                                                                    <div className="flex items-center">
+                                                                        {part.view_url && (
+                                                                            <Button
+                                                                                variant="ghost"
+                                                                                size="icon"
+                                                                                onClick={() =>
+                                                                                    setViewPart(
+                                                                                        part,
+                                                                                    )
+                                                                                }
+                                                                            >
+                                                                                <Eye />
+                                                                            </Button>
+                                                                        )}
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            onClick={() =>
+                                                                                setDeletePart(
+                                                                                    part,
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            <Trash2 className="text-destructive" />
+                                                                        </Button>
+                                                                    </div>
                                                                 </TableCell>
                                                             </TableRow>
                                                         );
@@ -1073,6 +1091,67 @@ export default function Edit({
                             onClick={confirmDeletePart}
                         >
                             {t('Delete')}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={!!viewPart}
+                onOpenChange={() => setViewPart(null)}
+            >
+                <DialogContent className="flex h-[85vh] max-w-5xl flex-col" onOpenAutoFocus={(e) => e.preventDefault()}>
+                    <DialogHeader>
+                        <DialogTitle>
+                            {viewPart?.original_filename}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {t(
+                                'Manage sheet music parts for this piece',
+                            )}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {viewPart && (
+                        <div className="grid min-h-0 flex-1 grid-cols-[280px_1fr] gap-4">
+                            {/* Left panel: form */}
+                            <div className="overflow-y-auto rounded-lg border bg-muted/80 p-4">
+                                <PartEditFields
+                                    values={getPartEdit(viewPart)}
+                                    instrumentOptions={instOptions}
+                                    onChange={(field, value) =>
+                                        updatePartEdit(
+                                            viewPart.id,
+                                            field,
+                                            value,
+                                        )
+                                    }
+                                    checkboxId="view_is_conductor"
+                                />
+                            </div>
+
+                            {/* Right panel: PDF preview */}
+                            <div className="min-h-0 overflow-hidden rounded-lg border">
+                                {viewPart.view_url && (
+                                    <iframe
+                                        src={viewPart.view_url}
+                                        className="h-full w-full"
+                                        title={
+                                            viewPart.original_filename ??
+                                            ''
+                                        }
+                                    />
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setViewPart(null)}
+                        >
+                            {t('Close')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

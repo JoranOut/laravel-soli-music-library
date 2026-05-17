@@ -8,10 +8,9 @@ import {
     Upload,
 } from 'lucide-react';
 import { useCallback, useState } from 'react';
+import PartEditFields from '@/components/part-edit-fields';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import type { ComboboxOption } from '@/components/ui/combobox';
-import { Combobox } from '@/components/ui/combobox';
 import {
     Dialog,
     DialogContent,
@@ -20,8 +19,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useTranslation } from '@/hooks/use-translation';
 import type { InstrumentType, Part } from '@/types/muziekstukken';
 
@@ -439,98 +436,18 @@ export default function PrepareUploadsDialog({
                                 ))}
 
                                 <div className="space-y-4">
-                                    <div className="space-y-1">
-                                        <Label>
-                                            {t('Instrument')}{' '}
-                                            <span className="text-destructive">
-                                                *
-                                            </span>
-                                        </Label>
-                                        <Combobox
-                                            className="bg-background"
-                                            options={instOptions}
-                                            value={
-                                                activeUpload.instrument_type_id
-                                            }
-                                            onChange={(v) =>
-                                                updateFormValue(
-                                                    activeIndex,
-                                                    'instrument_type_id',
-                                                    v,
-                                                )
-                                            }
-                                        />
-                                    </div>
-
-                                    <div className="space-y-1">
-                                        <Label>{t('Voice')}</Label>
-                                        <Input
-                                            type="number"
-                                            min="1"
-                                            className="bg-background"
-                                            value={activeUpload.voice}
-                                            onChange={(e) =>
-                                                updateFormValue(
-                                                    activeIndex,
-                                                    'voice',
-                                                    e.target.value,
-                                                )
-                                            }
-                                            placeholder="-"
-                                        />
-                                    </div>
-
-                                    <div className="space-y-1">
-                                        <Label>{t('Note')}</Label>
-                                        <Input
-                                            className="bg-background"
-                                            maxLength={20}
-                                            value={activeUpload.note}
-                                            onChange={(e) =>
-                                                updateFormValue(
-                                                    activeIndex,
-                                                    'note',
-                                                    e.target.value,
-                                                )
-                                            }
-                                            placeholder="-"
-                                        />
-                                    </div>
-
-                                    <div className="space-y-1">
-                                        <Label>{t('Amount bought')}</Label>
-                                        <Input
-                                            type="number"
-                                            min="0"
-                                            className="bg-background"
-                                            value={activeUpload.amount_bought}
-                                            onChange={(e) =>
-                                                updateFormValue(
-                                                    activeIndex,
-                                                    'amount_bought',
-                                                    e.target.value,
-                                                )
-                                            }
-                                            placeholder="-"
-                                        />
-                                    </div>
-
-                                    <div className="flex items-center gap-2">
-                                        <Checkbox
-                                            id="is_conductor"
-                                            checked={activeUpload.is_conductor}
-                                            onCheckedChange={(checked) =>
-                                                updateFormValue(
-                                                    activeIndex,
-                                                    'is_conductor',
-                                                    !!checked,
-                                                )
-                                            }
-                                        />
-                                        <Label htmlFor="is_conductor">
-                                            {t('Partituur')}
-                                        </Label>
-                                    </div>
+                                    <PartEditFields
+                                        values={activeUpload}
+                                        instrumentOptions={instOptions}
+                                        onChange={(field, value) =>
+                                            updateFormValue(
+                                                activeIndex,
+                                                field,
+                                                value,
+                                            )
+                                        }
+                                        instrumentRequired
+                                    />
 
                                     {isActiveSkipped ? (
                                         <Button
