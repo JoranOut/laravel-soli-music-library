@@ -1096,19 +1096,15 @@ export default function Edit({
                 </DialogContent>
             </Dialog>
 
-            <Dialog
-                open={!!viewPart}
-                onOpenChange={() => setViewPart(null)}
-            >
-                <DialogContent className="flex h-[85vh] max-w-5xl flex-col" onOpenAutoFocus={(e) => e.preventDefault()}>
+            <Dialog open={!!viewPart} onOpenChange={() => setViewPart(null)}>
+                <DialogContent
+                    className="flex h-[85vh] max-w-5xl flex-col"
+                    onOpenAutoFocus={(e) => e.preventDefault()}
+                >
                     <DialogHeader>
-                        <DialogTitle>
-                            {viewPart?.original_filename}
-                        </DialogTitle>
+                        <DialogTitle>{viewPart?.original_filename}</DialogTitle>
                         <DialogDescription>
-                            {t(
-                                'Manage sheet music parts for this piece',
-                            )}
+                            {t('Manage sheet music parts for this piece')}
                         </DialogDescription>
                     </DialogHeader>
 
@@ -1136,10 +1132,7 @@ export default function Edit({
                                     <iframe
                                         src={viewPart.view_url}
                                         className="h-full w-full"
-                                        title={
-                                            viewPart.original_filename ??
-                                            ''
-                                        }
+                                        title={viewPart.original_filename ?? ''}
                                     />
                                 )}
                             </div>

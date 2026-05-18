@@ -48,9 +48,7 @@ export default function DownloadLogs({ logs }: Props) {
             <div className="space-y-6 p-6">
                 <Heading
                     title={t('Download logs')}
-                    description={t(
-                        'View download activity for all users.',
-                    )}
+                    description={t('View download activity for all users.')}
                 />
 
                 <div className="overflow-x-auto rounded-lg border">
@@ -69,7 +67,7 @@ export default function DownloadLogs({ logs }: Props) {
                                 <TableRow>
                                     <TableCell
                                         colSpan={5}
-                                        className="text-muted-foreground text-center"
+                                        className="text-center text-muted-foreground"
                                     >
                                         {t('No download logs found.')}
                                     </TableCell>

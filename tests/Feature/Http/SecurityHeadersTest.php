@@ -12,7 +12,7 @@ test('security headers are present on responses', function () {
     $response = $this->actingAs($user)->get('/');
 
     $response->assertHeader('X-Content-Type-Options', 'nosniff');
-    $response->assertHeader('X-Frame-Options', 'DENY');
+    $response->assertHeader('X-Frame-Options', 'SAMEORIGIN');
     $response->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     $response->assertHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 });
@@ -40,5 +40,5 @@ test('csp and hsts are set in production environment', function () {
         ->toContain("default-src 'self'")
         ->toContain("script-src 'self'")
         ->toContain("object-src 'none'")
-        ->toContain("frame-ancestors 'none'");
+        ->toContain("frame-ancestors 'self'");
 });
