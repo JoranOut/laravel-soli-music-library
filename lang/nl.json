@@ -183,5 +183,13 @@
     "This document contains another instrument": "Dit document bevat nog een ander instrument",
     "Skip": "Overslaan",
     "Skipped": "Overgeslagen",
-    "Unskip": "Niet meer overslaan"
+    "Unskip": "Niet meer overslaan",
+    "Download logs": "Downloadlogboek",
+    "View download activity for all users.": "Bekijk downloadactiviteit van alle gebruikers.",
+    "Downloaded at": "Gedownload op",
+    "Country": "Land",
+    "User": "Gebruiker",
+    "Deleted user": "Verwijderde gebruiker",
+    "Deleted part": "Verwijderde partij",
+    "No download logs found.": "Geen downloadlogboek gevonden."
 }

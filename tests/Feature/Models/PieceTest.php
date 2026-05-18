@@ -42,20 +42,114 @@ it('belongs to many orchestras via usages', function () {
         ->each->toBeInstanceOf(Orchestra::class);
 });
 
-it('orchestras only returns active usages (tot is null or in the future)', function () {
+// --- Speelperiode active/inactive: all van/tot combinations ---
+
+// van=null: no explicit start date, treated as always started
+it('shows speelperiode with van=null, tot=null', function () {
     $piece = Piece::factory()->create();
-    $current = Orchestra::factory()->create();
-    $future = Orchestra::factory()->create();
-    $historical = Orchestra::factory()->create();
+    $orchestra = Orchestra::factory()->create();
+    $piece->speelperiodes()->create(['van' => null, 'tot' => null, 'orchestra_id' => $orchestra->id]);
 
-    $piece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $current->id]);
-    $piece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $future->id, 'tot' => now()->addMonth()->toDateString()]);
-    $piece->speelperiodes()->create(['van' => now(), 'orchestra_id' => $historical->id, 'tot' => '2025-01-01']);
+    expect($piece->orchestras->pluck('id')->toArray())->toContain($orchestra->id);
+});
 
-    $orchestraIds = $piece->orchestras->pluck('id')->toArray();
-    expect($orchestraIds)->toContain($current->id)
-        ->toContain($future->id)
-        ->not->toContain($historical->id);
+it('hides speelperiode with van=null, tot=past', function () {
+    $piece = Piece::factory()->create();
+    $orchestra = Orchestra::factory()->create();
+    $piece->speelperiodes()->create(['van' => null, 'tot' => now()->subDay()->toDateString(), 'orchestra_id' => $orchestra->id]);
+
+    expect($piece->orchestras->pluck('id')->toArray())->not->toContain($orchestra->id);
+});
+
+it('shows speelperiode with van=null, tot=today', function () {
+    $piece = Piece::factory()->create();
+    $orchestra = Orchestra::factory()->create();
+    $piece->speelperiodes()->create(['van' => null, 'tot' => now()->toDateString(), 'orchestra_id' => $orchestra->id]);
+
+    expect($piece->orchestras->pluck('id')->toArray())->toContain($orchestra->id);
+});
+
+it('shows speelperiode with van=null, tot=future', function () {
+    $piece = Piece::factory()->create();
+    $orchestra = Orchestra::factory()->create();
+    $piece->speelperiodes()->create(['van' => null, 'tot' => now()->addMonth()->toDateString(), 'orchestra_id' => $orchestra->id]);
+
+    expect($piece->orchestras->pluck('id')->toArray())->toContain($orchestra->id);
+});
+
+// van=past
+it('shows speelperiode with van=past, tot=null', function () {
+    $piece = Piece::factory()->create();
+    $orchestra = Orchestra::factory()->create();
+    $piece->speelperiodes()->create(['van' => now()->subMonth()->toDateString(), 'tot' => null, 'orchestra_id' => $orchestra->id]);
+
+    expect($piece->orchestras->pluck('id')->toArray())->toContain($orchestra->id);
+});
+
+it('hides speelperiode with van=past, tot=past', function () {
+    $piece = Piece::factory()->create();
+    $orchestra = Orchestra::factory()->create();
+    $piece->speelperiodes()->create(['van' => now()->subMonth()->toDateString(), 'tot' => now()->subDay()->toDateString(), 'orchestra_id' => $orchestra->id]);
+
+    expect($piece->orchestras->pluck('id')->toArray())->not->toContain($orchestra->id);
+});
+
+it('shows speelperiode with van=past, tot=today', function () {
+    $piece = Piece::factory()->create();
+    $orchestra = Orchestra::factory()->create();
+    $piece->speelperiodes()->create(['van' => now()->subMonth()->toDateString(), 'tot' => now()->toDateString(), 'orchestra_id' => $orchestra->id]);
+
+    expect($piece->orchestras->pluck('id')->toArray())->toContain($orchestra->id);
+});
+
+it('shows speelperiode with van=past, tot=future', function () {
+    $piece = Piece::factory()->create();
+    $orchestra = Orchestra::factory()->create();
+    $piece->speelperiodes()->create(['van' => now()->subMonth()->toDateString(), 'tot' => now()->addMonth()->toDateString(), 'orchestra_id' => $orchestra->id]);
+
+    expect($piece->orchestras->pluck('id')->toArray())->toContain($orchestra->id);
+});
+
+// van=today
+it('shows speelperiode with van=today, tot=null', function () {
+    $piece = Piece::factory()->create();
+    $orchestra = Orchestra::factory()->create();
+    $piece->speelperiodes()->create(['van' => now()->toDateString(), 'tot' => null, 'orchestra_id' => $orchestra->id]);
+
+    expect($piece->orchestras->pluck('id')->toArray())->toContain($orchestra->id);
+});
+
+it('shows speelperiode with van=today, tot=today', function () {
+    $piece = Piece::factory()->create();
+    $orchestra = Orchestra::factory()->create();
+    $piece->speelperiodes()->create(['van' => now()->toDateString(), 'tot' => now()->toDateString(), 'orchestra_id' => $orchestra->id]);
+
+    expect($piece->orchestras->pluck('id')->toArray())->toContain($orchestra->id);
+});
+
+it('shows speelperiode with van=today, tot=future', function () {
+    $piece = Piece::factory()->create();
+    $orchestra = Orchestra::factory()->create();
+    $piece->speelperiodes()->create(['van' => now()->toDateString(), 'tot' => now()->addMonth()->toDateString(), 'orchestra_id' => $orchestra->id]);
+
+    expect($piece->orchestras->pluck('id')->toArray())->toContain($orchestra->id);
+});
+
+// van=future: never active yet
+it('hides speelperiode with van=future, tot=null', function () {
+    $piece = Piece::factory()->create();
+    $orchestra = Orchestra::factory()->create();
+    $piece->speelperiodes()->create(['van' => now()->addMonth()->toDateString(), 'tot' => null, 'orchestra_id' => $orchestra->id]);
+
+    expect($piece->orchestras->pluck('id')->toArray())->not->toContain($orchestra->id);
+});
+
+it('hides speelperiode with van=future, tot=future', function () {
+    $piece = Piece::factory()->create();
+    $orchestra = Orchestra::factory()->create();
+    $piece->speelperiodes()->create(['van' => now()->addMonth()->toDateString(), 'tot' => now()->addMonths(2)->toDateString(), 'orchestra_id' => $orchestra->id]);
+
+    expect($piece->orchestras->pluck('id')->toArray())->not->toContain($orchestra->id);
 });
 
 it('has many speelperiodes', function () {

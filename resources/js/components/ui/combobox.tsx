@@ -88,10 +88,10 @@ function Combobox({ options, value, onChange, placeholder, className, allowCusto
                 >
                     {!search && selectedLabel && (
                         <span className={cn(
-                            'pointer-events-none absolute inset-0 flex items-center px-3',
+                            'pointer-events-none absolute inset-0 flex items-center px-3 pr-8',
                             open ? 'text-muted-foreground' : 'text-foreground',
                         )}>
-                            {selectedLabel}
+                            <span className="truncate">{selectedLabel}</span>
                         </span>
                     )}
                     <input

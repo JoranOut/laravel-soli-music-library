@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\DownloadLogController;
 use App\Http\Controllers\Admin\GenreController;
 use App\Http\Controllers\Admin\InstrumentAliasController;
 use App\Http\Controllers\Admin\InstrumentTypeController;
@@ -106,6 +107,10 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
 Route::middleware(['auth', 'can:manage-instrument-aliases'])->group(function () {
     Route::get('/admin/instrument-aliases', [InstrumentAliasController::class, 'index'])->name('admin.instrument-aliases');
     Route::put('/admin/instrument-aliases/{instrumentType}', [InstrumentAliasController::class, 'update'])->name('admin.instrument-aliases.update');
+});
+
+Route::middleware(['auth', 'can:view-download-logs'])->group(function () {
+    Route::get('/admin/download-logs', [DownloadLogController::class, 'index'])->name('admin.download-logs');
 });
 
 Route::middleware(['auth', 'can:manage-instrument-types'])->group(function () {

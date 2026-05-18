@@ -16,7 +16,7 @@ class SecurityHeaders
         $response = $next($request);
 
         $response->headers->set('X-Content-Type-Options', 'nosniff');
-        $response->headers->set('X-Frame-Options', 'DENY');
+        $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 
@@ -36,7 +36,7 @@ class SecurityHeaders
                 "object-src 'none'; ".
                 "base-uri 'self'; ".
                 "form-action 'self'; ".
-                "frame-ancestors 'none'"
+                "frame-ancestors 'self'"
             );
         }
 

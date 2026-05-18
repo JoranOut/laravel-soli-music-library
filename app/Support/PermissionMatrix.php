@@ -30,6 +30,7 @@ class PermissionMatrix
         'manage-genres',
         'manage-music-types',
         'manage-instrument-types',
+        'view-download-logs',
     ];
 
     /** Roles and their default permission sets. */
@@ -44,6 +45,7 @@ class PermissionMatrix
             'manage-instrument-types',
             'manage-genres',
             'manage-music-types',
+            'view-download-logs',
         ],
         'muziekbeheer' => [
             'view muziekstukken', 'create muziekstukken', 'edit muziekstukken', 'delete muziekstukken',
