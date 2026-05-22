@@ -63,6 +63,7 @@ Route::middleware(['auth', EnsureUserIsEditor::class])->group(function () {
     Route::delete('/muziekstukken/{piece}', [PieceController::class, 'destroy'])->name('muziekstukken.destroy')->withTrashed();
     Route::post('/muziekstukken/{piece}/parts', [PartController::class, 'store'])->name('muziekstukken.parts.store');
     Route::put('/muziekstukken/{piece}/parts/{part}', [PartController::class, 'update'])->name('muziekstukken.parts.update');
+    Route::post('/muziekstukken/{piece}/parts/{part}/duplicate', [PartController::class, 'duplicate'])->name('muziekstukken.parts.duplicate');
     Route::delete('/muziekstukken/{piece}/parts/{part}', [PartController::class, 'destroy'])->name('muziekstukken.parts.destroy');
     Route::post('/muziekstukken/{piece}/audio', [PieceController::class, 'updateAudio'])->name('muziekstukken.audio.update');
     Route::delete('/muziekstukken/{piece}/audio', [PieceController::class, 'deleteAudio'])->name('muziekstukken.audio.destroy');
