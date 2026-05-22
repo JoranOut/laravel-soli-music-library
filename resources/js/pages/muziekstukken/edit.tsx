@@ -997,8 +997,7 @@ export default function Edit({
                                                                                         `/muziekstukken/${piece.id}/parts/${part.id}/duplicate`,
                                                                                         {},
                                                                                         {
-                                                                                            preserveScroll:
-                                                                                                true,
+                                                                                            preserveScroll: true,
                                                                                         },
                                                                                     )
                                                                                 }
