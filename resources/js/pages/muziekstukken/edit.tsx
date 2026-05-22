@@ -1,6 +1,7 @@
 import { Head, router } from '@inertiajs/react';
 import {
     CircleAlert,
+    Copy,
     Eye,
     Music,
     Plus,
@@ -840,7 +841,7 @@ export default function Edit({
                                                     <TableHead>
                                                         {t('Partituur')}
                                                     </TableHead>
-                                                    <TableHead className="w-[80px]" />
+                                                    <TableHead className="w-[120px]" />
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
@@ -985,6 +986,23 @@ export default function Edit({
                                                                                 }
                                                                             >
                                                                                 <Eye />
+                                                                            </Button>
+                                                                        )}
+                                                                        {part.view_url && (
+                                                                            <Button
+                                                                                variant="ghost"
+                                                                                size="icon"
+                                                                                onClick={() =>
+                                                                                    router.post(
+                                                                                        `/muziekstukken/${piece.id}/parts/${part.id}/duplicate`,
+                                                                                        {},
+                                                                                        {
+                                                                                            preserveScroll: true,
+                                                                                        },
+                                                                                    )
+                                                                                }
+                                                                            >
+                                                                                <Copy />
                                                                             </Button>
                                                                         )}
                                                                         <Button

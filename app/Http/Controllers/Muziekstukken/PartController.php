@@ -65,6 +65,31 @@ class PartController extends Controller
         return back();
     }
 
+    public function duplicate(Piece $piece, Part $part): RedirectResponse
+    {
+        if ($part->piece_id !== $piece->id) {
+            abort(404);
+        }
+
+        abort_unless($part->file_path, 400);
+
+        $extension = pathinfo($part->file_path, PATHINFO_EXTENSION);
+        $newPath = "pieces/{$piece->id}/".uniqid().'.'.$extension;
+        Storage::disk('sheets')->copy($part->file_path, $newPath);
+
+        $piece->parts()->create([
+            'instrument_type_id' => $part->instrument_type_id,
+            'is_conductor' => false,
+            'voice' => null,
+            'amount_bought' => $part->amount_bought,
+            'note' => '',
+            'file_path' => $newPath,
+            'original_filename' => $part->original_filename,
+        ]);
+
+        return back();
+    }
+
     public function destroy(Piece $piece, Part $part): RedirectResponse
     {
         if ($part->piece_id !== $piece->id) {
