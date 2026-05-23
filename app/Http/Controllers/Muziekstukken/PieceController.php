@@ -156,7 +156,7 @@ class PieceController extends Controller
                 ? URL::temporarySignedRoute('parts.download', now()->addHours(2), ['part' => $part->id])
                 : null,
             'view_url' => in_array($part->id, $downloadableIds) && $part->file_path
-                ? URL::temporarySignedRoute('parts.view', now()->addHours(2), ['part' => $part->id])
+                ? URL::temporarySignedRoute('parts.view', now()->addHours(2), ['part' => $part->id, 'filename' => PartController::displayName($part)])
                 : null,
         ]);
 
@@ -251,7 +251,7 @@ class PieceController extends Controller
 
         $piece->parts->transform(function ($part) {
             $part->view_url = $part->file_path
-                ? URL::temporarySignedRoute('parts.view', now()->addHours(2), ['part' => $part->id])
+                ? URL::temporarySignedRoute('parts.view', now()->addHours(2), ['part' => $part->id, 'filename' => PartController::displayName($part)])
                 : null;
 
             return $part;
