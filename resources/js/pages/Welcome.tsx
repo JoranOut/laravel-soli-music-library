@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { Download, Pause, Play } from 'lucide-react';
+import { Download, Eye, Pause, Play } from 'lucide-react';
 import { Heading } from '@/components/heading';
 import { YouTubeIcon } from '@/components/icons/youtube';
 import { Badge } from '@/components/ui/badge';
@@ -96,6 +96,14 @@ function PartActions({
 
     return (
         <div className="flex items-center gap-1">
+            <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleView(part.id)}
+            >
+                <Eye />
+                <span className="sr-only">{t('View')}</span>
+            </Button>
             <Button
                 variant="ghost"
                 size="icon"
