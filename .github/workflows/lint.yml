@@ -28,6 +28,12 @@ jobs:
           composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
           npm ci
 
+      - name: Security Audit (Composer)
+        run: composer audit
+
+      - name: Security Audit (npm)
+        run: npm audit
+
       - name: Check PHP formatting (Pint)
         run: composer lint:check
 
