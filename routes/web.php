@@ -89,7 +89,7 @@ Route::middleware(['auth', EnsureUserHasMusicAccess::class])->group(function () 
         ->middleware('signed');
     Route::get('/parts/{part}/download-url', [PartController::class, 'downloadUrl'])
         ->name('parts.download-url');
-    Route::get('/parts/{part}/view', [PartController::class, 'view'])
+    Route::get('/parts/{part}/view/{filename?}', [PartController::class, 'view'])
         ->name('parts.view')
         ->middleware('signed');
     Route::get('/parts/{part}/view-url', [PartController::class, 'viewUrl'])

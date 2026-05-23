@@ -16,6 +16,20 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PartController extends Controller
 {
+    public static function displayName(Part $part): string
+    {
+        $part->loadMissing(['instrumentType', 'piece']);
+        $name = str($part->piece->title)->slug().'-'.str($part->instrumentType->name)->slug();
+        if ($part->voice !== null) {
+            $name .= '-'.$part->voice;
+        }
+        if ($part->note !== null && $part->note !== '') {
+            $name .= '-'.str($part->note)->slug();
+        }
+
+        return $name.'.pdf';
+    }
+
     public function store(Request $request, Piece $piece): RedirectResponse
     {
         $validated = $request->validate([
@@ -144,7 +158,7 @@ class PartController extends Controller
         }
 
         return response()->json([
-            'url' => URL::temporarySignedRoute('parts.view', now()->addHours(2), ['part' => $part->id]),
+            'url' => URL::temporarySignedRoute('parts.view', now()->addHours(2), ['part' => $part->id, 'filename' => self::displayName($part)]),
         ]);
     }
 
@@ -161,15 +175,7 @@ class PartController extends Controller
             abort(403);
         }
 
-        $part->loadMissing('instrumentType');
-        $displayName = str($piece->title)->slug().'-'.str($part->instrumentType->name)->slug();
-        if ($part->voice !== null) {
-            $displayName .= '-'.$part->voice;
-        }
-        if ($part->note !== null && $part->note !== '') {
-            $displayName .= '-'.str($part->note)->slug();
-        }
-        $displayName .= '.pdf';
+        $displayName = self::displayName($part);
 
         return Storage::disk('sheets')->response($part->file_path, $displayName, [
             'Content-Type' => 'application/pdf',
@@ -197,15 +203,7 @@ class PartController extends Controller
             'ip_hash' => hash('sha256', $request->ip()),
         ]);
 
-        $part->loadMissing('instrumentType');
-        $downloadName = str($piece->title)->slug().'-'.str($part->instrumentType->name)->slug();
-        if ($part->voice !== null) {
-            $downloadName .= '-'.$part->voice;
-        }
-        if ($part->note !== null && $part->note !== '') {
-            $downloadName .= '-'.str($part->note)->slug();
-        }
-        $downloadName .= '.pdf';
+        $downloadName = self::displayName($part);
 
         return Storage::disk('sheets')->download($part->file_path, $downloadName);
     }
