@@ -48,7 +48,7 @@ export function AppSidebar() {
     if (canSeeAllPieces) {
         const orchestraChildren: NavItem[] = (auth.orchestras ?? []).map(
             (o) => ({
-                title: o.abbreviation || o.name,
+                title: o.name,
                 href: `/muziekstukken?orchestra=${o.id}`,
             }),
         );
